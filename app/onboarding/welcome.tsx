@@ -188,7 +188,7 @@ const styles = StyleSheet.create({
 
   // Визуальная часть (Иконка)
   visualContainer: {
-    flex: 2, // Занимает верхние 2/3 экрана (почти)
+    flex: 1, // Занимает всё свободное пространство сверху
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -205,39 +205,8 @@ const styles = StyleSheet.create({
 
   // Текстовая часть
   textContainer: {
-    flex: 1.5, // Нижняя часть
-    justifyContent: 'flex-start', // Текст начинается сразу под картинкой
-    paddingTop: 20,
-  },
-  title: {
-    fontSize: 36, // Крупный, журнальный заголовок
-    fontWeight: '300', // Тонкое начертание (Elegant)
-    color: THEME.text,
-    textAlign: 'left', // Выравнивание по левому краю для стиля
-    lineHeight: 44,
-    fontFamily: 'System', // Если есть Cormorant Garamond, лучше использовать его здесь
-  },
-  separator: {
-    width: 40,
-    height: 2,
-    backgroundColor: THEME.text,
-    marginTop: 20,
-    marginBottom: 20,
-    opacity: 0.2,
-  },
-  subtitle: {
-    fontSize: 17,
-    color: THEME.subText,
-    textAlign: 'left',
-    lineHeight: 26,
-    fontWeight: '400',
-  },
-
-  // Футер
-  footer: {
-    paddingHorizontal: 30,
-    paddingBottom: 50,
-    justifyContent: 'flex-end',
+    paddingBottom: 40, // Отступ снизу до футера
+    justifyContent: 'flex-end', // Прижимаем текст к низу блока
   },
 
   // Прогресс-бар (линии)
