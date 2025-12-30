@@ -1,0 +1,94 @@
+import { useRouter } from 'expo-router';
+import { createContext, useContext, useEffect, useState } from 'react';
+import { Platform } from 'react-native';
+
+let WebApp: any = null;
+if (Platform.OS === 'web') {
+    try {
+        WebApp = require('@twa-dev/sdk').default;
+    } catch (e) {
+        console.error('Failed to load @twa-dev/sdk', e);
+    }
+}
+
+interface TelegramContextType {
+    isTelegram: boolean;
+    user: any;
+    webApp: typeof WebApp | null;
+    initData: string;
+    initDataUnsafe: any;
+    colorScheme: 'light' | 'dark';
+}
+
+const TelegramContext = createContext<TelegramContextType>({
+    isTelegram: false,
+    user: null,
+    webApp: null,
+    initData: '',
+    initDataUnsafe: {},
+    colorScheme: 'light',
+});
+
+export const useTelegram = () => useContext(TelegramContext);
+
+export function TelegramProvider({ children }: { children: React.ReactNode }) {
+    const [isTelegram, setIsTelegram] = useState(false);
+    const [colorScheme, setColorScheme] = useState<'light' | 'dark'>('light');
+    const router = useRouter();
+
+    useEffect(() => {
+        // Check if running on web and if Telegram WebApp is available
+        const checkTelegram = () => {
+            if (Platform.OS === 'web' && typeof window !== 'undefined' && (window as any).Telegram?.WebApp) {
+                // Determine if we are really inside Telegram by checking initData or platform
+                // (initData might be empty during local dev, but WebApp object exists)
+                setIsTelegram(true);
+
+                try {
+                    WebApp.ready();
+                    WebApp.expand();
+                    setColorScheme(WebApp.colorScheme);
+
+                    // Listen for theme changes
+                    const themeParams = WebApp.themeParams;
+                    // You could sync specific colors here if needed
+                } catch (e) {
+                    console.error('Error initializing Telegram WebApp:', e);
+                }
+
+                // Handle Back Button
+                const handleBackButton = () => {
+                    router.back();
+                };
+
+                WebApp.BackButton.onClick(handleBackButton);
+
+                // Show BackButton if we can go back... logic can be complex in Expo Router
+                // For now, let's leave it controlled by screens or simple logic
+                // WebApp.BackButton.show(); 
+
+                return () => {
+                    WebApp.BackButton.offClick(handleBackButton);
+                };
+            }
+        };
+
+        const cleanup = checkTelegram();
+        return cleanup;
+    }, [router]);
+
+    const value: TelegramContextType = {
+        isTelegram,
+        user: isTelegram ? WebApp.initDataUnsafe?.user : null,
+        webApp: isTelegram ? WebApp : null,
+        initData: isTelegram ? WebApp.initData : '',
+        initDataUnsafe: isTelegram ? WebApp.initDataUnsafe : {},
+        colorScheme
+    };
+
+    return (
+        <TelegramContext.Provider value={value}>
+            {children}
+        </TelegramContext.Provider>
+    );
+}

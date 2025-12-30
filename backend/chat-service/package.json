@@ -1,0 +1,11 @@
+{
+    "name": "chat-service",
+    "version": "1.0.0",
+    "description": "Yandex Cloud Function for Chats and Matches with WebSocket support",
+    "main": "index.js",
+    "dependencies": {
+        "ydb-sdk": "^3.0.0",
+        "jsonwebtoken": "^9.0.0",
+        "uuid": "^9.0.0"
+    }
+}

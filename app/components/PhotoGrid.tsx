@@ -1,0 +1,168 @@
+// components/PhotoGrid.tsx
+import { Ionicons } from '@expo/vector-icons';
+import * as ImagePicker from 'expo-image-picker';
+import React, { useState } from 'react';
+import {
+  ActivityIndicator,
+  Alert,
+  Image,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View
+} from 'react-native';
+
+interface PhotoGridProps {
+  photos: string[];
+  setPhotos: (photos: string[]) => void;
+  maxPhotos?: number;
+}
+
+import { yandexStorage } from '../services/yandex/StorageService'; // Импорт сервиса
+
+export const PhotoGrid = ({ photos, setPhotos, maxPhotos = 6 }: PhotoGridProps) => {
+  const [loading, setLoading] = useState(false);
+  // ... imports removed
+
+  const pickImage = async () => {
+    if (photos.length >= maxPhotos) return;
+
+    try {
+      setLoading(true);
+      // 1. Запрашиваем разрешение
+      const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+      if (status !== 'granted') {
+        Alert.alert('Ошибка', 'Нужен доступ к галерее, чтобы выбрать фото.');
+        setLoading(false);
+        return;
+      }
+
+      // 2. Выбираем фото
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        allowsEditing: true,
+        aspect: [3, 4],
+        quality: 0.5,
+      });
+
+      if (!result.canceled && result.assets[0].uri) {
+        const localUri = result.assets[0].uri;
+
+        // 🔥 YANDEX UPLOAD START
+        // console.log("Uploading to Yandex...", localUri);
+        const remoteUrl = await yandexStorage.uploadImage(localUri, 'avatars');
+        // console.log("Uploaded:", remoteUrl);
+
+        setPhotos([...photos, remoteUrl]);
+      }
+    } catch (error) {
+      console.error('Pick error:', error);
+      Alert.alert('Ошибка', 'Не удалось загрузить фото. Проверьте интернет.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const removePhoto = (indexToRemove: number) => {
+    Alert.alert('Удалить фото?', '', [
+      { text: 'Отмена', style: 'cancel' },
+      {
+        text: 'Удалить',
+        style: 'destructive',
+        onPress: () => {
+          setPhotos(photos.filter((_, index) => index !== indexToRemove));
+        }
+      }
+    ]);
+  };
+
+  return (
+    <View style={styles.container}>
+      {/* Сетка фото */}
+      {photos.map((photoUrl, index) => (
+        <View key={index} style={styles.photoWrapper}>
+          <Image source={{ uri: photoUrl }} style={styles.photo} />
+          <TouchableOpacity
+            style={styles.removeButton}
+            onPress={() => removePhoto(index)}
+          >
+            <Ionicons name="close" size={14} color="#fff" />
+          </TouchableOpacity>
+        </View>
+      ))}
+
+      {/* Кнопка добавления */}
+      {photos.length < maxPhotos && (
+        <TouchableOpacity
+          style={styles.addButton}
+          onPress={pickImage}
+          disabled={loading}
+        >
+          {loading ? (
+            <ActivityIndicator color="#e1306c" />
+          ) : (
+            <Ionicons name="add" size={32} color="#e1306c" />
+          )}
+        </TouchableOpacity>
+      )}
+
+      {/* Подсказка если пусто */}
+      {photos.length === 0 && !loading && (
+        <Text style={styles.hint}>
+          Добавьте фото (Локальный режим)
+        </Text>
+      )}
+    </View>
+  );
+};
+
+const styles = StyleSheet.create({
+  container: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 12,
+    justifyContent: 'center',
+  },
+  photoWrapper: {
+    width: 100,
+    height: 133,
+    borderRadius: 12,
+    overflow: 'hidden',
+    backgroundColor: '#1a1a1a',
+    borderWidth: 1,
+    borderColor: '#333',
+  },
+  photo: {
+    width: '100%',
+    height: '100%',
+  },
+  removeButton: {
+    position: 'absolute',
+    top: 6,
+    right: 6,
+    backgroundColor: 'rgba(0,0,0,0.6)',
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  addButton: {
+    width: 100,
+    height: 133,
+    borderRadius: 12,
+    backgroundColor: '#1a1a1a',
+    borderWidth: 2,
+    borderColor: '#333',
+    borderStyle: 'dashed',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  hint: {
+    width: '100%',
+    textAlign: 'center',
+    color: '#666',
+    marginTop: 10,
+    fontSize: 14,
+  }
+});

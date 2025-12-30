@@ -1,0 +1,181 @@
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { Platform } from 'react-native';
+import { IAuthService, User } from '../interfaces/IAuthService';
+
+const API_URL = 'https://d5dg37j92h7tg2f7sf87.o2p3jdjj.apigw.yandexcloud.net';
+
+class YandexAuthService implements IAuthService {
+    private _currentUser: User | null = null;
+    private _listeners: ((user: User | null) => void)[] = [];
+
+    constructor() {
+        // Skip session load on server-side (Next.js/Expo Router SSG)
+        if (Platform.OS === 'web' && typeof window === 'undefined') {
+            return;
+        }
+        this._loadSession();
+    }
+
+    async telegramLogin(tgUser: any): Promise<void> {
+        try {
+            console.log('Authenticating with backend via Telegram...', tgUser);
+
+            const response = await fetch(`${API_URL}/telegram-login`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(tgUser),
+            });
+
+            const data = await response.json();
+
+            if (!response.ok) {
+                throw new Error(data.error || 'Telegram auth failed on server');
+            }
+
+            if (data.token && data.user) {
+                this._currentUser = this._transformUser(data.user);
+                await AsyncStorage.setItem('auth_token', data.token);
+                this._notifyListeners();
+                console.log('Telegram login successful, token saved');
+            } else {
+                throw new Error('Invalid response from server');
+            }
+        } catch (error) {
+            console.error('Telegram Login Error:', error);
+            throw error;
+        }
+    }
+    private async _loadSession() {
+        if (Platform.OS === 'web' && typeof window === 'undefined') return;
+
+        try {
+            const token = await AsyncStorage.getItem('auth_token');
+            console.log('[AuthService] Loading session, token exists:', !!token);
+
+            if (token) {
+                // Verify token with backend
+                const response = await fetch(`${API_URL}/me`, {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+
+                console.log('[AuthService] /me response status:', response.status);
+
+                if (response.ok) {
+                    const data = await response.json();
+                    console.log('[AuthService] /me response data:', { hasUser: !!data?.user, uid: data?.user?.uid });
+
+                    if (data && data.user) {
+                        this._currentUser = this._transformUser(data.user);
+                        this._notifyListeners();
+                        console.log('[AuthService] User loaded successfully');
+                    } else {
+                        console.error('[AuthService] Invalid user data from backend:', data);
+                        this._currentUser = null;
+                        this._notifyListeners();
+                        await AsyncStorage.removeItem('auth_token');
+                    }
+                } else {
+                    // Token invalid
+                    console.log('[AuthService] Token validation failed, clearing token');
+                    this._currentUser = null;
+                    this._notifyListeners();
+                    await AsyncStorage.removeItem('auth_token');
+                }
+            } else {
+                // No token
+                console.log('[AuthService] No token found');
+                this._currentUser = null;
+                this._notifyListeners();
+            }
+        } catch (e) {
+            console.error('[AuthService] Failed to load session', e);
+            // Clear invalid token on error
+            this._currentUser = null;
+            this._notifyListeners();
+            await AsyncStorage.removeItem('auth_token');
+        }
+    }
+
+    getCurrentUser(): User | null {
+        return this._currentUser;
+    }
+
+
+
+    async logout(): Promise<void> {
+        this._currentUser = null;
+        await AsyncStorage.removeItem('auth_token');
+        this._notifyListeners();
+    }
+
+    onAuthStateChanged(callback: (user: User | null) => void): () => void {
+        this._listeners.push(callback);
+        // Immediate callback
+        callback(this._currentUser);
+
+        return () => {
+            this._listeners = this._listeners.filter(l => l !== callback);
+        };
+    }
+
+    private _notifyListeners() {
+        this._listeners.forEach(listener => listener(this._currentUser));
+    }
+    async refreshSession(): Promise<void> {
+        await this._loadSession();
+    }
+
+    async updateProfile(data: Partial<User> & Record<string, any>): Promise<void> {
+        console.log('[AuthService] updateProfile called with:', Object.keys(data));
+        const token = await AsyncStorage.getItem('auth_token');
+        if (!token) throw new Error('Not authenticated');
+
+        const response = await fetch(`${API_URL}/profile`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
+            },
+            body: JSON.stringify(data)
+        });
+
+        console.log('[AuthService] updateProfile response status:', response.status);
+
+        if (!response.ok) {
+            const text = await response.text();
+            console.error('[AuthService] Update profile failed:', response.status, text);
+            throw new Error(`Failed to update profile: ${response.status} ${text}`);
+        }
+
+        console.log('[AuthService] Profile updated successfully, refreshing session...');
+        // Refresh user data from server to ensure consistency
+        await this.refreshSession();
+        console.log('[AuthService] Session refreshed');
+    }
+
+    private _transformUser(user: any): User {
+        const tryParse = (val: any) => {
+            if (!val) return [];
+            if (Array.isArray(val)) return val;
+            try {
+                return JSON.parse(val);
+            } catch (e) {
+                return [];
+            }
+        };
+
+        return {
+            ...user,
+            photos: tryParse(user.photos),
+            interests: tryParse(user.interests),
+            religions: tryParse(user.religions || user.religion),
+            macroGroups: tryParse(user.macroGroups || user.macro_groups)
+        };
+    }
+}
+
+export const yandexAuth = new YandexAuthService();
