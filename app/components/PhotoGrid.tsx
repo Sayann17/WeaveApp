@@ -109,7 +109,7 @@ export const PhotoGrid = ({ photos, setPhotos, maxPhotos = 6 }: PhotoGridProps) 
       {/* Подсказка если пусто */}
       {photos.length === 0 && !loading && (
         <Text style={styles.hint}>
-          Добавьте фото (Локальный режим)
+          Добавьте фото
         </Text>
       )}
     </View>

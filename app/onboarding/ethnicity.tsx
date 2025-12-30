@@ -107,7 +107,7 @@ export default function OnboardingEthnicityScreen() {
                     </View>
 
                     {/* Макрогруппы */}
-                    <Text style={styles.label}>Культурный код (Макрогруппа)</Text>
+                    <Text style={styles.label}>Культурный код</Text>
                     <View style={styles.grid}>
                         {ethnicityGroups.map((group, index) => (
                             <SelectableCard

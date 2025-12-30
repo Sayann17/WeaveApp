@@ -183,14 +183,17 @@ const styles = StyleSheet.create({
     width: width,
     flex: 1,
     paddingHorizontal: 30,
-    justifyContent: 'center',
+    justifyContent: 'space-between', // Explicitly separate top and bottom
+    paddingTop: 60, // Add top padding for the icon area
+    paddingBottom: 20, // Add bottom padding for text area relative to content
   },
 
   // Визуальная часть (Иконка)
   visualContainer: {
-    flex: 1, // Занимает всё свободное пространство сверху
+    flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
+    // backgroundColor: 'red', // Debug color if needed
   },
   iconCircle: {
     width: 120,
@@ -205,8 +208,9 @@ const styles = StyleSheet.create({
 
   // Текстовая часть
   textContainer: {
-    paddingBottom: 40, // Отступ снизу до футера
-    justifyContent: 'flex-end', // Прижимаем текст к низу блока
+    // flex: 0, // Don't force flex here, let it size to content
+    justifyContent: 'flex-end',
+    paddingBottom: 40,
   },
 
   // Прогресс-бар (линии)
