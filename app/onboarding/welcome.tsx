@@ -129,6 +129,17 @@ export default function WelcomeScreen() {
         scrollEventThrottle={16}
         keyExtractor={(item) => item.id}
         bounces={false} // Отключаем пружину для строгости
+        getItemLayout={(data, index) => ({
+          length: width,
+          offset: width * index,
+          index,
+        })}
+        onScrollToIndexFailed={(info) => {
+          const wait = new Promise((resolve) => setTimeout(resolve, 500));
+          wait.then(() => {
+            flatListRef.current?.scrollToIndex({ index: info.index, animated: true });
+          });
+        }}
       />
 
       {/* Панель управления снизу */}
