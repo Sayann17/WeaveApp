@@ -445,7 +445,7 @@ const styles = StyleSheet.create({
     tagText: { color: '#e4e4e7', fontSize: 14, fontWeight: '500' },
 
     // --- LIGHTBOX ---
-    lightboxContainer: { flex: 1, backgroundColor: 'rgba(0,0,0,0.95)', justifyContent: 'center', alignItems: 'center' },
+    lightboxContainer: { flex: 1, backgroundColor: 'rgba(0,0,0,0.85)', justifyContent: 'center', alignItems: 'center' },
     lightboxImageContainer: { width: '100%', height: '100%', justifyContent: 'center', alignItems: 'center' },
     lightboxImage: { width: '100%', height: '100%' },
     lightboxCloseButton: { position: 'absolute', top: 15, right: 20, zIndex: 100, backgroundColor: 'rgba(50,50,50,0.5)', borderRadius: 20, padding: 8 },
