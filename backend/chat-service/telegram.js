@@ -65,7 +65,7 @@ async function notifyNewMessage(receiverTelegramId, senderName, messagePreview) 
     return await sendTelegramNotification(receiverTelegramId, text, {
         reply_markup: {
             inline_keyboard: [[
-                { text: '📱 Открыть чат', url: 'https://t.me/your_bot/app' }
+                { text: '📱 Открыть чат', url: 'https://t.me/WeaveMe_bot/app' }
             ]]
         }
     });
@@ -77,7 +77,13 @@ async function notifyNewMessage(receiverTelegramId, senderName, messagePreview) 
 async function notifyNewLike(likedUserTelegramId) {
     const text = `❤️ <b>Вами заинтересовались!</b>\n\nКто-то поставил вам лайк. Проверьте, кто это!`;
 
-    return await sendTelegramNotification(likedUserTelegramId, text);
+    return await sendTelegramNotification(likedUserTelegramId, text, {
+        reply_markup: {
+            inline_keyboard: [[
+                { text: '👀 Посмотреть', url: 'https://t.me/WeaveMe_bot/app' }
+            ]]
+        }
+    });
 }
 
 /**
@@ -89,7 +95,7 @@ async function notifyMatch(userTelegramId, matchedUserName) {
     return await sendTelegramNotification(userTelegramId, text, {
         reply_markup: {
             inline_keyboard: [[
-                { text: '💬 Написать сообщение', url: 'https://t.me/your_bot/app' }
+                { text: '💬 Написать сообщение', url: 'https://t.me/WeaveMe_bot/app' }
             ]]
         }
     });

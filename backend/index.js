@@ -2,6 +2,7 @@ const { getDriver } = require('./db');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const { TypedValues, TypedData } = require('ydb-sdk');
+const { notifyStart } = require('./telegram');
 
 // Secret for JWT - in production use Environment Variable!
 const JWT_SECRET = process.env.JWT_SECRET || 'dev-secret-key-change-me';
@@ -42,6 +43,8 @@ module.exports.handler = async function (event, context) {
             return await updateProfile(driver, headers, JSON.parse(body), responseHeaders);
         } else if (path === '/telegram-login' && httpMethod === 'POST') {
             return await telegramLogin(driver, JSON.parse(body), responseHeaders);
+        } else if (path === '/webhook' && httpMethod === 'POST') {
+            return await handleWebhook(JSON.parse(body), responseHeaders);
         } else {
             return {
                 statusCode: 404,
@@ -403,5 +406,21 @@ async function telegramLogin(driver, data, headers) {
                 stereotypeFalse: fullUser.stereotype_false
             }
         })
+    };
+}
+
+async function handleWebhook(update, headers) {
+    console.log('[Webhook] Received update:', JSON.stringify(update));
+
+    if (update.message && update.message.text === '/start') {
+        const chatId = update.message.chat.id;
+        console.log('[Webhook] Processing /start for chat:', chatId);
+        await notifyStart(chatId);
+    }
+
+    return {
+        statusCode: 200,
+        headers,
+        body: JSON.stringify({ status: 'ok' })
     };
 }

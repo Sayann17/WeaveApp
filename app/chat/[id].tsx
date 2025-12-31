@@ -125,7 +125,12 @@ export default function ChatScreen() {
     const showSubscription = Keyboard.addListener(
       Platform.OS === 'ios' ? 'keyboardWillShow' : 'keyboardDidShow',
       () => {
-        setTimeout(() => scrollViewRef.current?.scrollToEnd({ animated: true }), 100);
+        // Scroll to bottom when keyboard opens
+        setTimeout(() => {
+          if (scrollViewRef.current) {
+            scrollViewRef.current.scrollToEnd({ animated: true });
+          }
+        }, 100);
       }
     );
 
@@ -240,7 +245,7 @@ export default function ChatScreen() {
       <KeyboardAvoidingView
         style={{ flex: 1 }}
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-        keyboardVerticalOffset={0}
+        keyboardVerticalOffset={Platform.OS === 'ios' ? 90 : 0}
       >
         <View style={{ flex: 1, paddingTop: insets.top }}>
 
