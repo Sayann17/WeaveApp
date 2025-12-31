@@ -19,6 +19,8 @@ import { ProfileView } from '../components/ProfileView';
 import { ThemedBackground } from '../components/ThemedBackground';
 import { useTheme } from '../context/ThemeContext';
 import { enhancedMatchService } from '../services/head_match';
+import { religions } from '../utils/basic_info';
+import { ethnicityGroups } from '../utils/ethnicities';
 
 interface UserProfile {
     id: string;
@@ -63,11 +65,15 @@ export default function ExploreScreen() {
 
     // UI States
     const [showFilters, setShowFilters] = useState(false);
-    const [searchMode, setSearchMode] = useState<'smart' | 'custom'>('smart'); // 🔥 Search Mode
 
-    // Custom Filter State
+    // Custom Filter State - default gender is opposite of current user
+    const getDefaultGender = (): 'male' | 'female' | 'all' => {
+        if (!currentUser) return 'all';
+        return currentUser.gender === 'male' ? 'female' : currentUser.gender === 'female' ? 'male' : 'all';
+    };
+
     const [filters, setFilters] = useState<Filters>({
-        gender: 'all',
+        gender: 'all', // Will be updated after currentUser loads
         minAge: '18',
         maxAge: '50',
         ethnicity: '',
@@ -80,7 +86,7 @@ export default function ExploreScreen() {
     useFocusEffect(
         useCallback(() => {
             loadData();
-        }, [searchMode]) // Reload when mode changes
+        }, [filters]) // Reload when filters change
     );
 
     const loadData = async () => {
@@ -89,7 +95,13 @@ export default function ExploreScreen() {
             const userData = await userService.getCurrentUser();
             if (userData) {
                 setCurrentUser(userData);
-                await loadProfiles(userData, filters, searchMode);
+                // Set default gender filter on first load
+                if (filters.gender === 'all') {
+                    const defaultGender = userData.gender === 'male' ? 'female' : userData.gender === 'female' ? 'male' : 'all';
+                    setFilters(prev => ({ ...prev, gender: defaultGender }));
+                    setTempFilters(prev => ({ ...prev, gender: defaultGender }));
+                }
+                await loadProfiles(userData, filters, 'smart'); // Always use smart mode
             }
         } catch (error) {
             console.error(error);
@@ -171,9 +183,7 @@ export default function ExploreScreen() {
     const applyFilters = () => {
         setFilters(tempFilters);
         setShowFilters(false);
-        // Ensure we switch to custom mode if filters applied
-        if (searchMode !== 'custom') setSearchMode('custom');
-        else loadData(); // Reload if already custom
+        loadData(); // Reload with new filters
     };
 
     const openFilters = () => {
@@ -187,38 +197,16 @@ export default function ExploreScreen() {
         <View style={styles.headerColumn}>
             <View style={styles.headerTop}>
                 <Text style={[styles.headerTitle, { color: theme.text }]}>Поиск</Text>
-                {/* Only show filter btn in Custom Mode */}
-                {searchMode === 'custom' && (
-                    <Pressable onPress={openFilters} style={[styles.filterBtn, { backgroundColor: theme.cardBg }]}>
-                        <Ionicons name="options" size={20} color={theme.text} />
-                    </Pressable>
-                )}
             </View>
 
-            {/* Mode Switcher */}
-            <View style={[styles.modeSwitcher, { backgroundColor: theme.cardBg }]}>
-                <Pressable
-                    style={[styles.modeBtn, searchMode === 'smart' && { backgroundColor: theme.accent || '#E07A5F' }]}
-                    onPress={() => setSearchMode('smart')}
-                >
-                    <Ionicons name="sparkles" size={16} color={searchMode === 'smart' ? '#fff' : theme.subText} />
-                    <Text style={[styles.modeText, { color: searchMode === 'smart' ? '#fff' : theme.subText }]}>Smart Match</Text>
-                </Pressable>
-                <Pressable
-                    style={[styles.modeBtn, searchMode === 'custom' && { backgroundColor: theme.accent || '#E07A5F' }]}
-                    onPress={() => setSearchMode('custom')}
-                >
-                    <Ionicons name="options-outline" size={16} color={searchMode === 'custom' ? '#fff' : theme.subText} />
-                    <Text style={[styles.modeText, { color: searchMode === 'custom' ? '#fff' : theme.subText }]}>Фильтры</Text>
-                </Pressable>
-            </View>
-
-            {/* Mode Description */}
-            <Text style={[styles.modeDesc, { color: theme.subText }]}>
-                {searchMode === 'smart'
-                    ? 'Умный подбор на основе вашей совместимости'
-                    : 'Ручной поиск по заданным параметрам'}
-            </Text>
+            {/* Green Filter Button */}
+            <Pressable
+                onPress={openFilters}
+                style={[styles.filterButton, { backgroundColor: '#00b894' }]}
+            >
+                <Ionicons name="options" size={20} color="#fff" />
+                <Text style={styles.filterButtonText}>Настройка фильтров</Text>
+            </Pressable>
         </View>
     );
 
@@ -241,16 +229,12 @@ export default function ExploreScreen() {
                     <View style={[styles.center, { paddingHorizontal: 30, flex: 1, paddingBottom: 100 }]}>
                         <Ionicons name="earth-outline" size={80} color={theme.subText} />
                         <Text style={[styles.emptyText, { color: theme.text, textAlign: 'center', lineHeight: 28 }]}>
-                            {searchMode === 'smart'
-                                ? 'Мы пока не нашли идеальных совпадений по алгоритму. Попробуйте расширить радиус или заглянуть позже!'
-                                : 'Никого не найдено по вашим фильтрам 😔 Попробуйте смягчить условия.'}
+                            Мы пока не нашли подходящих людей. Попробуйте изменить фильтры или заглянуть позже!
                         </Text>
 
-                        {searchMode === 'custom' && (
-                            <Pressable style={[styles.actionBtn, { backgroundColor: '#00b894', marginTop: 30 }]} onPress={openFilters}>
-                                <Text style={styles.actionBtnText}>Изменить фильтры</Text>
-                            </Pressable>
-                        )}
+                        <Pressable style={[styles.actionBtn, { backgroundColor: '#00b894', marginTop: 30 }]} onPress={openFilters}>
+                            <Text style={styles.actionBtnText}>Изменить фильтры</Text>
+                        </Pressable>
 
                         <Pressable style={[styles.actionBtnOutline, { borderColor: '#00b894', marginTop: 15 }]} onPress={() => router.push('/(tabs)/profile')}>
                             <Text style={[styles.actionBtnText, { color: '#00b894' }]}>Редактировать профиль</Text>
@@ -332,45 +316,79 @@ export default function ExploreScreen() {
 
                             {/* ВОЗРАСТ */}
                             <Text style={[styles.filterLabel, { color: theme.text, marginTop: 20 }]}>Возраст</Text>
-                            <View style={styles.row}>
-                                <TextInput
-                                    style={[styles.input, { color: theme.text, borderColor: theme.border, flex: 1, backgroundColor: theme.cardBg }]}
-                                    value={tempFilters.minAge}
-                                    onChangeText={t => setTempFilters({ ...tempFilters, minAge: t })}
-                                    keyboardType="numeric"
-                                    placeholder="От"
-                                    placeholderTextColor={theme.subText}
-                                />
-                                <View style={{ width: 10, height: 1, backgroundColor: theme.border, marginHorizontal: 10 }} />
-                                <TextInput
-                                    style={[styles.input, { color: theme.text, borderColor: theme.border, flex: 1, backgroundColor: theme.cardBg }]}
-                                    value={tempFilters.maxAge}
-                                    onChangeText={t => setTempFilters({ ...tempFilters, maxAge: t })}
-                                    keyboardType="numeric"
-                                    placeholder="До"
-                                    placeholderTextColor={theme.subText}
-                                />
+                            <View style={styles.ageRow}>
+                                <View style={{ flex: 1 }}>
+                                    <Text style={[styles.ageLabel, { color: theme.subText }]}>От</Text>
+                                    <TextInput
+                                        style={[styles.ageInput, { color: theme.text, borderColor: theme.border, backgroundColor: theme.cardBg }]}
+                                        value={tempFilters.minAge}
+                                        onChangeText={(t: string) => setTempFilters({ ...tempFilters, minAge: t })}
+                                        keyboardType="numeric"
+                                        placeholder="18"
+                                        placeholderTextColor={theme.subText}
+                                    />
+                                </View>
+                                <Text style={[styles.ageSeparator, { color: theme.subText }]}>—</Text>
+                                <View style={{ flex: 1 }}>
+                                    <Text style={[styles.ageLabel, { color: theme.subText }]}>До</Text>
+                                    <TextInput
+                                        style={[styles.ageInput, { color: theme.text, borderColor: theme.border, backgroundColor: theme.cardBg }]}
+                                        value={tempFilters.maxAge}
+                                        onChangeText={(t: string) => setTempFilters({ ...tempFilters, maxAge: t })}
+                                        keyboardType="numeric"
+                                        placeholder="50"
+                                        placeholderTextColor={theme.subText}
+                                    />
+                                </View>
                             </View>
 
                             {/* ЭТНОС */}
-                            <Text style={[styles.filterLabel, { color: theme.text, marginTop: 20 }]}>Этнос / Нация</Text>
-                            <TextInput
-                                style={[styles.input, { color: theme.text, borderColor: theme.border, backgroundColor: theme.cardBg }]}
-                                value={tempFilters.ethnicity}
-                                onChangeText={t => setTempFilters({ ...tempFilters, ethnicity: t })}
-                                placeholder="Например: Якут, Русский..."
-                                placeholderTextColor={theme.subText}
-                            />
+                            <Text style={[styles.filterLabel, { color: theme.text, marginTop: 20 }]}>Этническая группа</Text>
+                            <View style={styles.chipContainer}>
+                                {ethnicityGroups.map(group => (
+                                    <Pressable
+                                        key={group.id}
+                                        style={[
+                                            styles.chip,
+                                            { borderColor: theme.border, backgroundColor: theme.cardBg },
+                                            tempFilters.ethnicity === group.id && { backgroundColor: '#00b894', borderColor: '#00b894' }
+                                        ]}
+                                        onPress={() => setTempFilters({ ...tempFilters, ethnicity: tempFilters.ethnicity === group.id ? '' : group.id })}
+                                    >
+                                        <Text style={styles.chipEmoji}>{group.emoji}</Text>
+                                        <Text style={[
+                                            styles.chipText,
+                                            { color: tempFilters.ethnicity === group.id ? '#fff' : theme.text }
+                                        ]}>
+                                            {group.name}
+                                        </Text>
+                                    </Pressable>
+                                ))}
+                            </View>
 
                             {/* РЕЛИГИЯ */}
                             <Text style={[styles.filterLabel, { color: theme.text, marginTop: 20 }]}>Религия</Text>
-                            <TextInput
-                                style={[styles.input, { color: theme.text, borderColor: theme.border, backgroundColor: theme.cardBg }]}
-                                value={tempFilters.religion}
-                                onChangeText={t => setTempFilters({ ...tempFilters, religion: t })}
-                                placeholder="Например: Буддизм..."
-                                placeholderTextColor={theme.subText}
-                            />
+                            <View style={styles.chipContainer}>
+                                {religions.map(rel => (
+                                    <Pressable
+                                        key={rel.id}
+                                        style={[
+                                            styles.chip,
+                                            { borderColor: theme.border, backgroundColor: theme.cardBg },
+                                            tempFilters.religion === rel.id && { backgroundColor: '#00b894', borderColor: '#00b894' }
+                                        ]}
+                                        onPress={() => setTempFilters({ ...tempFilters, religion: tempFilters.religion === rel.id ? '' : rel.id })}
+                                    >
+                                        <Text style={styles.chipEmoji}>{rel.emoji}</Text>
+                                        <Text style={[
+                                            styles.chipText,
+                                            { color: tempFilters.religion === rel.id ? '#fff' : theme.text }
+                                        ]}>
+                                            {rel.name}
+                                        </Text>
+                                    </Pressable>
+                                ))}
+                            </View>
 
                             <View style={{ height: 40 }} />
                         </ScrollView>
@@ -438,11 +456,48 @@ const styles = StyleSheet.create({
     closeBtn: { padding: 5 },
     modalFooter: { padding: 20, borderTopWidth: 1 },
 
+    // Filter Button
+    filterButton: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        paddingVertical: 12,
+        paddingHorizontal: 20,
+        borderRadius: 12,
+        gap: 8,
+        marginTop: 10,
+    },
+    filterButtonText: {
+        color: '#fff',
+        fontSize: 16,
+        fontWeight: '600',
+    },
+
     // Filter Elements
     filterLabel: { fontSize: 16, fontWeight: '600', marginBottom: 10 },
     genderRow: { flexDirection: 'row', gap: 10 },
     genderBtn: { flex: 1, paddingVertical: 10, borderWidth: 1, borderRadius: 10, alignItems: 'center' },
     genderText: { fontWeight: '600' },
+
+    // Age Range
+    ageRow: { flexDirection: 'row', alignItems: 'center', gap: 15 },
+    ageLabel: { fontSize: 12, marginBottom: 5, fontWeight: '500' },
+    ageInput: { borderWidth: 1, borderRadius: 10, padding: 12, fontSize: 16, textAlign: 'center' },
+    ageSeparator: { fontSize: 20, fontWeight: '300', marginTop: 20 },
+
+    // Chips for ethnicity/religion
+    chipContainer: { flexDirection: 'row', flexWrap: 'wrap', gap: 10 },
+    chip: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        paddingHorizontal: 12,
+        paddingVertical: 8,
+        borderRadius: 12,
+        borderWidth: 1,
+        gap: 6,
+    },
+    chipEmoji: { fontSize: 16 },
+    chipText: { fontSize: 14, fontWeight: '500' },
+
     row: { flexDirection: 'row', alignItems: 'center' },
     input: { borderWidth: 1, borderRadius: 10, padding: 12, fontSize: 16 },
     applyBtn: { paddingVertical: 16, borderRadius: 12, alignItems: 'center' },

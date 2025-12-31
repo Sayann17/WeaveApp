@@ -73,6 +73,7 @@ export default function TabLayout() {
           tabBarIcon: ({ color, size }) => (
             <TabIconWithBadge name="home" size={size} color={color} />
           ),
+          href: null, // Hide from tab bar
         }}
       />
       <Tabs.Screen
