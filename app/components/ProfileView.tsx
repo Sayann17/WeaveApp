@@ -8,17 +8,18 @@ import {
     Modal,
     NativeScrollEvent,
     NativeSyntheticEvent,
+    Pressable,
     ScrollView,
     StyleSheet,
     Text,
     TouchableOpacity,
-    View
+    View,
 } from 'react-native';
 import { Colors } from '../constants/colors';
 import { useTheme } from '../context/ThemeContext';
 import { getReligionById, getZodiacSignById } from '../utils/basic_info';
 
-const { width, height } = Dimensions.get('window');
+const { width } = Dimensions.get('window');
 
 // Размеры фото (4:5)
 const PHOTO_WIDTH = width - 32;
@@ -65,7 +66,6 @@ export const ProfileView = ({ userData, isOwnProfile = false }: ProfileViewProps
     const [currentCarouselIndex, setCurrentCarouselIndex] = useState(0);
     const [activePhotoIndex, setActivePhotoIndex] = useState(0);
     const [isFullScreenPhoto, setIsFullScreenPhoto] = useState(false);
-    const lightboxRef = React.useRef<FlatList>(null);
 
     const isLight = themeType === 'light';
     const textColor = isLight ? '#1a1a1a' : Colors.text;
@@ -301,61 +301,28 @@ export const ProfileView = ({ userData, isOwnProfile = false }: ProfileViewProps
                 onRequestClose={() => setIsFullScreenPhoto(false)}
             >
                 <View style={styles.lightboxContainer}>
+                    {/* <StatusBar hidden /> conflicts with other status bar configs sometimes */}
                     <TouchableOpacity style={styles.lightboxCloseButton} onPress={() => setIsFullScreenPhoto(false)}>
                         <Ionicons name="close" size={28} color="#fff" />
                     </TouchableOpacity>
 
                     {userData?.photos && userData.photos.length > 0 && (
-                        <FlatList
-                            ref={lightboxRef}
-                            data={userData.photos}
-                            horizontal
-                            pagingEnabled
-                            showsHorizontalScrollIndicator={false}
-                            initialScrollIndex={activePhotoIndex}
-                            getItemLayout={(data, index) => (
-                                { length: width, offset: width * index, index }
-                            )}
-                            onMomentumScrollEnd={(ev) => {
-                                const newIndex = Math.round(ev.nativeEvent.contentOffset.x / width);
-                                setActivePhotoIndex(newIndex);
-                            }}
-                            keyExtractor={(_, index) => index.toString()}
-                            renderItem={({ item }) => (
-                                <View style={{ width: width, height: height, justifyContent: 'center', alignItems: 'center' }}>
-                                    <Image
-                                        source={{ uri: item }}
-                                        style={{ width: width, height: height }}
-                                        contentFit="contain"
-                                    />
-                                </View>
-                            )}
-                        />
+                        <Pressable style={styles.lightboxImageContainer} onPress={handleNextPhotoLightbox}>
+                            <Image
+                                source={{ uri: userData.photos[activePhotoIndex] }}
+                                style={styles.lightboxImage}
+                                contentFit="contain"
+                                onError={(e) => console.log('Lightbox Image Load Error:', e.error || e)}
+                            />
+                        </Pressable>
                     )}
 
                     {userData?.photos && userData.photos.length > 1 && (
                         <>
-                            <TouchableOpacity
-                                style={styles.navArrowLeft}
-                                onPress={() => {
-                                    const newIndex = Math.max(0, activePhotoIndex - 1);
-                                    lightboxRef.current?.scrollToIndex({ index: newIndex, animated: true });
-                                    setActivePhotoIndex(newIndex);
-                                }}
-                                hitSlop={{ top: 20, bottom: 20, left: 20, right: 20 }}
-                            >
+                            <TouchableOpacity style={styles.navArrowLeft} onPress={handlePrevPhotoLightbox} hitSlop={{ top: 20, bottom: 20, left: 20, right: 20 }}>
                                 <Ionicons name="chevron-back" size={50} color="rgba(255,255,255,0.7)" />
                             </TouchableOpacity>
-
-                            <TouchableOpacity
-                                style={styles.navArrowRight}
-                                onPress={() => {
-                                    const newIndex = Math.min(userData.photos.length - 1, activePhotoIndex + 1);
-                                    lightboxRef.current?.scrollToIndex({ index: newIndex, animated: true });
-                                    setActivePhotoIndex(newIndex);
-                                }}
-                                hitSlop={{ top: 20, bottom: 20, left: 20, right: 20 }}
-                            >
+                            <TouchableOpacity style={styles.navArrowRight} onPress={handleNextPhotoLightbox} hitSlop={{ top: 20, bottom: 20, left: 20, right: 20 }}>
                                 <Ionicons name="chevron-forward" size={50} color="rgba(255,255,255,0.7)" />
                             </TouchableOpacity>
                         </>
@@ -445,10 +412,10 @@ const styles = StyleSheet.create({
     tagText: { color: '#e4e4e7', fontSize: 14, fontWeight: '500' },
 
     // --- LIGHTBOX ---
-    lightboxContainer: { flex: 1, backgroundColor: 'rgba(0,0,0,0.85)', justifyContent: 'center', alignItems: 'center' },
+    lightboxContainer: { flex: 1, backgroundColor: 'rgba(0,0,0,0.95)', justifyContent: 'center', alignItems: 'center' },
     lightboxImageContainer: { width: '100%', height: '100%', justifyContent: 'center', alignItems: 'center' },
     lightboxImage: { width: '100%', height: '100%' },
-    lightboxCloseButton: { position: 'absolute', top: 15, right: 20, zIndex: 100, backgroundColor: 'rgba(50,50,50,0.5)', borderRadius: 20, padding: 8 },
-    navArrowLeft: { position: 'absolute', left: 0, top: '40%', bottom: '40%', width: 60, justifyContent: 'center', alignItems: 'center', zIndex: 100 },
-    navArrowRight: { position: 'absolute', right: 0, top: '40%', bottom: '40%', width: 60, justifyContent: 'center', alignItems: 'center', zIndex: 100 },
+    lightboxCloseButton: { position: 'absolute', top: 15, right: 20, zIndex: 50, backgroundColor: 'rgba(50,50,50,0.5)', borderRadius: 20, padding: 8 },
+    navArrowLeft: { position: 'absolute', left: 0, top: '40%', bottom: '40%', width: 60, justifyContent: 'center', alignItems: 'center', zIndex: 50 },
+    navArrowRight: { position: 'absolute', right: 0, top: '40%', bottom: '40%', width: 60, justifyContent: 'center', alignItems: 'center', zIndex: 50 },
 });

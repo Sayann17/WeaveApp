@@ -12,6 +12,7 @@ import {
     View
 } from 'react-native';
 import { yandexAuth } from '../services/yandex/AuthService';
+import { availableInterests } from '../utils/basic_info';
 
 const THEME = {
     background: '#f4f4e7',
@@ -21,12 +22,6 @@ const THEME = {
     active: '#e1306c',
     activeText: '#ffffff'
 };
-
-const availableInterests = [
-    'Кино', 'Путешествия', 'Спорт', 'Чтение', 'Музыка', 'Готовка',
-    'Йога', 'Игры', 'Искусство', 'Технологии', 'Природа', 'Танцы',
-    'Фотография', 'Психология', 'Мода', 'Бизнес'
-];
 
 export default function OnboardingInterestsScreen() {
     const [selectedInterests, setSelectedInterests] = useState<string[]>([]);

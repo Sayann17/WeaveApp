@@ -41,13 +41,17 @@ export default function HomeScreen() {
 
   // Подписка на данные пользователя
   useEffect(() => {
+    console.log('[HomeScreen] Mounting...');
     const currentUser = yandexAuth.getCurrentUser();
+    console.log('[HomeScreen] Current user:', currentUser ? 'Found' : 'Null');
+
     if (currentUser) {
       setUser(currentUser);
       setIsLoading(false);
     } else {
-      // Fallback or wait for session if loading
+      console.log('[HomeScreen] Waiting for user...');
       const unsubscribe = yandexAuth.onAuthStateChanged((u: User | null) => {
+        console.log('[HomeScreen] Auth state changed:', u ? 'User found' : 'Null');
         if (u) {
           setUser(u);
           setIsLoading(false);
@@ -73,6 +77,7 @@ export default function HomeScreen() {
     return (
       <View style={[styles.loadingContainer, { backgroundColor: theme.background }]}>
         <ActivityIndicator size="large" color={theme.text} />
+        <Text style={{ marginTop: 10, color: theme.text }}>Загрузка главной...</Text>
       </View>
     );
   }

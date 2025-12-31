@@ -23,7 +23,7 @@ export default function InterestsSection({ interests, onEditPress }: InterestsSe
           style={styles.editButton}
           onPress={onEditPress}
         >
-          <Ionicons name="add" size={20} color="#e1306c" />
+          <Ionicons name="add" size={20} color="#ffffff" />
         </TouchableOpacity>
       </View>
 
@@ -49,7 +49,7 @@ export default function InterestsSection({ interests, onEditPress }: InterestsSe
           style={styles.addInterestsButton}
           onPress={onEditPress}
         >
-          <Ionicons name="add-circle-outline" size={24} color="#e1306c" />
+          <Ionicons name="add-circle-outline" size={28} color="#22c55e" />
           <Text style={styles.addInterestsText}>Добавить интересы</Text>
         </TouchableOpacity>
       )}
@@ -72,7 +72,10 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
   },
   editButton: {
-    padding: 5,
+    padding: 8,
+    backgroundColor: '#22c55e',
+    borderRadius: 20,
+    paddingHorizontal: 12,
   },
   interestsContainer: {
     flexDirection: 'row',
@@ -95,16 +98,17 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    padding: 16,
-    borderWidth: 1,
-    borderColor: '#333',
-    borderStyle: 'dashed',
-    borderRadius: 12,
-    gap: 8,
+    padding: 20,
+    borderWidth: 2,
+    borderColor: '#22c55e',
+    backgroundColor: 'rgba(34, 197, 94, 0.1)',
+    borderStyle: 'solid',
+    borderRadius: 16,
+    gap: 10,
   },
   addInterestsText: {
-    color: '#e1306c',
-    fontSize: 16,
-    fontWeight: '600',
+    color: '#22c55e',
+    fontSize: 17,
+    fontWeight: 'bold',
   },
 });

@@ -12,12 +12,7 @@ import {
   View
 } from 'react-native';
 import { yandexAuth } from '../../../services/yandex/AuthService';
-
-// Список доступных интересов
-const availableInterests = [
-  'Бег', 'Боевые искусства', 'Кино', 'Аниме', 'Комиксы',
-  'Творчество', 'Музей', 'Музыка', 'Вокал', 'Музыкальные инструменты'
-];
+import { availableInterests } from '../../../utils/basic_info';
 
 interface InterestsModalProps {
   visible: boolean;
@@ -54,7 +49,6 @@ export default function InterestsModal({ visible, interests, setInterests, onClo
           interests: interests
         });
         onClose();
-        showAlert('Интересы обновлены');
       }
     } catch (error) {
       console.error('Ошибка сохранения интересов:', error);
