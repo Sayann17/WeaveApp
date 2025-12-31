@@ -64,13 +64,20 @@ export const PhotoGrid = ({ photos, setPhotos, maxPhotos = 6 }: PhotoGridProps) 
   };
 
   const removePhoto = (indexToRemove: number) => {
+    const photoUrl = photos[indexToRemove];
     Alert.alert('Удалить фото?', '', [
       { text: 'Отмена', style: 'cancel' },
       {
         text: 'Удалить',
         style: 'destructive',
         onPress: () => {
+          // 1. Remove from UI immediately
           setPhotos(photos.filter((_, index) => index !== indexToRemove));
+
+          // 2. Remove from Server (Fire & Forget)
+          yandexStorage.deleteImage(photoUrl).catch(err => {
+            console.error('Failed to delete image from server:', err);
+          });
         }
       }
     ]);
@@ -85,8 +92,9 @@ export const PhotoGrid = ({ photos, setPhotos, maxPhotos = 6 }: PhotoGridProps) 
           <TouchableOpacity
             style={styles.removeButton}
             onPress={() => removePhoto(index)}
+            hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }} // Increase touch area
           >
-            <Ionicons name="close" size={14} color="#fff" />
+            <Ionicons name="close" size={16} color="#fff" />
           </TouchableOpacity>
         </View>
       ))}

@@ -183,17 +183,14 @@ const styles = StyleSheet.create({
     width: width,
     flex: 1,
     paddingHorizontal: 30,
-    justifyContent: 'space-between', // Explicitly separate top and bottom
-    paddingTop: 60, // Add top padding for the icon area
-    paddingBottom: 20, // Add bottom padding for text area relative to content
+    justifyContent: 'center',
   },
 
   // Визуальная часть (Иконка)
   visualContainer: {
-    flex: 1,
+    flex: 2, // Занимает верхние 2/3 экрана (почти)
     justifyContent: 'center',
     alignItems: 'center',
-    // backgroundColor: 'red', // Debug color if needed
   },
   iconCircle: {
     width: 120,
@@ -208,9 +205,39 @@ const styles = StyleSheet.create({
 
   // Текстовая часть
   textContainer: {
-    // flex: 0, // Don't force flex here, let it size to content
+    flex: 1.5, // Нижняя часть
+    justifyContent: 'flex-start', // Текст начинается сразу под картинкой
+    paddingTop: 20,
+  },
+  title: {
+    fontSize: 36, // Крупный, журнальный заголовок
+    fontWeight: '300', // Тонкое начертание (Elegant)
+    color: THEME.text,
+    textAlign: 'left', // Выравнивание по левому краю для стиля
+    lineHeight: 44,
+    fontFamily: 'System', // Если есть Cormorant Garamond, лучше использовать его здесь
+  },
+  separator: {
+    width: 40,
+    height: 2,
+    backgroundColor: THEME.text,
+    marginTop: 20,
+    marginBottom: 20,
+    opacity: 0.2,
+  },
+  subtitle: {
+    fontSize: 17,
+    color: THEME.subText,
+    textAlign: 'left',
+    lineHeight: 26,
+    fontWeight: '400',
+  },
+
+  // Футер
+  footer: {
+    paddingHorizontal: 30,
+    paddingBottom: 50,
     justifyContent: 'flex-end',
-    paddingBottom: 40,
   },
 
   // Прогресс-бар (линии)
