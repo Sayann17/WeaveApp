@@ -127,12 +127,12 @@ export default function ChatScreen() {
       Platform.OS === 'ios' ? 'keyboardWillShow' : 'keyboardDidShow',
       () => {
         setKeyboardVisible(true);
-        // Scroll to bottom when keyboard opens - longer delay for layout to settle
+        // Scroll to bottom when keyboard opens
         setTimeout(() => {
           if (scrollViewRef.current) {
             scrollViewRef.current.scrollToEnd({ animated: true });
           }
-        }, 300);
+        }, 150);
       }
     );
 
@@ -300,14 +300,6 @@ export default function ChatScreen() {
                 setTimeout(() => {
                   scrollViewRef.current?.scrollToEnd({ animated: true });
                 }, 100);
-              }}
-              onLayout={() => {
-                // Scroll when layout changes (keyboard opens/closes)
-                if (messages.length > 0) {
-                  setTimeout(() => {
-                    scrollViewRef.current?.scrollToEnd({ animated: false });
-                  }, 100);
-                }
               }}
             >
               {messages.length > 0 ? (
