@@ -37,6 +37,7 @@ export default function ChatScreen() {
   const [isLoading, setIsLoading] = useState(true);
   const [isSending, setIsSending] = useState(false);
   const [error, setError] = useState<string>('');
+  const [keyboardVisible, setKeyboardVisible] = useState(false);
   const scrollViewRef = useRef<ScrollView>(null);
   const router = useRouter();
 
@@ -125,18 +126,27 @@ export default function ChatScreen() {
     const showSubscription = Keyboard.addListener(
       Platform.OS === 'ios' ? 'keyboardWillShow' : 'keyboardDidShow',
       () => {
-        // Scroll to bottom when keyboard opens
+        setKeyboardVisible(true);
+        // Scroll to bottom when keyboard opens - longer delay for layout to settle
         setTimeout(() => {
           if (scrollViewRef.current) {
             scrollViewRef.current.scrollToEnd({ animated: true });
           }
-        }, 100);
+        }, 300);
+      }
+    );
+
+    const hideSubscription = Keyboard.addListener(
+      Platform.OS === 'ios' ? 'keyboardWillHide' : 'keyboardDidHide',
+      () => {
+        setKeyboardVisible(false);
       }
     );
 
     return () => {
       unsubscribe();
       showSubscription.remove();
+      hideSubscription.remove();
     };
   }, [chatId]);
 
@@ -286,11 +296,18 @@ export default function ChatScreen() {
               showsVerticalScrollIndicator={false}
               keyboardDismissMode="on-drag"
               onContentSizeChange={() => {
-                // Scroll to bottom when content implementation changes
-                scrollViewRef.current?.scrollToEnd({ animated: true });
+                // Scroll to bottom when content changes (new messages)
+                setTimeout(() => {
+                  scrollViewRef.current?.scrollToEnd({ animated: true });
+                }, 100);
               }}
               onLayout={() => {
-                // Removed auto-scroll on layout change to prevent keyboard dismissal issues
+                // Scroll when layout changes (keyboard opens/closes)
+                if (messages.length > 0) {
+                  setTimeout(() => {
+                    scrollViewRef.current?.scrollToEnd({ animated: false });
+                  }, 100);
+                }
               }}
             >
               {messages.length > 0 ? (
