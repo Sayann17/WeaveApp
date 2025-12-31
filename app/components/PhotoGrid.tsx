@@ -6,8 +6,7 @@ import {
   ActivityIndicator,
   Alert,
   Image,
-  Platform, // Add Platform import
-  StyleSheet,
+  Platform,
   Text,
   TouchableOpacity,
   View
@@ -42,7 +41,7 @@ export const PhotoGrid = ({ photos, setPhotos, maxPhotos = 6 }: PhotoGridProps) 
       const result = await ImagePicker.launchImageLibraryAsync({
         mediaTypes: ImagePicker.MediaTypeOptions.Images,
         allowsEditing: true,
-        aspect: [3, 4],
+        // aspect: [3, 4], // Removed to allow freeform cropping
         quality: 0.5,
       });
 
@@ -134,54 +133,3 @@ export const PhotoGrid = ({ photos, setPhotos, maxPhotos = 6 }: PhotoGridProps) 
   );
 };
 
-const styles = StyleSheet.create({
-  container: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 12,
-    justifyContent: 'center',
-  },
-  photoWrapper: {
-    width: 100,
-    height: 133,
-    borderRadius: 12,
-    overflow: 'hidden',
-    backgroundColor: '#1a1a1a',
-    borderWidth: 1,
-    borderColor: '#333',
-  },
-  photo: {
-    width: '100%',
-    height: '100%',
-  },
-  removeButton: {
-    position: 'absolute',
-    top: 6,
-    right: 6,
-    backgroundColor: 'rgba(0,0,0,0.6)',
-    width: 24,
-    height: 24,
-    borderRadius: 12,
-    justifyContent: 'center',
-    alignItems: 'center',
-    zIndex: 100, // Ensure it's on top
-  },
-  addButton: {
-    width: 100,
-    height: 133,
-    borderRadius: 12,
-    backgroundColor: '#1a1a1a',
-    borderWidth: 2,
-    borderColor: '#333',
-    borderStyle: 'dashed',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  hint: {
-    width: '100%',
-    textAlign: 'center',
-    color: '#666',
-    marginTop: 10,
-    fontSize: 14,
-  }
-});
