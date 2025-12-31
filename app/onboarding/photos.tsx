@@ -24,6 +24,8 @@ export default function OnboardingPhotosScreen() {
     const [isLoading, setIsLoading] = useState(false);
     const router = useRouter();
 
+    console.log('[OnboardingPhotos] Mounting...');
+
     const handleFinish = async () => {
         if (photos.length === 0) {
             Alert.alert('Нужно фото', 'Загрузите хотя бы одно фото.');

@@ -34,6 +34,7 @@ export default function OnboardingZodiacScreen() {
             await yandexAuth.updateProfile({
                 zodiac: selectedZodiac || ''
             });
+            console.log('[OnboardingZodiac] Navigating to photos...');
             router.replace('/onboarding/photos');
         } catch (error) {
             console.error(error);

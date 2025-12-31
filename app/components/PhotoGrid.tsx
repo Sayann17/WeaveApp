@@ -7,6 +7,7 @@ import {
   Alert,
   Image,
   Platform,
+  StyleSheet,
   Text,
   TouchableOpacity,
   View
@@ -133,3 +134,55 @@ export const PhotoGrid = ({ photos, setPhotos, maxPhotos = 6 }: PhotoGridProps) 
   );
 };
 
+
+const styles = StyleSheet.create({
+  container: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 10,
+    marginBottom: 20
+  },
+  photoWrapper: {
+    width: '30%',
+    aspectRatio: 0.75, // 3:4
+    borderRadius: 12,
+    overflow: 'hidden',
+    position: 'relative',
+    backgroundColor: '#e0e0e0'
+  },
+  photo: {
+    width: '100%',
+    height: '100%',
+    resizeMode: 'cover'
+  },
+  removeButton: {
+    position: 'absolute',
+    top: 5,
+    right: 5,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    borderRadius: 12,
+    width: 24,
+    height: 24,
+    justifyContent: 'center',
+    alignItems: 'center',
+    zIndex: 100
+  },
+  addButton: {
+    width: '30%',
+    aspectRatio: 0.75,
+    borderRadius: 12,
+    borderWidth: 2,
+    borderColor: '#e1306c',
+    borderStyle: 'dashed',
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'rgba(225, 48, 108, 0.05)'
+  },
+  hint: {
+    width: '100%',
+    textAlign: 'center',
+    color: '#999',
+    marginTop: 20,
+    fontSize: 16
+  }
+});
