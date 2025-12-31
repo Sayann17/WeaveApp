@@ -6,6 +6,7 @@ import {
   ActivityIndicator,
   Alert,
   Image,
+  Platform, // Add Platform import
   StyleSheet,
   Text,
   TouchableOpacity,
@@ -65,22 +66,31 @@ export const PhotoGrid = ({ photos, setPhotos, maxPhotos = 6 }: PhotoGridProps) 
 
   const removePhoto = (indexToRemove: number) => {
     const photoUrl = photos[indexToRemove];
-    Alert.alert('Удалить фото?', '', [
-      { text: 'Отмена', style: 'cancel' },
-      {
-        text: 'Удалить',
-        style: 'destructive',
-        onPress: () => {
-          // 1. Remove from UI immediately
-          setPhotos(photos.filter((_, index) => index !== indexToRemove));
 
-          // 2. Remove from Server (Fire & Forget)
-          yandexStorage.deleteImage(photoUrl).catch(err => {
-            console.error('Failed to delete image from server:', err);
-          });
-        }
+    const deleteLogic = () => {
+      // 1. Remove from UI immediately
+      setPhotos(photos.filter((_, index) => index !== indexToRemove));
+
+      // 2. Remove from Server (Fire & Forget)
+      yandexStorage.deleteImage(photoUrl).catch(err => {
+        console.error('Failed to delete image from server:', err);
+      });
+    };
+
+    if (Platform.OS === 'web') {
+      if (window.confirm('Удалить фото?')) {
+        deleteLogic();
       }
-    ]);
+    } else {
+      Alert.alert('Удалить фото?', '', [
+        { text: 'Отмена', style: 'cancel' },
+        {
+          text: 'Удалить',
+          style: 'destructive',
+          onPress: deleteLogic
+        }
+      ]);
+    }
   };
 
   return (
@@ -154,6 +164,7 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     justifyContent: 'center',
     alignItems: 'center',
+    zIndex: 100, // Ensure it's on top
   },
   addButton: {
     width: 100,
