@@ -2,6 +2,8 @@ const { getDriver } = require('./db');
 const jwt = require('jsonwebtoken');
 const { TypedValues, TypedData } = require('ydb-sdk');
 const { v4: uuidv4 } = require('uuid');
+const { notifyNewLike, notifyMatch, notifyNewMessage } = require('../telegram');
+const { sendLikeNotification, sendMatchNotifications, sendMessageNotification } = require('./telegram-helpers');
 
 const JWT_SECRET = process.env.JWT_SECRET || 'dev-secret-key-change-me';
 
@@ -199,6 +201,11 @@ async function handleMessage(driver, event, connectionId) {
 
         // Notify sender (echo back for UI update)
         await sendToConnection(connectionId, messageEvent);
+
+        // 🔔 Send Telegram notification if recipient is offline
+        if (!recipientConnectionId) {
+            await sendMessageNotification(driver, userId, recipientId, text);
+        }
     }
     return { statusCode: 200 };
 }
@@ -405,8 +412,14 @@ async function handleLike(driver, requestHeaders, body, responseHeaders) {
             // Notify both users via WebSocket
             await notifyMatch(driver, userId, targetUserId, chatId);
 
+            // 🔔 Send Telegram notifications for match
+            await sendMatchNotifications(driver, userId, targetUserId);
+
             return { type: 'match', chatId };
         }
+
+        // 🔔 Send Telegram notification for like (not a match)
+        await sendLikeNotification(driver, targetUserId);
 
         return { type: 'like' };
     });
