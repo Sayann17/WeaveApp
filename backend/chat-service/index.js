@@ -2,7 +2,7 @@ const { getDriver } = require('./db');
 const jwt = require('jsonwebtoken');
 const { TypedValues, TypedData } = require('ydb-sdk');
 const { v4: uuidv4 } = require('uuid');
-const { notifyNewLike, notifyMatch, notifyNewMessage } = require('../telegram');
+const { notifyNewLike, notifyMatch, notifyNewMessage } = require('./telegram');
 const { sendLikeNotification, sendMatchNotifications, sendMessageNotification } = require('./telegram-helpers');
 
 const JWT_SECRET = process.env.JWT_SECRET || 'dev-secret-key-change-me';
@@ -410,7 +410,7 @@ async function handleLike(driver, requestHeaders, body, responseHeaders) {
             });
 
             // Notify both users via WebSocket
-            await notifyMatch(driver, userId, targetUserId, chatId);
+            await notifyMatchViaWebSocket(driver, userId, targetUserId, chatId);
 
             // 🔔 Send Telegram notifications for match
             await sendMatchNotifications(driver, userId, targetUserId);
@@ -439,7 +439,7 @@ function checkAuth(headers) {
     }
 }
 
-async function notifyMatch(driver, user1Id, user2Id, chatId) {
+async function notifyMatchViaWebSocket(driver, user1Id, user2Id, chatId) {
     const conn1 = await getConnectionIdByUserId(driver, user1Id);
     const conn2 = await getConnectionIdByUserId(driver, user2Id);
 
@@ -557,6 +557,20 @@ async function getDiscovery(driver, requestHeaders, filters, responseHeaders) {
     const userId = checkAuth(requestHeaders);
     if (!userId) return { statusCode: 401, headers: responseHeaders, body: JSON.stringify({ error: 'Unauthorized' }) };
 
+    console.log('[getDiscovery] User ID:', userId);
+    console.log('[getDiscovery] Filters:', filters);
+
+    const tryParse = (val) => {
+        if (!val) return [];
+        if (Array.isArray(val)) return val;
+        try {
+            return JSON.parse(val);
+        } catch (e) {
+            console.error('[getDiscovery] JSON parse error for value:', val, e);
+            return [];
+        }
+    };
+
     let profiles = [];
     await driver.tableClient.withSession(async (session) => {
         // 1. Get IDs already liked/disliked to exclude
@@ -567,6 +581,8 @@ async function getDiscovery(driver, requestHeaders, filters, responseHeaders) {
         const { resultSets: resLikes } = await session.executeQuery(excludeQuery, { '$userId': TypedValues.utf8(userId) });
         const excludedIds = TypedData.createNativeObjects(resLikes[0]).map(r => r.to_user_id);
         excludedIds.push(userId); // Exclude self
+
+        console.log('[getDiscovery] Excluded IDs count:', excludedIds.length);
 
         // 2. Fetch users with filters
         let usersQuery = `SELECT * FROM users WHERE profile_completed = 1`;
@@ -595,8 +611,20 @@ async function getDiscovery(driver, requestHeaders, filters, responseHeaders) {
             }
         }
 
+        console.log('[getDiscovery] Query:', usersQuery);
+        console.log('[getDiscovery] Params:', Object.keys(params));
+
         const { resultSets: resUsers } = await session.executeQuery(usersQuery, params);
         const allUsers = TypedData.createNativeObjects(resUsers[0]);
+
+        console.log('[getDiscovery] Total users from DB:', allUsers.length);
+        if (allUsers.length > 0) {
+            console.log('[getDiscovery] Sample user:', {
+                id: allUsers[0].id,
+                name: allUsers[0].name,
+                profile_completed: allUsers[0].profile_completed
+            });
+        }
 
         // Filter out excluded IDs and map
         profiles = allUsers
@@ -605,14 +633,21 @@ async function getDiscovery(driver, requestHeaders, filters, responseHeaders) {
                 id: u.id,
                 name: u.name,
                 age: u.age,
-                photos: typeof u.photos === 'string' ? JSON.parse(u.photos) : u.photos,
+                photos: tryParse(u.photos),
                 bio: u.about,
                 gender: u.gender,
                 ethnicity: u.ethnicity,
                 religion: u.religion,
-                macroGroups: typeof u.macro_groups === 'string' ? JSON.parse(u.macro_groups) : u.macro_groups
+                macroGroups: tryParse(u.macro_groups),
+                zodiac: u.zodiac,
+                religions: tryParse(u.religion),
+                profileCompleted: true
             }));
+
+        console.log('[getDiscovery] Profiles after filtering:', profiles.length);
     });
+
+    console.log('[getDiscovery] Returning profiles:', profiles.length);
 
     return {
         statusCode: 200,

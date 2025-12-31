@@ -24,21 +24,37 @@ export class YandexUserService implements IUserService {
     }
 
     async getPotentialMatches(currentUserId: string, filters: SearchFilters): Promise<UserProfile[]> {
-        const token = await AsyncStorage.getItem('auth_token');
-        const queryParams = new URLSearchParams();
-        if (filters.gender) queryParams.append('gender', filters.gender);
-        if (filters.minAge) queryParams.append('minAge', filters.minAge.toString());
-        if (filters.maxAge) queryParams.append('maxAge', filters.maxAge.toString());
-        if (filters.ethnicity) queryParams.append('ethnicity', filters.ethnicity);
-        if (filters.religion) queryParams.append('religion', filters.religion);
+        try {
+            const token = await AsyncStorage.getItem('auth_token');
+            const queryParams = new URLSearchParams();
+            if (filters.gender) queryParams.append('gender', filters.gender);
+            if (filters.minAge) queryParams.append('minAge', filters.minAge.toString());
+            if (filters.maxAge) queryParams.append('maxAge', filters.maxAge.toString());
+            if (filters.ethnicity) queryParams.append('ethnicity', filters.ethnicity);
+            if (filters.religion) queryParams.append('religion', filters.religion);
 
-        const response = await fetch(`https://d5dg37j92h7tg2f7sf87.o2p3jdjj.apigw.yandexcloud.net/discovery?${queryParams.toString()}`, {
-            headers: { 'Authorization': `Bearer ${token}` }
-        });
+            const url = `https://d5dg37j92h7tg2f7sf87.o2p3jdjj.apigw.yandexcloud.net/discovery?${queryParams.toString()}`;
+            console.log('[UserService] Fetching discovery:', url);
+            console.log('[UserService] Token present:', !!token);
 
-        if (!response.ok) return [];
-        const data = await response.json();
-        return data.profiles || [];
+            const response = await fetch(url, {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+
+            console.log('[UserService] Response status:', response.status);
+
+            if (!response.ok) {
+                console.error('[UserService] Response not OK:', response.status, response.statusText);
+                return [];
+            }
+
+            const data = await response.json();
+            console.log('[UserService] Profiles received:', data.profiles?.length || 0);
+            return data.profiles || [];
+        } catch (error) {
+            console.error('[UserService] Error fetching discovery:', error);
+            return [];
+        }
     }
 
     private mapToUserProfile(id: string, data: any): UserProfile {

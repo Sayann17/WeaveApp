@@ -73,6 +73,9 @@ export default function ChatScreen() {
   useEffect(() => {
     if (!chatId || typeof chatId !== 'string') return;
 
+    // Ensure WebSocket is connected
+    yandexChat.connect().catch(console.error);
+
     const loadHistory = async () => {
       setIsLoading(true);
       try {
@@ -114,6 +117,7 @@ export default function ChatScreen() {
           const newMessages = [...prev, msg];
           return newMessages.sort((a, b) => a.timestamp.getTime() - b.timestamp.getTime());
         });
+        // Scroll slightly delayed to ensure rendering is done
         setTimeout(() => scrollViewRef.current?.scrollToEnd({ animated: true }), 100);
       }
     });
@@ -281,10 +285,7 @@ export default function ChatScreen() {
                 scrollViewRef.current?.scrollToEnd({ animated: true });
               }}
               onLayout={() => {
-                // Scroll to bottom when layout changes (keyboard open/close)
-                setTimeout(() => {
-                  scrollViewRef.current?.scrollToEnd({ animated: true });
-                }, 100);
+                // Removed auto-scroll on layout change to prevent keyboard dismissal issues
               }}
             >
               {messages.length > 0 ? (

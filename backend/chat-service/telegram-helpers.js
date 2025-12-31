@@ -1,3 +1,6 @@
+const { TypedValues, TypedData } = require('ydb-sdk');
+const { notifyNewLike, notifyMatch, notifyNewMessage } = require('./telegram');
+
 // Helper functions for Telegram notifications
 
 async function sendLikeNotification(driver, likedUserId) {
