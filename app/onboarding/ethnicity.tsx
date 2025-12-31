@@ -96,7 +96,10 @@ export default function OnboardingEthnicityScreen() {
                         <View style={styles.inputWrapper}>
                             <Ionicons name="pencil-outline" size={20} color="#666" style={styles.inputIcon} />
                             <TextInput
-                                style={styles.input}
+                                style={[
+                                    styles.input,
+                                    Platform.OS === 'web' && ({ outlineStyle: 'none' } as any)
+                                ]}
                                 placeholder="Например: Русский, Аварец, Татарин..."
                                 placeholderTextColor="#999"
                                 value={customEthnicity}
