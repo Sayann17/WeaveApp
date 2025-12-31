@@ -18,7 +18,7 @@ import { Colors } from '../constants/colors';
 import { useTheme } from '../context/ThemeContext';
 import { getReligionById, getZodiacSignById } from '../utils/basic_info';
 
-const { width } = Dimensions.get('window');
+const { width, height } = Dimensions.get('window');
 
 // Размеры фото (4:5)
 const PHOTO_WIDTH = width - 32;
@@ -322,10 +322,10 @@ export const ProfileView = ({ userData, isOwnProfile = false }: ProfileViewProps
                             }}
                             keyExtractor={(_, index) => index.toString()}
                             renderItem={({ item }) => (
-                                <View style={{ width: width, height: '100%', justifyContent: 'center', alignItems: 'center' }}>
+                                <View style={{ width: width, height: height, justifyContent: 'center', alignItems: 'center' }}>
                                     <Image
                                         source={{ uri: item }}
-                                        style={styles.lightboxImage}
+                                        style={{ width: width, height: height }}
                                         contentFit="contain"
                                     />
                                 </View>
