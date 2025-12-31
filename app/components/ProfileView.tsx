@@ -8,12 +8,11 @@ import {
     Modal,
     NativeScrollEvent,
     NativeSyntheticEvent,
-    Pressable,
     ScrollView,
     StyleSheet,
     Text,
     TouchableOpacity,
-    View,
+    View
 } from 'react-native';
 import { Colors } from '../constants/colors';
 import { useTheme } from '../context/ThemeContext';
@@ -66,6 +65,7 @@ export const ProfileView = ({ userData, isOwnProfile = false }: ProfileViewProps
     const [currentCarouselIndex, setCurrentCarouselIndex] = useState(0);
     const [activePhotoIndex, setActivePhotoIndex] = useState(0);
     const [isFullScreenPhoto, setIsFullScreenPhoto] = useState(false);
+    const lightboxRef = React.useRef<FlatList>(null);
 
     const isLight = themeType === 'light';
     const textColor = isLight ? '#1a1a1a' : Colors.text;
@@ -301,28 +301,61 @@ export const ProfileView = ({ userData, isOwnProfile = false }: ProfileViewProps
                 onRequestClose={() => setIsFullScreenPhoto(false)}
             >
                 <View style={styles.lightboxContainer}>
-                    {/* <StatusBar hidden /> conflicts with other status bar configs sometimes */}
                     <TouchableOpacity style={styles.lightboxCloseButton} onPress={() => setIsFullScreenPhoto(false)}>
                         <Ionicons name="close" size={28} color="#fff" />
                     </TouchableOpacity>
 
                     {userData?.photos && userData.photos.length > 0 && (
-                        <Pressable style={styles.lightboxImageContainer} onPress={handleNextPhotoLightbox}>
-                            <Image
-                                source={{ uri: userData.photos[activePhotoIndex] }}
-                                style={styles.lightboxImage}
-                                contentFit="contain"
-                                onError={(e) => console.log('Lightbox Image Load Error:', e.error || e)}
-                            />
-                        </Pressable>
+                        <FlatList
+                            ref={lightboxRef}
+                            data={userData.photos}
+                            horizontal
+                            pagingEnabled
+                            showsHorizontalScrollIndicator={false}
+                            initialScrollIndex={activePhotoIndex}
+                            getItemLayout={(data, index) => (
+                                { length: width, offset: width * index, index }
+                            )}
+                            onMomentumScrollEnd={(ev) => {
+                                const newIndex = Math.round(ev.nativeEvent.contentOffset.x / width);
+                                setActivePhotoIndex(newIndex);
+                            }}
+                            keyExtractor={(_, index) => index.toString()}
+                            renderItem={({ item }) => (
+                                <View style={{ width: width, height: '100%', justifyContent: 'center', alignItems: 'center' }}>
+                                    <Image
+                                        source={{ uri: item }}
+                                        style={styles.lightboxImage}
+                                        contentFit="contain"
+                                    />
+                                </View>
+                            )}
+                        />
                     )}
 
                     {userData?.photos && userData.photos.length > 1 && (
                         <>
-                            <TouchableOpacity style={styles.navArrowLeft} onPress={handlePrevPhotoLightbox} hitSlop={{ top: 20, bottom: 20, left: 20, right: 20 }}>
+                            <TouchableOpacity
+                                style={styles.navArrowLeft}
+                                onPress={() => {
+                                    const newIndex = Math.max(0, activePhotoIndex - 1);
+                                    lightboxRef.current?.scrollToIndex({ index: newIndex, animated: true });
+                                    setActivePhotoIndex(newIndex);
+                                }}
+                                hitSlop={{ top: 20, bottom: 20, left: 20, right: 20 }}
+                            >
                                 <Ionicons name="chevron-back" size={50} color="rgba(255,255,255,0.7)" />
                             </TouchableOpacity>
-                            <TouchableOpacity style={styles.navArrowRight} onPress={handleNextPhotoLightbox} hitSlop={{ top: 20, bottom: 20, left: 20, right: 20 }}>
+
+                            <TouchableOpacity
+                                style={styles.navArrowRight}
+                                onPress={() => {
+                                    const newIndex = Math.min(userData.photos.length - 1, activePhotoIndex + 1);
+                                    lightboxRef.current?.scrollToIndex({ index: newIndex, animated: true });
+                                    setActivePhotoIndex(newIndex);
+                                }}
+                                hitSlop={{ top: 20, bottom: 20, left: 20, right: 20 }}
+                            >
                                 <Ionicons name="chevron-forward" size={50} color="rgba(255,255,255,0.7)" />
                             </TouchableOpacity>
                         </>

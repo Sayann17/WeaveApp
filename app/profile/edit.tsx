@@ -70,11 +70,18 @@ export default function EditProfileScreen() {
   );
 
   const loadUserData = async () => {
+    console.log('[EditProfile] Loading user data started');
     try {
       const currentUser = yandexAuth.getCurrentUser();
-      if (!currentUser) return;
+      console.log('[EditProfile] Current user:', currentUser ? 'Found' : 'Null');
+
+      if (!currentUser) {
+        Alert.alert('Ошибка', 'Пользователь не найден. Попробуйте перезайти.');
+        return;
+      }
 
       const data = currentUser as any;
+      console.log('[EditProfile] Setting state...');
       setName(data.name || '');
       setAge(data.age ? data.age.toString() : '');
       setBio(data.bio || data.about || '');
@@ -82,7 +89,6 @@ export default function EditProfileScreen() {
       setPhotos(data.photos || []);
       setInterests(data.interests || []);
       setZodiac(data.zodiac || null);
-      // Map religions/religions properly
       setReligions(data.religions || data.religion || []);
       setMacroGroups(data.macroGroups || data.macro_groups || []);
       setEthnicities(data.ethnicity ? [data.ethnicity] : []);
@@ -92,10 +98,12 @@ export default function EditProfileScreen() {
       setFamilyMemory(data.familyMemory || '');
       setStereotypeTrue(data.stereotypeTrue || '');
       setStereotypeFalse(data.stereotypeFalse || '');
+      console.log('[EditProfile] State set successfully');
     } catch (error) {
-      console.error('Error loading user data:', error);
+      console.error('[EditProfile] Error loading user data:', error);
       Alert.alert('Ошибка', 'Не удалось загрузить данные профиля');
     } finally {
+      console.log('[EditProfile] Loading finished, setting isLoading = false');
       setIsLoading(false);
     }
   };
@@ -161,6 +169,15 @@ export default function EditProfileScreen() {
     age.trim().length > 0 &&
     gender !== null &&
     (macroGroups.length > 0 || ethnicities.length > 0);
+
+  if (isLoading) {
+    return (
+      <View style={{ flex: 1, backgroundColor: theme.background, justifyContent: 'center', alignItems: 'center' }}>
+        <ActivityIndicator size="large" color={Colors.primary} />
+        <Text style={{ marginTop: 10, color: theme.text }}>Загрузка...</Text>
+      </View>
+    );
+  }
 
   return (
     <View style={[styles.container, { backgroundColor: theme.background }]}>
