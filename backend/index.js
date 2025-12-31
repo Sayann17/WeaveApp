@@ -300,6 +300,8 @@ async function telegramLogin(driver, data, headers) {
         const createdAt = new Date().toISOString();
         const passwordHash = 'TELEGRAM_AUTH'; // Placeholder
 
+        console.log('[telegramLogin] Creating new user with telegram_id:', id);
+
         await driver.tableClient.withSession(async (session) => {
             const query = `
                 DECLARE $id AS Utf8;
@@ -309,9 +311,10 @@ async function telegramLogin(driver, data, headers) {
                 DECLARE $age AS Uint32;
                 DECLARE $created_at AS Datetime;
                 DECLARE $photo AS Utf8;
+                DECLARE $telegram_id AS Utf8;
 
-                INSERT INTO users (id, email, password_hash, name, age, created_at, photos)
-                VALUES ($id, $email, $password_hash, $name, $age, $created_at, $photo);
+                INSERT INTO users (id, email, password_hash, name, age, created_at, photos, telegram_id)
+                VALUES ($id, $email, $password_hash, $name, $age, $created_at, $photo, $telegram_id);
             `;
 
             // Wrap photo in array string as per schema
@@ -324,11 +327,26 @@ async function telegramLogin(driver, data, headers) {
                 '$name': TypedValues.utf8(name || 'Telegram User'),
                 '$age': TypedValues.uint32(18), // Default age
                 '$created_at': TypedValues.datetime(new Date(createdAt)),
-                '$photo': TypedValues.utf8(photoJson)
+                '$photo': TypedValues.utf8(photoJson),
+                '$telegram_id': TypedValues.utf8(String(id))
             });
         });
 
         user = { uid: newId, email, name, age: 18 };
+    } else {
+        // Update telegram_id for existing user (if not set)
+        console.log('[telegramLogin] Updating telegram_id for existing user:', user.id);
+        await driver.tableClient.withSession(async (session) => {
+            const query = `
+                DECLARE $id AS Utf8;
+                DECLARE $telegram_id AS Utf8;
+                UPDATE users SET telegram_id = $telegram_id WHERE id = $id;
+            `;
+            await session.executeQuery(query, {
+                '$id': TypedValues.utf8(user.id),
+                '$telegram_id': TypedValues.utf8(String(id))
+            });
+        });
     }
 
     // Generate real JWT
