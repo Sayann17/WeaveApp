@@ -83,20 +83,25 @@ export function TelegramProvider({ children }: { children: React.ReactNode }) {
                     // Force expand to fullscreen
                     WebApp.expand();
 
-                    // Platform-specific expand behavior
-                    if (WebApp.isExpanded === false) {
-                        if (detectedIsMobile) {
-                            // Mobile: aggressive expand
-                            setTimeout(() => WebApp.expand(), 100);
-                            setTimeout(() => WebApp.expand(), 300);
-                        } else if (detectedIsDesktop) {
-                            // Desktop: single retry
-                            setTimeout(() => WebApp.expand(), 100);
-                        } else if (isWeb) {
-                            // Web: may need more time
-                            setTimeout(() => WebApp.expand(), 200);
+                    // Aggressive expansion strategy to ensure 100% height
+                    const expandInterval = setInterval(() => {
+                        try {
+                            if (!WebApp.isExpanded) {
+                                WebApp.expand();
+                            }
+                        } catch (e) {
+                            console.error('Error expanding WebApp:', e);
                         }
-                    }
+                    }, 100);
+
+                    // Clear interval after 2 seconds, but keep trying initially
+                    setTimeout(() => {
+                        clearInterval(expandInterval);
+                        // One final attempt
+                        try {
+                            WebApp.expand();
+                        } catch (e) { }
+                    }, 2000);
 
                     // Set viewport height to full
                     if (WebApp.setHeaderColor) {
