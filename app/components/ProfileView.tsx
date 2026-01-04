@@ -1,7 +1,7 @@
 // app/components/ProfileView.tsx
 import { Ionicons } from '@expo/vector-icons';
 import { Image } from 'expo-image';
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
     Dimensions,
     FlatList,
@@ -16,6 +16,7 @@ import {
     View,
 } from 'react-native';
 import { Colors } from '../constants/colors';
+import { useTelegram } from '../context/TelegramProvider';
 import { useTheme } from '../context/ThemeContext';
 import { getReligionById, getZodiacSignById } from '../utils/basic_info';
 
@@ -63,6 +64,7 @@ interface ProfileViewProps {
 
 export const ProfileView = ({ userData, isOwnProfile = false }: ProfileViewProps) => {
     const { themeType } = useTheme();
+    const { showBackButton, hideBackButton } = useTelegram();
     const [currentCarouselIndex, setCurrentCarouselIndex] = useState(0);
     const [activePhotoIndex, setActivePhotoIndex] = useState(0);
     const [isFullScreenPhoto, setIsFullScreenPhoto] = useState(false);
@@ -121,6 +123,19 @@ export const ProfileView = ({ userData, isOwnProfile = false }: ProfileViewProps
         setActivePhotoIndex(index);
         setIsFullScreenPhoto(true);
     };
+
+    const closeFullScreen = () => {
+        setIsFullScreenPhoto(false);
+    };
+
+    // Manage Telegram BackButton for photo viewer
+    useEffect(() => {
+        if (isFullScreenPhoto) {
+            showBackButton();
+        } else {
+            hideBackButton();
+        }
+    }, [isFullScreenPhoto]);
 
     const handleNextPhotoLightbox = () => {
         if (userData?.photos && Array.isArray(userData.photos)) {
@@ -298,13 +313,10 @@ export const ProfileView = ({ userData, isOwnProfile = false }: ProfileViewProps
                 visible={isFullScreenPhoto}
                 transparent={true}
                 animationType="fade"
-                onRequestClose={() => setIsFullScreenPhoto(false)}
+                onRequestClose={closeFullScreen}
             >
                 <View style={styles.lightboxContainer}>
-                    {/* <StatusBar hidden /> conflicts with other status bar configs sometimes */}
-                    <TouchableOpacity style={styles.lightboxCloseButton} onPress={() => setIsFullScreenPhoto(false)}>
-                        <Ionicons name="close" size={28} color="#fff" />
-                    </TouchableOpacity>
+                    {/* Telegram BackButton handles closing */}
 
                     {userData?.photos && userData.photos.length > 0 && (
                         <Pressable style={styles.lightboxImageContainer} onPress={handleNextPhotoLightbox}>
@@ -415,7 +427,6 @@ const styles = StyleSheet.create({
     lightboxContainer: { flex: 1, backgroundColor: 'rgba(0,0,0,0.95)', justifyContent: 'center', alignItems: 'center' },
     lightboxImageContainer: { width: '100%', height: '100%', justifyContent: 'center', alignItems: 'center' },
     lightboxImage: { width: '100%', height: '100%' },
-    lightboxCloseButton: { position: 'absolute', top: 50, right: 20, zIndex: 50, backgroundColor: 'rgba(50,50,50,0.8)', borderRadius: 20, padding: 10, width: 44, height: 44, justifyContent: 'center', alignItems: 'center' },
     navArrowLeft: { position: 'absolute', left: 0, top: '40%', bottom: '40%', width: 60, justifyContent: 'center', alignItems: 'center', zIndex: 50 },
     navArrowRight: { position: 'absolute', right: 0, top: '40%', bottom: '40%', width: 60, justifyContent: 'center', alignItems: 'center', zIndex: 50 },
 });

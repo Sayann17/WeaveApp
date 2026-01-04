@@ -200,10 +200,10 @@ export default function ChatsScreen() {
     <ThemedBackground>
       <StatusBar barStyle={isLight ? "dark-content" : "light-content"} />
 
-      <View style={{ flex: 1, paddingTop: insets.top }}>
+      <View style={{ flex: 1 }}>
         <ScrollView
           style={styles.scrollView}
-          contentContainerStyle={styles.scrollContent}
+          contentContainerStyle={[styles.scrollContent, { paddingTop: insets.top + 10 }]}
           showsVerticalScrollIndicator={false}
           refreshControl={
             <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={theme.text} />

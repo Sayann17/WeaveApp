@@ -65,9 +65,9 @@ export default function MatchesScreen() {
     return (
         <ThemedBackground>
             <StatusBar barStyle={isLight ? "dark-content" : "light-content"} />
-            <View style={{ flex: 1, paddingTop: insets.top }}>
+            <View style={{ flex: 1 }}>
                 {/* Таб-бар */}
-                <View style={styles.tabContainer}>
+                <View style={[styles.tabContainer, { paddingTop: insets.top + 10 }]}>
                     <Pressable
                         style={[styles.tab, activeTab === 'matches' && { borderBottomColor: theme.text, borderBottomWidth: 2 }]}
                         onPress={() => setActiveTab('matches')}
