@@ -20,6 +20,7 @@ interface TelegramContextType {
     colorScheme: 'light' | 'dark';
     showBackButton: () => void;
     hideBackButton: () => void;
+    setBackButtonHandler: (handler: (() => void) | null) => void;
 }
 
 const TelegramContext = createContext<TelegramContextType>({
@@ -31,6 +32,7 @@ const TelegramContext = createContext<TelegramContextType>({
     colorScheme: 'light',
     showBackButton: () => { },
     hideBackButton: () => { },
+    setBackButtonHandler: () => { },
 });
 
 export const useTelegram = () => useContext(TelegramContext);
@@ -38,6 +40,7 @@ export const useTelegram = () => useContext(TelegramContext);
 export function TelegramProvider({ children }: { children: React.ReactNode }) {
     const [isTelegram, setIsTelegram] = useState(false);
     const [colorScheme, setColorScheme] = useState<'light' | 'dark'>('light');
+    const [customBackHandler, setCustomBackHandler] = useState<(() => void) | null>(null);
     const router = useRouter();
 
     useEffect(() => {
@@ -62,7 +65,11 @@ export function TelegramProvider({ children }: { children: React.ReactNode }) {
 
                 // Handle Back Button
                 const handleBackButton = () => {
-                    router.back();
+                    if (customBackHandler) {
+                        customBackHandler();
+                    } else {
+                        router.back();
+                    }
                 };
 
                 WebApp.BackButton.onClick(handleBackButton);
@@ -79,7 +86,7 @@ export function TelegramProvider({ children }: { children: React.ReactNode }) {
 
         const cleanup = checkTelegram();
         return cleanup;
-    }, [router]);
+    }, [router, customBackHandler]);
 
     const showBackButton = () => {
         if (isTelegram && WebApp?.BackButton) {
@@ -93,6 +100,10 @@ export function TelegramProvider({ children }: { children: React.ReactNode }) {
         }
     };
 
+    const setBackButtonHandler = (handler: (() => void) | null) => {
+        setCustomBackHandler(() => handler);
+    };
+
     const value: TelegramContextType = {
         isTelegram,
         user: isTelegram ? WebApp.initDataUnsafe?.user : null,
@@ -102,6 +113,7 @@ export function TelegramProvider({ children }: { children: React.ReactNode }) {
         colorScheme,
         showBackButton,
         hideBackButton,
+        setBackButtonHandler,
     };
 
     return (

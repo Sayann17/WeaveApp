@@ -64,7 +64,7 @@ interface ProfileViewProps {
 
 export const ProfileView = ({ userData, isOwnProfile = false }: ProfileViewProps) => {
     const { themeType } = useTheme();
-    const { showBackButton, hideBackButton } = useTelegram();
+    const { showBackButton, hideBackButton, setBackButtonHandler } = useTelegram();
     const [currentCarouselIndex, setCurrentCarouselIndex] = useState(0);
     const [activePhotoIndex, setActivePhotoIndex] = useState(0);
     const [isFullScreenPhoto, setIsFullScreenPhoto] = useState(false);
@@ -131,8 +131,10 @@ export const ProfileView = ({ userData, isOwnProfile = false }: ProfileViewProps
     // Manage Telegram BackButton for photo viewer
     useEffect(() => {
         if (isFullScreenPhoto) {
+            setBackButtonHandler(closeFullScreen);
             showBackButton();
         } else {
+            setBackButtonHandler(null);
             hideBackButton();
         }
     }, [isFullScreenPhoto]);
