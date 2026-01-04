@@ -11,7 +11,6 @@ import {
     View,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useNotifications } from '../context/NotificationContext';
 import { useTheme } from '../context/ThemeContext';
 import { yandexAuth } from '../services/yandex/AuthService';
 
@@ -22,7 +21,6 @@ interface MenuModalProps {
 
 export const MenuModal = ({ visible, onClose }: MenuModalProps) => {
     const { theme, themeType, setTheme } = useTheme();
-    const { unreadMessagesCount } = useNotifications();
     const router = useRouter();
     const insets = useSafeAreaInsets();
     const isLight = themeType === 'light';
@@ -84,37 +82,6 @@ export const MenuModal = ({ visible, onClose }: MenuModalProps) => {
                             </View>
                             <Ionicons name="chevron-forward" size={20} color={theme.subText} />
                         </Pressable>
-
-                        {/* Notifications */}
-                        <Pressable
-                            style={[styles.menuItem, { backgroundColor: theme.cardBg }]}
-                            onPress={() => handleNavigation('/notifications')}
-                        >
-                            <View style={[styles.iconContainer, { backgroundColor: isLight ? '#f0f0f0' : 'rgba(255,255,255,0.1)' }]}>
-                                <Ionicons name="notifications-outline" size={24} color={theme.text} />
-                                {unreadMessagesCount > 0 && (
-                                    <View style={styles.badge}>
-                                        <Text style={styles.badgeText}>{unreadMessagesCount > 99 ? '99+' : unreadMessagesCount}</Text>
-                                    </View>
-                                )}
-                            </View>
-                            <View style={styles.menuTextContainer}>
-                                <Text style={[styles.menuText, { color: theme.text }]}>Уведомления</Text>
-                                <Text style={[styles.menuSubtext, { color: theme.subText }]}>Активность и новости</Text>
-                            </View>
-                            <Ionicons name="chevron-forward" size={20} color={theme.subText} />
-                        </Pressable>
-
-                        {/* Theme Settings */}
-                        <View style={[styles.menuItem, { backgroundColor: theme.cardBg }]}>
-                            <View style={[styles.iconContainer, { backgroundColor: isLight ? '#f0f0f0' : 'rgba(255,255,255,0.1)' }]}>
-                                <Ionicons name="color-palette-outline" size={24} color={theme.text} />
-                            </View>
-                            <View style={styles.menuTextContainer}>
-                                <Text style={[styles.menuText, { color: theme.text }]}>Оформление</Text>
-                                <Text style={[styles.menuSubtext, { color: theme.subText }]}>Выберите тему приложения</Text>
-                            </View>
-                        </View>
 
                         {/* Theme Options */}
                         <View style={styles.themeOptions}>
@@ -225,23 +192,6 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         marginRight: 12,
         position: 'relative',
-    },
-    badge: {
-        position: 'absolute',
-        top: -4,
-        right: -4,
-        backgroundColor: '#FF3B30',
-        borderRadius: 10,
-        minWidth: 20,
-        height: 20,
-        justifyContent: 'center',
-        alignItems: 'center',
-        paddingHorizontal: 6,
-    },
-    badgeText: {
-        color: '#fff',
-        fontSize: 11,
-        fontWeight: '600',
     },
     menuTextContainer: {
         flex: 1,

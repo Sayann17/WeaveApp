@@ -203,7 +203,7 @@ export default function ChatsScreen() {
       <View style={{ flex: 1 }}>
         <ScrollView
           style={styles.scrollView}
-          contentContainerStyle={[styles.scrollContent, { paddingTop: insets.top + 80 }]}
+          contentContainerStyle={[styles.scrollContent, { paddingTop: insets.top + 90 }]}
           showsVerticalScrollIndicator={false}
           refreshControl={
             <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={theme.text} />
