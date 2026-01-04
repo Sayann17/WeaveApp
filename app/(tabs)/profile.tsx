@@ -75,7 +75,7 @@ export default function ProfileScreen() {
       <ThemedBackground>
         <StatusBar barStyle={isLight ? "dark-content" : "light-content"} />
 
-        <View style={[styles.safeArea, { paddingTop: insets.top + 78 }]}>
+        <View style={[styles.safeArea, { paddingTop: insets.top + 85 }]}>
           {/* 🔥 ИСПОЛЬЗУЕМ ПЕРЕИСПОЛЬЗУЕМЫЙ КОМПОНЕНТ */}
           <ProfileView userData={userData} isOwnProfile={true} />
         </View>
