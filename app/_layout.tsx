@@ -5,6 +5,7 @@ import { ActivityIndicator, View } from 'react-native';
 import { NotificationProvider } from './context/NotificationContext';
 import { TelegramProvider } from './context/TelegramProvider';
 import { ThemeProvider } from './context/ThemeContext';
+import './global.css'; // Import global CSS for pinch-zoom prevention
 import { User } from './services/interfaces/IAuthService';
 import { yandexAuth } from './services/yandex/AuthService';
 import SplashScreen from './splash';
@@ -43,8 +44,10 @@ export default function RootLayout() {
         router.replace('/onboarding/welcome');
       } else if (user.profile_completed && (inAuthGroup || inOnboarding)) {
         // Если профиль заполнен и мы в авторизации или онбординге - на профиль
+        // НО только если мы НЕ в табах уже
         router.replace('/(tabs)/profile');
       }
+      // Если уже в табах - ничего не делаем
     } else if (!user && (inTabsGroup || inOnboarding)) {
       // Нет пользователя - в авторизацию
       router.replace('/(auth)');

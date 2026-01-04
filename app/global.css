@@ -1,0 +1,29 @@
+/* Global styles to prevent pinch-to-zoom */
+* {
+  touch-action: pan-x pan-y;
+  -ms-touch-action: pan-x pan-y;
+  user-select: none;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+}
+
+html, body {
+  touch-action: pan-x pan-y;
+  -ms-touch-action: pan-x pan-y;
+  -webkit-text-size-adjust: 100%;
+  -ms-text-size-adjust: 100%;
+  overscroll-behavior: none;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Prevent double-tap zoom */
+button, a, input, textarea {
+  touch-action: manipulation;
+  -ms-touch-action: manipulation;
+}
+
+/* Prevent zoom on input focus (iOS) */
+input, textarea, select {
+  font-size: 16px !important;
+}

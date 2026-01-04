@@ -18,6 +18,8 @@ interface TelegramContextType {
     initData: string;
     initDataUnsafe: any;
     colorScheme: 'light' | 'dark';
+    showBackButton: () => void;
+    hideBackButton: () => void;
 }
 
 const TelegramContext = createContext<TelegramContextType>({
@@ -27,6 +29,8 @@ const TelegramContext = createContext<TelegramContextType>({
     initData: '',
     initDataUnsafe: {},
     colorScheme: 'light',
+    showBackButton: () => { },
+    hideBackButton: () => { },
 });
 
 export const useTelegram = () => useContext(TelegramContext);
@@ -77,13 +81,27 @@ export function TelegramProvider({ children }: { children: React.ReactNode }) {
         return cleanup;
     }, [router]);
 
+    const showBackButton = () => {
+        if (isTelegram && WebApp?.BackButton) {
+            WebApp.BackButton.show();
+        }
+    };
+
+    const hideBackButton = () => {
+        if (isTelegram && WebApp?.BackButton) {
+            WebApp.BackButton.hide();
+        }
+    };
+
     const value: TelegramContextType = {
         isTelegram,
         user: isTelegram ? WebApp.initDataUnsafe?.user : null,
         webApp: isTelegram ? WebApp : null,
         initData: isTelegram ? WebApp.initData : '',
         initDataUnsafe: isTelegram ? WebApp.initDataUnsafe : {},
-        colorScheme
+        colorScheme,
+        showBackButton,
+        hideBackButton,
     };
 
     return (
