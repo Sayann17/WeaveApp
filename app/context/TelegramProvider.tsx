@@ -66,9 +66,16 @@ export function TelegramProvider({ children }: { children: React.ReactNode }) {
                 try {
                     WebApp.ready();
 
+                    // Debug info
+                    console.log('=== TELEGRAM DEBUG INFO ===');
+                    console.log('Platform:', WebApp.platform);
+                    console.log('InitData:', WebApp.initDataUnsafe);
+                    console.log('Is expanded:', WebApp.isExpanded);
+                    console.log('Version:', WebApp.version);
+                    console.log('======================');
+
                     // Detect platform
-                    const detectedPlatform = WebApp.platform; // 'android', 'ios', 'macos', 'tdesktop', 'web', 'weba', 'webk', 'unknown'
-                    console.log('[Telegram] Platform detected:', detectedPlatform);
+                    const detectedPlatform = WebApp.platform;
                     setPlatform(detectedPlatform);
 
                     // Platform-specific settings
@@ -80,43 +87,65 @@ export function TelegramProvider({ children }: { children: React.ReactNode }) {
                     setIsDesktop(detectedIsDesktop);
                     setIsWeb(detectedIsWeb);
 
-                    // 1. Force expand to fullscreen immediate call
-                    WebApp.expand();
-
-                    // 2. Check for start_param
-                    const initData = WebApp.initData;
-                    const startParam = new URLSearchParams(initData).get('start_param') || WebApp.initDataUnsafe?.start_param;
-
-                    if (startParam === 'fullscreen') {
-                        WebApp.expand();
-                    }
-
-                    // 3. Persistent expansion strategy
-                    const expandInterval = setInterval(() => {
+                    // Expansion Function
+                    const expandApp = () => {
                         try {
+                            // Standard expand
                             if (!WebApp.isExpanded) {
                                 WebApp.expand();
                             }
+
+                            // API v7.0+ requestFullscreen
+                            if (WebApp.requestFullscreen) {
+                                WebApp.requestFullscreen();
+                            }
                         } catch (e) {
-                            console.error('Error expanding WebApp:', e);
+                            console.error('Expansion failed:', e);
                         }
+                    };
+
+                    // 1. Immediate call
+                    expandApp();
+
+                    // 2. Check start_param logic
+                    const initData = WebApp.initData;
+                    const startParam = new URLSearchParams(initData).get('start_param') || WebApp.initDataUnsafe?.start_param;
+                    if (startParam === 'fullscreen') {
+                        expandApp();
+                    }
+
+                    // 3. Persistent expansion (Interval)
+                    const expandInterval = setInterval(() => {
+                        expandApp();
                     }, 100);
 
-                    // Clear interval after 2 seconds
+                    // Clear interval after 2s
                     setTimeout(() => {
                         clearInterval(expandInterval);
-                        // One final attempt if mobile
-                        if (detectedIsMobile) {
-                            WebApp.expand();
-                        }
+                        // Final attempt
+                        expandApp();
                     }, 2000);
+
+                    // 4. Event Listeners
+                    // Re-expand on visibility change (e.g. switching back to app)
+                    document.addEventListener('visibilitychange', () => {
+                        if (document.visibilityState === 'visible') {
+                            expandApp();
+                        }
+                    });
+
+                    // Re-expand on viewport change/resize
+                    window.addEventListener('resize', () => {
+                        if (!WebApp.isExpanded) {
+                            expandApp();
+                        }
+                    });
 
                     // Set viewport height to full
                     if (WebApp.setHeaderColor) {
                         WebApp.setHeaderColor('secondary_bg_color');
                     }
 
-                    // Platform-specific viewport settings
                     if (WebApp.setViewportHeight) {
                         WebApp.setViewportHeight(window.innerHeight);
                     }
