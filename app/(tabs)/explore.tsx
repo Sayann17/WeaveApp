@@ -256,7 +256,7 @@ export default function ExploreScreen() {
                         <Ionicons name="options" size={22} color="#fff" />
                     </Pressable>
                     <Pressable style={[styles.btn, styles.passBtn]} onPress={() => handleAction('pass')}>
-                        <Ionicons name="arrow-redo" size={26} color={isLight ? "#555" : "#fff"} />
+                        <Ionicons name="close" size={32} color={isLight ? "#555" : "#fff"} />
                     </Pressable>
                     <Pressable style={[styles.btn, styles.likeBtn]} onPress={() => handleAction('like')}>
                         <Ionicons name="heart" size={28} color="#E07A5F" />

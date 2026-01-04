@@ -276,10 +276,6 @@ export default function ChatScreen() {
 
           {/* ХЕДЕР */}
           <View style={[styles.header, { borderBottomColor: theme.border }]}>
-            <Pressable style={styles.backButton} onPress={() => router.back()}>
-              <Ionicons name="chevron-back" size={28} color={theme.text} />
-            </Pressable>
-
             <Pressable
               style={styles.participantInfo}
               onPress={() => participantId && router.push(`/users/${participantId}` as any)}
@@ -298,8 +294,6 @@ export default function ChatScreen() {
                 {participant?.name || 'Собеседник'}
               </Text>
             </Pressable>
-
-            <View style={{ width: 40 }} />
           </View>
 
           {/* СООБЩЕНИЯ */}
