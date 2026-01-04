@@ -2,7 +2,7 @@ const { getDriver } = require('./db');
 const jwt = require('jsonwebtoken');
 const { TypedValues, TypedData } = require('ydb-sdk');
 const { v4: uuidv4 } = require('uuid');
-const fetch = require('node-fetch');
+// Using native fetch (Node.js 18+)
 const { notifyNewLike, notifyMatch, notifyNewMessage } = require('./telegram');
 const { sendLikeNotification, sendMatchNotifications, sendMessageNotification } = require('./telegram-helpers');
 
