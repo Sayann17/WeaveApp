@@ -13,9 +13,11 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { ThemedBackground } from '../components/ThemedBackground';
+import { useTelegram } from '../context/TelegramProvider';
 import { useTheme } from '../context/ThemeContext';
 import { yandexAuth } from '../services/yandex/AuthService';
 import { yandexMatch } from '../services/yandex/MatchService';
+import { getPlatformPadding } from '../utils/platformPadding';
 
 export default function MatchesScreen() {
     const router = useRouter();
@@ -25,6 +27,7 @@ export default function MatchesScreen() {
     const [activeTab, setActiveTab] = useState<'matches' | 'likes'>('matches');
     const [loading, setLoading] = useState(true);
     const insets = useSafeAreaInsets();
+    const { isMobile } = useTelegram();
 
     const isLight = themeType === 'light';
 
@@ -67,7 +70,7 @@ export default function MatchesScreen() {
             <StatusBar barStyle={isLight ? "dark-content" : "light-content"} />
             <View style={{ flex: 1 }}>
                 {/* Таб-бар */}
-                <View style={[styles.tabContainer, { paddingTop: insets.top + 78 }]}>
+                <View style={[styles.tabContainer, { paddingTop: getPlatformPadding(insets, isMobile, 78) }]}>
                     <Pressable
                         style={[styles.tab, activeTab === 'matches' && { borderBottomColor: theme.text, borderBottomWidth: 2 }]}
                         onPress={() => setActiveTab('matches')}

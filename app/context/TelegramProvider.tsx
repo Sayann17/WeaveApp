@@ -18,6 +18,10 @@ interface TelegramContextType {
     initData: string;
     initDataUnsafe: any;
     colorScheme: 'light' | 'dark';
+    platform: string;
+    isMobile: boolean;
+    isDesktop: boolean;
+    isWeb: boolean;
     showBackButton: () => void;
     hideBackButton: () => void;
     setBackButtonHandler: (handler: (() => void) | null) => void;
@@ -30,6 +34,10 @@ const TelegramContext = createContext<TelegramContextType>({
     initData: '',
     initDataUnsafe: {},
     colorScheme: 'light',
+    platform: 'unknown',
+    isMobile: false,
+    isDesktop: false,
+    isWeb: false,
     showBackButton: () => { },
     hideBackButton: () => { },
     setBackButtonHandler: () => { },
@@ -40,6 +48,10 @@ export const useTelegram = () => useContext(TelegramContext);
 export function TelegramProvider({ children }: { children: React.ReactNode }) {
     const [isTelegram, setIsTelegram] = useState(false);
     const [colorScheme, setColorScheme] = useState<'light' | 'dark'>('light');
+    const [platform, setPlatform] = useState('unknown');
+    const [isMobile, setIsMobile] = useState(false);
+    const [isDesktop, setIsDesktop] = useState(false);
+    const [isWeb, setIsWeb] = useState(false);
     const [customBackHandler, setCustomBackHandler] = useState<(() => void) | null>(null);
     const router = useRouter();
 
@@ -54,17 +66,46 @@ export function TelegramProvider({ children }: { children: React.ReactNode }) {
                 try {
                     WebApp.ready();
 
+                    // Detect platform
+                    const detectedPlatform = WebApp.platform; // 'android', 'ios', 'macos', 'tdesktop', 'web', 'weba', 'webk', 'unknown'
+                    console.log('[Telegram] Platform detected:', detectedPlatform);
+                    setPlatform(detectedPlatform);
+
+                    // Platform-specific settings
+                    const detectedIsMobile = detectedPlatform === 'android' || detectedPlatform === 'ios';
+                    const detectedIsDesktop = detectedPlatform === 'macos' || detectedPlatform === 'tdesktop' || detectedPlatform === 'windows';
+                    const detectedIsWeb = detectedPlatform === 'web' || detectedPlatform === 'weba' || detectedPlatform === 'webk';
+
+                    setIsMobile(detectedIsMobile);
+                    setIsDesktop(detectedIsDesktop);
+                    setIsWeb(detectedIsWeb);
+
                     // Force expand to fullscreen
                     WebApp.expand();
 
-                    // Enable fullscreen mode if available
+                    // Platform-specific expand behavior
                     if (WebApp.isExpanded === false) {
-                        setTimeout(() => WebApp.expand(), 100);
+                        if (detectedIsMobile) {
+                            // Mobile: aggressive expand
+                            setTimeout(() => WebApp.expand(), 100);
+                            setTimeout(() => WebApp.expand(), 300);
+                        } else if (detectedIsDesktop) {
+                            // Desktop: single retry
+                            setTimeout(() => WebApp.expand(), 100);
+                        } else if (isWeb) {
+                            // Web: may need more time
+                            setTimeout(() => WebApp.expand(), 200);
+                        }
                     }
 
                     // Set viewport height to full
                     if (WebApp.setHeaderColor) {
                         WebApp.setHeaderColor('secondary_bg_color');
+                    }
+
+                    // Platform-specific viewport settings
+                    if (WebApp.setViewportHeight) {
+                        WebApp.setViewportHeight(window.innerHeight);
                     }
 
                     setColorScheme(WebApp.colorScheme);
@@ -117,20 +158,24 @@ export function TelegramProvider({ children }: { children: React.ReactNode }) {
         setCustomBackHandler(() => handler);
     };
 
-    const value: TelegramContextType = {
-        isTelegram,
-        user: isTelegram ? WebApp.initDataUnsafe?.user : null,
-        webApp: isTelegram ? WebApp : null,
-        initData: isTelegram ? WebApp.initData : '',
-        initDataUnsafe: isTelegram ? WebApp.initDataUnsafe : {},
-        colorScheme,
-        showBackButton,
-        hideBackButton,
-        setBackButtonHandler,
-    };
-
     return (
-        <TelegramContext.Provider value={value}>
+        <TelegramContext.Provider
+            value={{
+                isTelegram,
+                user: WebApp?.initDataUnsafe?.user || null,
+                webApp: WebApp,
+                initData: WebApp?.initData || '',
+                initDataUnsafe: WebApp?.initDataUnsafe || {},
+                colorScheme,
+                platform,
+                isMobile,
+                isDesktop,
+                isWeb,
+                showBackButton,
+                hideBackButton,
+                setBackButtonHandler: (handler) => setCustomBackHandler(() => handler),
+            }}
+        >
             {children}
         </TelegramContext.Provider>
     );

@@ -17,6 +17,7 @@ import { Colors } from '../constants/colors';
 import { useTelegram } from '../context/TelegramProvider';
 import { useTheme } from '../context/ThemeContext';
 import { yandexAuth } from '../services/yandex/AuthService';
+import { getPlatformPadding } from '../utils/platformPadding';
 
 // Компоненты секций
 import BasicInfoSection from './components/BasicInfoSection';
@@ -37,7 +38,7 @@ export default function EditProfileScreen() {
   const router = useRouter();
   const { theme, themeType } = useTheme();
   const insets = useSafeAreaInsets();
-  const { setBackButtonHandler, showBackButton, hideBackButton } = useTelegram();
+  const { setBackButtonHandler, showBackButton, hideBackButton, isMobile } = useTelegram();
   const params = useLocalSearchParams();
   const isFirstEdit = params.firstEdit === 'true';
 
@@ -196,7 +197,7 @@ export default function EditProfileScreen() {
 
   return (
     <View style={[styles.container, { backgroundColor: theme.background }]}>
-      <View style={{ flex: 1, paddingTop: insets.top + 78 }}>
+      <View style={{ flex: 1, paddingTop: getPlatformPadding(insets, isMobile, 78) }}>
         <KeyboardAvoidingView
           behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
           style={{ flex: 1 }}

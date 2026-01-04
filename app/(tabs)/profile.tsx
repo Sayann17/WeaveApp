@@ -16,9 +16,11 @@ import { ProfileView } from '../components/ProfileView';
 import { ThemedBackground } from '../components/ThemedBackground';
 import { Colors } from '../constants/colors';
 import { useNotifications } from '../context/NotificationContext';
+import { useTelegram } from '../context/TelegramProvider';
 import { useTheme } from '../context/ThemeContext';
 import { User } from '../services/interfaces/IAuthService';
 import { yandexAuth } from '../services/yandex/AuthService';
+import { getPlatformPadding } from '../utils/platformPadding';
 
 export default function ProfileScreen() {
   const router = useRouter();
@@ -27,6 +29,7 @@ export default function ProfileScreen() {
   const [userData, setUserData] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
   const insets = useSafeAreaInsets();
+  const { isMobile } = useTelegram();
 
   const [isMenuVisible, setMenuVisible] = useState(false);
   const [settingsVisible, setSettingsVisible] = useState(false);
@@ -75,7 +78,7 @@ export default function ProfileScreen() {
       <ThemedBackground>
         <StatusBar barStyle={isLight ? "dark-content" : "light-content"} />
 
-        <View style={[styles.safeArea, { paddingTop: insets.top + 85 }]}>
+        <View style={[styles.safeArea, { paddingTop: getPlatformPadding(insets, isMobile) }]}>
           {/* 🔥 ИСПОЛЬЗУЕМ ПЕРЕИСПОЛЬЗУЕМЫЙ КОМПОНЕНТ */}
           <ProfileView userData={userData} isOwnProfile={true} />
         </View>

@@ -17,10 +17,16 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { ProfileView } from '../components/ProfileView';
 import { ThemedBackground } from '../components/ThemedBackground';
+import { useTelegram } from '../context/TelegramProvider';
 import { useTheme } from '../context/ThemeContext';
 import { enhancedMatchService } from '../services/head_match';
+import { yandexAuth } from '../services/yandex/AuthService';
+import { YandexUserService } from '../services/yandex/UserService';
 import { religions } from '../utils/basic_info';
 import { ethnicityGroups } from '../utils/ethnicities';
+import { getPlatformPadding } from '../utils/platformPadding';
+
+const userService = new YandexUserService();
 
 interface UserProfile {
     id: string;
@@ -47,15 +53,12 @@ interface Filters {
 
 const { width } = Dimensions.get('window');
 
-import { yandexAuth } from '../services/yandex/AuthService';
-import { YandexUserService } from '../services/yandex/UserService';
-
-const userService = new YandexUserService();
 
 export default function ExploreScreen() {
     const router = useRouter();
-    const { theme, themeType } = useTheme();
+    const { theme, isLight } = useTheme();
     const insets = useSafeAreaInsets();
+    const { isMobile } = useTelegram();
 
     // Data States
     const [currentUser, setCurrentUser] = useState<any>(null);
@@ -191,7 +194,7 @@ export default function ExploreScreen() {
         setShowFilters(true);
     };
 
-    const isLight = themeType === 'light';
+
 
     if (isLoading) {
         return (
@@ -205,7 +208,7 @@ export default function ExploreScreen() {
     if (profiles.length === 0) {
         return (
             <ThemedBackground>
-                <View style={[styles.safeArea, { paddingTop: insets.top + 85 }]}>
+                <View style={[styles.safeArea, { paddingTop: getPlatformPadding(insets, isMobile) }]}>
                     <StatusBar barStyle={isLight ? "dark-content" : "light-content"} />
 
                     <View style={[styles.center, { paddingHorizontal: 30, flex: 1, paddingBottom: 100 }]}>
@@ -242,7 +245,7 @@ export default function ExploreScreen() {
 
     return (
         <ThemedBackground>
-            <View style={[styles.safeArea, { paddingTop: insets.top + 85 }]}>
+            <View style={[styles.safeArea, { paddingTop: getPlatformPadding(insets, isMobile) }]}>
                 <StatusBar barStyle={isLight ? "dark-content" : "light-content"} />
 
                 {/* 🔥 ПОЛНЫЙ ПРОСМОТР ПРОФИЛЯ */}

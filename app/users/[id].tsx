@@ -13,6 +13,7 @@ import { ThemedBackground } from '../components/ThemedBackground';
 import { useTelegram } from '../context/TelegramProvider';
 import { useTheme } from '../context/ThemeContext';
 import { YandexUserService } from '../services/yandex/UserService';
+import { getPlatformPadding } from '../utils/platformPadding';
 
 const userService = new YandexUserService();
 
@@ -21,7 +22,7 @@ export default function UserProfileScreen() {
     const router = useRouter();
     const { theme } = useTheme();
     const insets = useSafeAreaInsets();
-    const { setBackButtonHandler, showBackButton, hideBackButton } = useTelegram();
+    const { setBackButtonHandler, showBackButton, hideBackButton, isMobile } = useTelegram();
 
     const [userData, setUserData] = useState<any>(null);
     const [loading, setLoading] = useState(true);
@@ -69,7 +70,7 @@ export default function UserProfileScreen() {
     if (loading) {
         return (
             <ThemedBackground>
-                <View style={[styles.center, { paddingTop: insets.top + 85 }]}>
+                <View style={[styles.center, { paddingTop: getPlatformPadding(insets, isMobile) }]}>
                     <ActivityIndicator size="large" color={theme.text} />
                 </View>
             </ThemedBackground>
@@ -79,7 +80,7 @@ export default function UserProfileScreen() {
     if (error || !userData) {
         return (
             <ThemedBackground>
-                <View style={[styles.center, { paddingTop: insets.top + 85 }]}>
+                <View style={[styles.center, { paddingTop: getPlatformPadding(insets, isMobile) }]}>
                     <Text style={{ color: theme.text }}>{error || 'User not found'}</Text>
                 </View>
             </ThemedBackground>
@@ -88,7 +89,7 @@ export default function UserProfileScreen() {
 
     return (
         <ThemedBackground>
-            <View style={{ flex: 1, paddingTop: insets.top + 85 }}>
+            <View style={{ flex: 1, paddingTop: getPlatformPadding(insets, isMobile) }}>
                 <ProfileView userData={userData} isOwnProfile={false} />
             </View>
         </ThemedBackground>

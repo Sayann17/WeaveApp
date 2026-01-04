@@ -46,6 +46,7 @@ export const THEMES = {
 type ThemeContextType = {
   theme: typeof THEMES.light;
   themeType: ThemeType;
+  isLight: boolean;
   setTheme: (type: ThemeType) => Promise<void>;
   userPhotoForAura: string | null; // Фото для ауры
 };
@@ -104,9 +105,10 @@ export const ThemeProvider = ({ children }: { children: React.ReactNode }) => {
   };
 
   const theme = THEMES[themeType];
+  const isLight = themeType === 'light';
 
   return (
-    <ThemeContext.Provider value={{ theme, themeType, setTheme, userPhotoForAura }}>
+    <ThemeContext.Provider value={{ theme, themeType, isLight, setTheme, userPhotoForAura }}>
       {children}
     </ThemeContext.Provider>
   );

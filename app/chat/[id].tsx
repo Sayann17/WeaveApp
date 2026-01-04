@@ -23,6 +23,7 @@ import { useTheme } from '../context/ThemeContext';
 import { yandexAuth } from '../services/yandex/AuthService';
 import { yandexChat, type Message } from '../services/yandex/ChatService';
 import { YandexUserService } from '../services/yandex/UserService';
+import { getPlatformPadding } from '../utils/platformPadding';
 
 const userService = new YandexUserService();
 
@@ -41,7 +42,7 @@ export default function ChatScreen() {
   const [keyboardVisible, setKeyboardVisible] = useState(false);
   const scrollViewRef = useRef<ScrollView>(null);
   const router = useRouter();
-  const { setBackButtonHandler, showBackButton, hideBackButton } = useTelegram();
+  const { setBackButtonHandler, showBackButton, hideBackButton, isMobile } = useTelegram();
 
   // Проверка параметров
   useEffect(() => {
@@ -288,7 +289,7 @@ export default function ChatScreen() {
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
         keyboardVerticalOffset={0}
       >
-        <View style={{ flex: 1, paddingTop: insets.top + 78 }}>
+        <View style={{ flex: 1, paddingTop: getPlatformPadding(insets, isMobile, 78) }}>
 
           {/* ХЕДЕР */}
           <View style={[styles.header, { borderBottomColor: theme.border }]}>
