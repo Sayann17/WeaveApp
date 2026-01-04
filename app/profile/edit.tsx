@@ -1,7 +1,6 @@
 // app/profile/edit.tsx
-import { Ionicons } from '@expo/vector-icons';
 import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
-import React, { useCallback, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import {
   ActivityIndicator,
   Alert,
@@ -11,7 +10,6 @@ import {
   StyleSheet,
   Text,
   TextInput,
-  TouchableOpacity,
   View
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -204,15 +202,9 @@ export default function EditProfileScreen() {
           style={{ flex: 1 }}
         >
           <View style={[styles.header, { backgroundColor: theme.background, borderBottomColor: theme.border }]}>
-            {!isFirstEdit && (
-              <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
-                <Ionicons name="arrow-back" size={24} color={theme.text} />
-              </TouchableOpacity>
-            )}
             <Text style={[styles.headerTitle, { color: theme.text }]}>
               {isFirstEdit ? 'Заполните профиль' : 'Редактировать'}
             </Text>
-            {!isFirstEdit && <View style={{ width: 24 }} />}
           </View>
 
           <ScrollView contentContainerStyle={styles.scrollContent}>
