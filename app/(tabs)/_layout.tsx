@@ -120,7 +120,6 @@ export default function TabLayout() {
           tabBarIcon: ({ color, size }) => (
             <TabIconWithBadge name="menu" size={size} color={color} />
           ),
-          href: null,
         }}
         listeners={{
           tabPress: (e) => {
