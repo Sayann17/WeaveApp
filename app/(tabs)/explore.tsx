@@ -242,7 +242,7 @@ export default function ExploreScreen() {
 
     return (
         <ThemedBackground>
-            <View style={[styles.safeArea, { paddingTop: insets.top + 78 }]}>
+            <View style={[styles.safeArea, { paddingTop: insets.top + 85 }]}>
                 <StatusBar barStyle={isLight ? "dark-content" : "light-content"} />
 
                 {/* 🔥 ПОЛНЫЙ ПРОСМОТР ПРОФИЛЯ */}
