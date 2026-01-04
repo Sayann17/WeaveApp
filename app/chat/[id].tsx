@@ -18,6 +18,7 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { ThemedBackground } from '../components/ThemedBackground';
+import { useTelegram } from '../context/TelegramProvider';
 import { useTheme } from '../context/ThemeContext';
 import { yandexAuth } from '../services/yandex/AuthService';
 import { yandexChat, type Message } from '../services/yandex/ChatService';
@@ -40,6 +41,7 @@ export default function ChatScreen() {
   const [keyboardVisible, setKeyboardVisible] = useState(false);
   const scrollViewRef = useRef<ScrollView>(null);
   const router = useRouter();
+  const { setBackButtonHandler, showBackButton, hideBackButton } = useTelegram();
 
   // Проверка параметров
   useEffect(() => {
@@ -149,6 +151,19 @@ export default function ChatScreen() {
       hideSubscription.remove();
     };
   }, [chatId]);
+
+  // Telegram BackButton handler
+  useEffect(() => {
+    showBackButton();
+    setBackButtonHandler(() => {
+      router.back(); // Navigate back to chats list
+    });
+
+    return () => {
+      hideBackButton();
+      setBackButtonHandler(null);
+    };
+  }, []);
 
   const handleSendMessage = async () => {
     if (!newMessage.trim() || !participantId || typeof participantId !== 'string') return;

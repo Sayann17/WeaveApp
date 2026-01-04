@@ -16,6 +16,7 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Colors } from '../constants/colors';
+import { useTelegram } from '../context/TelegramProvider';
 import { useTheme } from '../context/ThemeContext';
 import { yandexAuth } from '../services/yandex/AuthService';
 
@@ -38,6 +39,7 @@ export default function EditProfileScreen() {
   const router = useRouter();
   const { theme, themeType } = useTheme();
   const insets = useSafeAreaInsets();
+  const { setBackButtonHandler, showBackButton, hideBackButton } = useTelegram();
   const params = useLocalSearchParams();
   const isFirstEdit = params.firstEdit === 'true';
 
@@ -70,6 +72,19 @@ export default function EditProfileScreen() {
       loadUserData();
     }, [])
   );
+
+  // Telegram BackButton handler
+  useEffect(() => {
+    showBackButton();
+    setBackButtonHandler(() => {
+      router.back(); // Navigate back without saving
+    });
+
+    return () => {
+      hideBackButton();
+      setBackButtonHandler(null);
+    };
+  }, []);
 
   const loadUserData = async () => {
     console.log('[EditProfile] Loading user data started');
@@ -299,22 +314,22 @@ export default function EditProfileScreen() {
                 icon="people-outline"
               />
 
-              {/* 12. Стереотип (Правда) */}
+              {/* 12. Что значит близость */}
               <HookInput
-                label="Стереотип о моей нации (правда ✅)"
+                label="Что для тебя значит настоящая близость?"
                 value={stereotypeTrue}
                 onChange={setStereotypeTrue}
-                placeholder="Да, мы действительно очень громкие..."
-                icon="checkmark-circle-outline"
+                placeholder="Доверие, общие цели, поддержка..."
+                icon="heart-outline"
               />
 
-              {/* 13. Стереотип (Неправда) */}
+              {/* 13. Перезагрузка */}
               <HookInput
-                label="Стереотип о моей нации (неправда ❌)"
+                label="Чем ты занимаешься, когда хочешь перезагрузиться?"
                 value={stereotypeFalse}
                 onChange={setStereotypeFalse}
-                placeholder="Нет, мы не едим это каждый день..."
-                icon="close-circle-outline"
+                placeholder="Читаю, гуляю, смотрю сериалы..."
+                icon="refresh-outline"
               />
             </View>
 
