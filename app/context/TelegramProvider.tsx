@@ -72,7 +72,7 @@ export function TelegramProvider({ children }: { children: React.ReactNode }) {
                     setPlatform(detectedPlatform);
 
                     // Platform-specific settings
-                    const detectedIsMobile = detectedPlatform === 'android' || detectedPlatform === 'ios';
+                    const detectedIsMobile = detectedPlatform === 'android' || detectedPlatform === 'ios' || /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
                     const detectedIsDesktop = detectedPlatform === 'macos' || detectedPlatform === 'tdesktop' || detectedPlatform === 'windows';
                     const detectedIsWeb = detectedPlatform === 'web' || detectedPlatform === 'weba' || detectedPlatform === 'webk';
 
@@ -80,10 +80,18 @@ export function TelegramProvider({ children }: { children: React.ReactNode }) {
                     setIsDesktop(detectedIsDesktop);
                     setIsWeb(detectedIsWeb);
 
-                    // Force expand to fullscreen
+                    // 1. Force expand to fullscreen immediate call
                     WebApp.expand();
 
-                    // Aggressive expansion strategy to ensure 100% height
+                    // 2. Check for start_param
+                    const initData = WebApp.initData;
+                    const startParam = new URLSearchParams(initData).get('start_param') || WebApp.initDataUnsafe?.start_param;
+
+                    if (startParam === 'fullscreen') {
+                        WebApp.expand();
+                    }
+
+                    // 3. Persistent expansion strategy
                     const expandInterval = setInterval(() => {
                         try {
                             if (!WebApp.isExpanded) {
@@ -94,13 +102,13 @@ export function TelegramProvider({ children }: { children: React.ReactNode }) {
                         }
                     }, 100);
 
-                    // Clear interval after 2 seconds, but keep trying initially
+                    // Clear interval after 2 seconds
                     setTimeout(() => {
                         clearInterval(expandInterval);
-                        // One final attempt
-                        try {
+                        // One final attempt if mobile
+                        if (detectedIsMobile) {
                             WebApp.expand();
-                        } catch (e) { }
+                        }
                     }, 2000);
 
                     // Set viewport height to full
