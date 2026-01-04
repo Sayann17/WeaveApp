@@ -57,7 +57,9 @@ export default function UserProfileScreen() {
     // Telegram BackButton handler
     useEffect(() => {
         showBackButton();
-        setBackButtonHandler(() => router.back());
+        setBackButtonHandler(() => {
+            router.back();
+        });
 
         return () => {
             hideBackButton();
