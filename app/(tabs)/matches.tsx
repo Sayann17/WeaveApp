@@ -66,10 +66,6 @@ export default function MatchesScreen() {
         <ThemedBackground>
             <StatusBar barStyle={isLight ? "dark-content" : "light-content"} />
             <View style={{ flex: 1, paddingTop: insets.top }}>
-                <View style={styles.header}>
-                    <Text style={[styles.title, { color: theme.text }]}>Ваши пары</Text>
-                </View>
-
                 {/* Таб-бар */}
                 <View style={styles.tabContainer}>
                     <Pressable
@@ -169,10 +165,7 @@ export default function MatchesScreen() {
 }
 
 const styles = StyleSheet.create({
-    header: { paddingHorizontal: 20, paddingVertical: 10, paddingTop: 10 },
-    title: { fontSize: 28, fontWeight: '300' },
-
-    tabContainer: { flexDirection: 'row', paddingHorizontal: 20, marginBottom: 10 },
+    tabContainer: { flexDirection: 'row', paddingHorizontal: 20, marginBottom: 10, marginTop: 10 },
     tab: { paddingVertical: 10, marginRight: 20 },
     tabText: { fontSize: 16, fontWeight: '500' },
 

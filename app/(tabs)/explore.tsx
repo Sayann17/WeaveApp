@@ -193,23 +193,6 @@ export default function ExploreScreen() {
 
     const isLight = themeType === 'light';
 
-    const renderHeader = () => (
-        <View style={styles.headerColumn}>
-            <View style={styles.headerTop}>
-                <Text style={[styles.headerTitle, { color: theme.text }]}>Поиск</Text>
-            </View>
-
-            {/* Green Filter Button */}
-            <Pressable
-                onPress={openFilters}
-                style={[styles.filterButton, { backgroundColor: '#00b894' }]}
-            >
-                <Ionicons name="options" size={20} color="#fff" />
-                <Text style={styles.filterButtonText}>Настройка фильтров</Text>
-            </Pressable>
-        </View>
-    );
-
     if (isLoading) {
         return (
             <View style={[styles.container, styles.center, { backgroundColor: theme.background }]}>
@@ -224,7 +207,6 @@ export default function ExploreScreen() {
             <ThemedBackground>
                 <View style={[styles.safeArea, { paddingTop: insets.top }]}>
                     <StatusBar barStyle={isLight ? "dark-content" : "light-content"} />
-                    {renderHeader()}
 
                     <View style={[styles.center, { paddingHorizontal: 30, flex: 1, paddingBottom: 100 }]}>
                         <Ionicons name="earth-outline" size={80} color={theme.subText} />
@@ -241,6 +223,14 @@ export default function ExploreScreen() {
                         </Pressable>
                     </View>
 
+                    {/* Floating Filter Button */}
+                    <Pressable
+                        style={[styles.floatingFilterBtn, { backgroundColor: '#00b894' }, isLight ? styles.lightShadow : styles.darkShadow]}
+                        onPress={openFilters}
+                    >
+                        <Ionicons name="options" size={24} color="#fff" />
+                    </Pressable>
+
                 </View>
 
                 {renderFilterModal()}
@@ -254,7 +244,6 @@ export default function ExploreScreen() {
         <ThemedBackground>
             <View style={[styles.safeArea, { paddingTop: insets.top }]}>
                 <StatusBar barStyle={isLight ? "dark-content" : "light-content"} />
-                {renderHeader()}
 
                 {/* 🔥 ПОЛНЫЙ ПРОСМОТР ПРОФИЛЯ */}
                 <View style={{ flex: 1 }}>
@@ -263,6 +252,9 @@ export default function ExploreScreen() {
 
                 {/* 🔥 ПЛАВАЮЩИЕ КНОПКИ ДЕЙСТВИЙ */}
                 <View style={[styles.floatingActions, isLight ? styles.lightShadow : styles.darkShadow]}>
+                    <Pressable style={[styles.btn, styles.filterBtnFloating, { backgroundColor: '#00b894' }]} onPress={openFilters}>
+                        <Ionicons name="options" size={22} color="#fff" />
+                    </Pressable>
                     <Pressable style={[styles.btn, styles.passBtn]} onPress={() => handleAction('pass')}>
                         <Ionicons name="arrow-redo" size={26} color={isLight ? "#555" : "#fff"} />
                     </Pressable>
@@ -409,9 +401,7 @@ const styles = StyleSheet.create({
     container: { flex: 1 },
     safeArea: { flex: 1 },
     center: { justifyContent: 'center', alignItems: 'center', gap: 20 },
-    headerColumn: { paddingHorizontal: 20, paddingBottom: 10, zIndex: 10 },
-    headerTop: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 },
-    headerTitle: { fontSize: 28, fontWeight: '300' },
+
 
     modeSwitcher: {
         flexDirection: 'row',
@@ -441,10 +431,12 @@ const styles = StyleSheet.create({
     actionBtnText: { fontSize: 16, fontWeight: 'bold', color: '#fff' },
 
     // Floating Buttons
-    floatingActions: { position: 'absolute', bottom: 30, alignSelf: 'center', flexDirection: 'row', gap: 25, zIndex: 100 },
+    floatingActions: { position: 'absolute', bottom: 30, alignSelf: 'center', flexDirection: 'row', gap: 20, zIndex: 100 },
     btn: { width: 60, height: 60, borderRadius: 30, justifyContent: 'center', alignItems: 'center' },
+    filterBtnFloating: { backgroundColor: '#00b894' },
     passBtn: { backgroundColor: 'rgba(255,255,255,0.1)', borderWidth: 1, borderColor: 'rgba(255,255,255,0.2)' },
     likeBtn: { backgroundColor: '#fff' },
+    floatingFilterBtn: { position: 'absolute', bottom: 30, right: 30, width: 60, height: 60, borderRadius: 30, justifyContent: 'center', alignItems: 'center', zIndex: 100 },
     lightShadow: { shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.1, shadowRadius: 4 },
     darkShadow: { shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.3, shadowRadius: 6 },
 

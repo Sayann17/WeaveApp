@@ -201,13 +201,6 @@ export default function ChatsScreen() {
       <StatusBar barStyle={isLight ? "dark-content" : "light-content"} />
 
       <View style={{ flex: 1, paddingTop: insets.top }}>
-        <View style={styles.header}>
-          <Text style={[styles.headerTitle, { color: theme.text }]}>Сообщения</Text>
-          <Text style={[styles.headerSubtitle, { color: theme.subText }]}>
-            {chats.length > 0 ? `${chats.length} диалогов` : 'Нет новых сообщений'}
-          </Text>
-        </View>
-
         <ScrollView
           style={styles.scrollView}
           contentContainerStyle={styles.scrollContent}
@@ -237,20 +230,6 @@ export default function ChatsScreen() {
 }
 
 const styles = StyleSheet.create({
-  header: {
-    paddingHorizontal: 20,
-    paddingVertical: 10,
-    paddingTop: 10,
-    paddingBottom: 15,
-  },
-  headerTitle: {
-    fontSize: 32,
-    fontWeight: '300',
-    marginBottom: 5
-  },
-  headerSubtitle: {
-    fontSize: 14,
-  },
   scrollView: { flex: 1 },
   scrollContent: { paddingHorizontal: 20, paddingBottom: 20 },
   chatItem: {

@@ -114,6 +114,15 @@ export default function TabLayout() {
           ),
         }}
       />
+      <Tabs.Screen
+        name="menu"
+        options={{
+          title: 'Меню',
+          tabBarIcon: ({ color, size }) => (
+            <TabIconWithBadge name="menu" size={size} color={color} />
+          ),
+        }}
+      />
     </Tabs>
   );
 }

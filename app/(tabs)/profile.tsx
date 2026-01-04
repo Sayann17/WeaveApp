@@ -76,32 +76,8 @@ export default function ProfileScreen() {
         <StatusBar barStyle={isLight ? "dark-content" : "light-content"} />
 
         <View style={[styles.safeArea, { paddingTop: insets.top }]}>
-
-          {/* ШАПКА */}
-          <View style={styles.header}>
-            <Text style={[styles.headerTitle, { color: textColor }]}>Мой профиль</Text>
-            <TouchableOpacity onPress={() => setMenuVisible(true)} style={styles.menuButton}>
-              <View>
-                <Ionicons name="menu-outline" size={30} color={iconColor} />
-                {(unreadMessagesCount > 0 || newLikesCount > 0) && (
-                  <View style={{
-                    position: 'absolute',
-                    top: 0,
-                    right: 0,
-                    width: 10, height: 10,
-                    borderRadius: 5,
-                    backgroundColor: '#e1306c',
-                    borderWidth: 1.5,
-                    borderColor: theme.background
-                  }} />
-                )}
-              </View>
-            </TouchableOpacity>
-          </View>
-
           {/* 🔥 ИСПОЛЬЗУЕМ ПЕРЕИСПОЛЬЗУЕМЫЙ КОМПОНЕНТ */}
           <ProfileView userData={userData} isOwnProfile={true} />
-
         </View>
       </ThemedBackground>
 
@@ -220,12 +196,6 @@ export default function ProfileScreen() {
 
 const styles = StyleSheet.create({
   safeArea: { flex: 1 },
-  header: {
-    flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',
-    paddingHorizontal: 20, paddingTop: 10, paddingBottom: 10
-  },
-  headerTitle: { fontSize: 28, fontWeight: '300' },
-  menuButton: { padding: 5 },
 
   modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'flex-end' },
   menuContainer: { borderTopLeftRadius: 20, borderTopRightRadius: 20, padding: 20, paddingBottom: 40 },

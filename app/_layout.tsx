@@ -42,8 +42,8 @@ export default function RootLayout() {
         // Если профиль не заполнен, отправляем на онбординг (но не если мы уже там)
         router.replace('/onboarding/welcome');
       } else if (user.profile_completed && (inAuthGroup || inOnboarding)) {
-        // Если профиль заполнен и мы в авторизации или онбординге - в табы
-        router.replace('/(tabs)');
+        // Если профиль заполнен и мы в авторизации или онбординге - на профиль
+        router.replace('/(tabs)/profile');
       }
     } else if (!user && (inTabsGroup || inOnboarding)) {
       // Нет пользователя - в авторизацию
