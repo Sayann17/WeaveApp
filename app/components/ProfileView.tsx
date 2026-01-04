@@ -1,6 +1,7 @@
 // app/components/ProfileView.tsx
 import { Ionicons } from '@expo/vector-icons';
 import { Image } from 'expo-image';
+import { useRouter } from 'expo-router';
 import React, { useEffect, useState } from 'react';
 import {
     Dimensions,
@@ -128,16 +129,26 @@ export const ProfileView = ({ userData, isOwnProfile = false }: ProfileViewProps
         setIsFullScreenPhoto(false);
     };
 
+    const router = useRouter(); // Ensure useRouter is imported from 'expo-router'
+
     // Manage Telegram BackButton for photo viewer
     useEffect(() => {
         if (isFullScreenPhoto) {
             setBackButtonHandler(closeFullScreen);
             showBackButton();
         } else {
-            setBackButtonHandler(null);
-            hideBackButton();
+            // If not in full screen mode:
+            if (!isOwnProfile) {
+                // If it's a foreign profile (stack navigation), we want the Back button to go back
+                setBackButtonHandler(() => router.back());
+                showBackButton();
+            } else {
+                // If it's our own profile (tab root), hide the button
+                setBackButtonHandler(null);
+                hideBackButton();
+            }
         }
-    }, [isFullScreenPhoto]);
+    }, [isFullScreenPhoto, isOwnProfile]);
 
     const handleNextPhotoLightbox = () => {
         if (userData?.photos && Array.isArray(userData.photos)) {
