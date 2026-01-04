@@ -62,10 +62,12 @@ async function sendTelegramNotification(telegramId, text, options = {}) {
 async function notifyNewMessage(receiverTelegramId, senderName, messagePreview) {
     const text = `💬 <b>Новое сообщение от ${senderName}</b>\n\n${messagePreview.substring(0, 100)}${messagePreview.length > 100 ? '...' : ''}`;
 
+    // Note: web_app buttons don't work in notifications sent via sendMessage
+    // Using url type instead
     return await sendTelegramNotification(receiverTelegramId, text, {
         reply_markup: {
             inline_keyboard: [[
-                { text: '📱 Открыть чат', web_app: { url: 'https://t.me/WeaveMe_bot/app' } }
+                { text: '📱 Открыть чат', url: 'https://t.me/WeaveMe_bot/app' }
             ]]
         }
     });
@@ -80,7 +82,7 @@ async function notifyNewLike(likedUserTelegramId) {
     return await sendTelegramNotification(likedUserTelegramId, text, {
         reply_markup: {
             inline_keyboard: [[
-                { text: '👀 Посмотреть', web_app: { url: 'https://t.me/WeaveMe_bot/app' } }
+                { text: '👀 Посмотреть', url: 'https://t.me/WeaveMe_bot/app' }
             ]]
         }
     });
@@ -95,7 +97,7 @@ async function notifyMatch(userTelegramId, matchedUserName) {
     return await sendTelegramNotification(userTelegramId, text, {
         reply_markup: {
             inline_keyboard: [[
-                { text: '💬 Написать сообщение', web_app: { url: 'https://t.me/WeaveMe_bot/app' } }
+                { text: '💬 Написать сообщение', url: 'https://t.me/WeaveMe_bot/app' }
             ]]
         }
     });
