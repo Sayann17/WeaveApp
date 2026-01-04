@@ -280,8 +280,8 @@ export const ProfileView = ({ userData, isOwnProfile = false }: ProfileViewProps
                     {(userData?.loveLanguage || userData?.love_language) && <HookItem title="МОЙ ЯЗЫК ЛЮБВИ" text={userData.loveLanguage || userData.love_language} color={HOOK_COLORS.loveLanguage} icon="heart" />}
                     {(userData?.familyMemory || userData?.family_memory) && <HookItem title="МОЕ ЛЮБИМОЕ ВОСПОМИНАНИЕ" text={userData.familyMemory || userData.family_memory} color={HOOK_COLORS.familyMemory} icon="book" />}
                     {(userData?.culturePride || userData?.culture_pride) && <HookItem title="ЧЕМ Я ГОРЖУСЬ В СВОЕЙ КУЛЬТУРЕ" text={userData.culturePride || userData.culture_pride} color={HOOK_COLORS.culturePride} icon="ribbon" />}
-                    {(userData?.stereotypeTrue || userData?.stereotype_true) && <HookItem title="СТЕРЕОТИП О МОЕЙ НАЦИИ (ПРАВДА)" text={userData.stereotypeTrue || userData.stereotype_true} color={HOOK_COLORS.stereotypeTrue} icon="happy" />}
-                    {(userData?.stereotypeFalse || userData?.stereotype_false) && <HookItem title="СТЕРЕОТИП О МОЕЙ НАЦИИ (МИФ)" text={userData.stereotypeFalse || userData.stereotype_false} color={HOOK_COLORS.stereotypeFalse} icon="hand-left" />}
+                    {(userData?.stereotypeTrue || userData?.stereotype_true) && <HookItem title="ЧТО ДЛЯ ТЕБЯ ЗНАЧИТ НАСТОЯЩАЯ БЛИЗОСТЬ?" text={userData.stereotypeTrue || userData.stereotype_true} color={HOOK_COLORS.stereotypeTrue} icon="heart" />}
+                    {(userData?.stereotypeFalse || userData?.stereotype_false) && <HookItem title="ЧЕМ ТЫ ЗАНИМАЕШЬСЯ, КОГДА ХОЧЕШЬ ПЕРЕЗАГРУЗИТЬСЯ?" text={userData.stereotypeFalse || userData.stereotype_false} color={HOOK_COLORS.stereotypeFalse} icon="refresh" />}
 
                     {/* Остальные хуки */}
                 </View>
