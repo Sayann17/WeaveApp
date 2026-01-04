@@ -257,7 +257,7 @@ export default function ChatScreen() {
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
         keyboardVerticalOffset={Platform.OS === 'ios' ? 90 : 0}
       >
-        <View style={{ flex: 1, paddingTop: insets.top }}>
+        <View style={{ flex: 1, paddingTop: insets.top + 78 }}>
 
           {/* ХЕДЕР */}
           <View style={[styles.header, { borderBottomColor: theme.border }]}>

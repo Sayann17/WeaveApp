@@ -205,7 +205,7 @@ export default function ExploreScreen() {
     if (profiles.length === 0) {
         return (
             <ThemedBackground>
-                <View style={[styles.safeArea, { paddingTop: insets.top }]}>
+                <View style={[styles.safeArea, { paddingTop: insets.top + 78 }]}>
                     <StatusBar barStyle={isLight ? "dark-content" : "light-content"} />
 
                     <View style={[styles.center, { paddingHorizontal: 30, flex: 1, paddingBottom: 100 }]}>
@@ -242,7 +242,7 @@ export default function ExploreScreen() {
 
     return (
         <ThemedBackground>
-            <View style={[styles.safeArea, { paddingTop: insets.top }]}>
+            <View style={[styles.safeArea, { paddingTop: insets.top + 78 }]}>
                 <StatusBar barStyle={isLight ? "dark-content" : "light-content"} />
 
                 {/* 🔥 ПОЛНЫЙ ПРОСМОТР ПРОФИЛЯ */}

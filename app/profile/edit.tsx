@@ -7,7 +7,6 @@ import {
   Alert,
   KeyboardAvoidingView,
   Platform,
-  SafeAreaView,
   ScrollView,
   StyleSheet,
   Text,
@@ -15,6 +14,7 @@ import {
   TouchableOpacity,
   View
 } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Colors } from '../constants/colors';
 import { useTheme } from '../context/ThemeContext';
 import { yandexAuth } from '../services/yandex/AuthService';
@@ -37,6 +37,7 @@ import ZodiacModal from './components/modals/ZodiacModal';
 export default function EditProfileScreen() {
   const router = useRouter();
   const { theme, themeType } = useTheme();
+  const insets = useSafeAreaInsets();
   const params = useLocalSearchParams();
   const isFirstEdit = params.firstEdit === 'true';
 
@@ -182,7 +183,7 @@ export default function EditProfileScreen() {
 
   return (
     <View style={[styles.container, { backgroundColor: theme.background }]}>
-      <SafeAreaView style={{ flex: 1 }}>
+      <View style={{ flex: 1, paddingTop: insets.top + 78 }}>
         <KeyboardAvoidingView
           behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
           style={{ flex: 1 }}
@@ -350,7 +351,7 @@ export default function EditProfileScreen() {
           />
 
         </KeyboardAvoidingView>
-      </SafeAreaView>
+      </View>
     </View>
   );
 }
