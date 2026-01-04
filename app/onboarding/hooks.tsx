@@ -176,7 +176,7 @@ export default function OnboardingHooksScreen() {
                         />
 
                         <HookInputItem
-                            label="Стереотип о моей нации (правда ✅)"
+                            label="Что для тебя значит настоящая близость?"
                             value={stereotypeTrue}
                             onChange={setStereotypeTrue}
                             placeholder="Да, это действительно так..."
@@ -184,7 +184,7 @@ export default function OnboardingHooksScreen() {
                         />
 
                         <HookInputItem
-                            label="Стереотип о моей нации (неправда ❌)"
+                            label="Чем ты занимаешься, когда хочешь перезагрузиться?"
                             value={stereotypeFalse}
                             onChange={setStereotypeFalse}
                             placeholder="Нет, это всего лишь миф..."
