@@ -1,5 +1,5 @@
 // Telegram Bot API helper module
-const fetch = require('node-fetch');
+// Using native fetch (Node.js 18+)
 
 const BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN;
 
