@@ -53,7 +53,20 @@ export function TelegramProvider({ children }: { children: React.ReactNode }) {
 
                 try {
                     WebApp.ready();
+
+                    // Force expand to fullscreen
                     WebApp.expand();
+
+                    // Enable fullscreen mode if available
+                    if (WebApp.isExpanded === false) {
+                        setTimeout(() => WebApp.expand(), 100);
+                    }
+
+                    // Set viewport height to full
+                    if (WebApp.setHeaderColor) {
+                        WebApp.setHeaderColor('secondary_bg_color');
+                    }
+
                     setColorScheme(WebApp.colorScheme);
 
                     // Listen for theme changes

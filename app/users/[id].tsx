@@ -1,17 +1,16 @@
 // app/users/[id].tsx
-import { Ionicons } from '@expo/vector-icons';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import React, { useEffect, useState } from 'react';
 import {
     ActivityIndicator,
-    SafeAreaView,
     StyleSheet,
     Text,
-    TouchableOpacity,
     View
 } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { ProfileView } from '../components/ProfileView';
 import { ThemedBackground } from '../components/ThemedBackground';
+import { useTelegram } from '../context/TelegramProvider';
 import { useTheme } from '../context/ThemeContext';
 import { YandexUserService } from '../services/yandex/UserService';
 
@@ -21,6 +20,8 @@ export default function UserProfileScreen() {
     const { id } = useLocalSearchParams();
     const router = useRouter();
     const { theme } = useTheme();
+    const insets = useSafeAreaInsets();
+    const { setBackButtonHandler, showBackButton, hideBackButton } = useTelegram();
 
     const [userData, setUserData] = useState<any>(null);
     const [loading, setLoading] = useState(true);
@@ -52,10 +53,23 @@ export default function UserProfileScreen() {
         loadUser();
     }, [id]);
 
+    // Telegram BackButton handler
+    useEffect(() => {
+        showBackButton();
+        setBackButtonHandler(() => {
+            router.back();
+        });
+
+        return () => {
+            hideBackButton();
+            setBackButtonHandler(null);
+        };
+    }, []);
+
     if (loading) {
         return (
             <ThemedBackground>
-                <View style={styles.center}>
+                <View style={[styles.center, { paddingTop: insets.top + 85 }]}>
                     <ActivityIndicator size="large" color={theme.text} />
                 </View>
             </ThemedBackground>
@@ -65,47 +79,22 @@ export default function UserProfileScreen() {
     if (error || !userData) {
         return (
             <ThemedBackground>
-                <SafeAreaView style={{ flex: 1 }}>
-                    <View style={styles.header}>
-                        <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
-                            <Ionicons name="chevron-back" size={28} color={theme.text} />
-                        </TouchableOpacity>
-                    </View>
-                    <View style={styles.center}>
-                        <Text style={{ color: theme.text }}>{error || 'User not found'}</Text>
-                    </View>
-                </SafeAreaView>
+                <View style={[styles.center, { paddingTop: insets.top + 85 }]}>
+                    <Text style={{ color: theme.text }}>{error || 'User not found'}</Text>
+                </View>
             </ThemedBackground>
         );
     }
 
     return (
         <ThemedBackground>
-            <SafeAreaView style={{ flex: 1 }}>
-                <View style={styles.header}>
-                    <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
-                        <Ionicons name="chevron-back" size={28} color={theme.text} />
-                    </TouchableOpacity>
-                </View>
+            <View style={{ flex: 1, paddingTop: insets.top + 85 }}>
                 <ProfileView userData={userData} isOwnProfile={false} />
-            </SafeAreaView>
+            </View>
         </ThemedBackground>
     );
 }
 
 const styles = StyleSheet.create({
     center: { flex: 1, justifyContent: 'center', alignItems: 'center' },
-    header: {
-        paddingHorizontal: 10,
-        paddingTop: 10,
-        paddingBottom: 5,
-        zIndex: 10,
-        flexDirection: 'row',
-        justifyContent: 'flex-start',
-    },
-    backButton: {
-        padding: 5,
-        justifyContent: 'center',
-        alignItems: 'center',
-    },
 });

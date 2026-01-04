@@ -95,10 +95,22 @@ export default function ChatScreen() {
     loadHistory();
 
     const unsubscribe = yandexChat.onMessage((msg) => {
+      console.log('[Chat] 🔔 WebSocket message received:', {
+        messageId: msg.id,
+        chatId: msg.chatId,
+        currentChatId: chatId,
+        senderId: msg.senderId,
+        text: msg.text.substring(0, 30)
+      });
+
       if (msg.chatId === chatId) {
+        console.log('[Chat] ✅ Message matches current chat, updating UI');
         setMessages(prev => {
           // 1. Check if we already have this exact message ID
-          if (prev.some(m => m.id === msg.id)) return prev;
+          if (prev.some(m => m.id === msg.id)) {
+            console.log('[Chat] ⚠️ Duplicate message, skipping');
+            return prev;
+          }
 
           // 2. If it's my message, try to find and replace the optimistic "temp" message
           const myId = yandexAuth.getCurrentUser()?.uid;
@@ -110,6 +122,7 @@ export default function ChatScreen() {
             );
 
             if (tempIndex !== -1) {
+              console.log('[Chat] 🔄 Replacing temp message with real one');
               const newMessages = [...prev];
               newMessages[tempIndex] = msg; // Replace temp with real
               return newMessages;
@@ -117,11 +130,14 @@ export default function ChatScreen() {
           }
 
           // 3. New message from other user or no temp found
+          console.log('[Chat] ➕ Adding new message to list');
           const newMessages = [...prev, msg];
           return newMessages.sort((a, b) => a.timestamp.getTime() - b.timestamp.getTime());
         });
         // Scroll slightly delayed to ensure rendering is done
         setTimeout(() => scrollViewRef.current?.scrollToEnd({ animated: true }), 100);
+      } else {
+        console.log('[Chat] ⚠️ Message for different chat, ignoring');
       }
     });
 
@@ -270,7 +286,7 @@ export default function ChatScreen() {
       <KeyboardAvoidingView
         style={{ flex: 1 }}
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-        keyboardVerticalOffset={Platform.OS === 'ios' ? 90 : 0}
+        keyboardVerticalOffset={0}
       >
         <View style={{ flex: 1, paddingTop: insets.top + 78 }}>
 
@@ -304,6 +320,7 @@ export default function ChatScreen() {
               contentContainerStyle={styles.messagesContent}
               showsVerticalScrollIndicator={false}
               keyboardDismissMode="on-drag"
+              keyboardShouldPersistTaps="handled"
               onContentSizeChange={() => {
                 // Scroll to bottom when content changes (new messages)
                 setTimeout(() => {

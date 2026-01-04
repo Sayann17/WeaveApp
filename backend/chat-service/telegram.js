@@ -65,7 +65,7 @@ async function notifyNewMessage(receiverTelegramId, senderName, messagePreview) 
     return await sendTelegramNotification(receiverTelegramId, text, {
         reply_markup: {
             inline_keyboard: [[
-                { text: '📱 Открыть чат', url: 'https://t.me/WeaveMe_bot/app' }
+                { text: '📱 Открыть чат', web_app: { url: 'https://t.me/WeaveMe_bot/app' } }
             ]]
         }
     });
@@ -80,7 +80,7 @@ async function notifyNewLike(likedUserTelegramId) {
     return await sendTelegramNotification(likedUserTelegramId, text, {
         reply_markup: {
             inline_keyboard: [[
-                { text: '👀 Посмотреть', url: 'https://t.me/WeaveMe_bot/app' }
+                { text: '👀 Посмотреть', web_app: { url: 'https://t.me/WeaveMe_bot/app' } }
             ]]
         }
     });
@@ -95,7 +95,7 @@ async function notifyMatch(userTelegramId, matchedUserName) {
     return await sendTelegramNotification(userTelegramId, text, {
         reply_markup: {
             inline_keyboard: [[
-                { text: '💬 Написать сообщение', url: 'https://t.me/WeaveMe_bot/app' }
+                { text: '💬 Написать сообщение', web_app: { url: 'https://t.me/WeaveMe_bot/app' } }
             ]]
         }
     });
