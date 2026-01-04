@@ -1,7 +1,9 @@
 // app/_layout.tsx
-import { Stack, useRouter, useSegments } from 'expo-router'; //
+import { Stack, useRouter, useSegments } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { ActivityIndicator, View } from 'react-native';
+import { MenuModal } from './components/MenuModal';
+import { MenuProvider, useMenu } from './context/MenuContext';
 import { NotificationProvider } from './context/NotificationContext';
 import { TelegramProvider } from './context/TelegramProvider';
 import { ThemeProvider } from './context/ThemeContext';
@@ -16,8 +18,6 @@ export default function RootLayout() {
   const [isSplashComplete, setIsSplashComplete] = useState(false);
   const segments = useSegments();
   const router = useRouter();
-
-  // ... existing fonts code ...
 
   // Проверка авторизации
   useEffect(() => {
@@ -40,23 +40,17 @@ export default function RootLayout() {
 
     if (user) {
       if (!user.profile_completed && !inOnboarding && !inAuthGroup) {
-        // Если профиль не заполнен, отправляем на онбординг (но не если мы уже там)
         router.replace('/onboarding/welcome');
       } else if (user.profile_completed && (inAuthGroup || inOnboarding)) {
-        // Если профиль заполнен и мы в авторизации или онбординге - на профиль
-        // НО только если мы НЕ в табах уже
         router.replace('/(tabs)/profile');
       }
-      // Если уже в табах - ничего не делаем
     } else if (!user && (inTabsGroup || inOnboarding)) {
-      // Нет пользователя - в авторизацию
       router.replace('/(auth)');
     }
   }, [user, segments, isLoading, isSplashComplete]);
 
   // Показываем сплеш-скрин
   if (!isSplashComplete) {
-    // 🔥 ИСПРАВЛЕНИЕ: Передаем функцию onFinish
     return <SplashScreen onFinish={() => setIsSplashComplete(true)} />;
   }
 
@@ -73,21 +67,27 @@ export default function RootLayout() {
     <TelegramProvider>
       <ThemeProvider>
         <NotificationProvider>
-          <Stack screenOptions={{ headerShown: false }}>
-            <Stack.Screen name="(auth)" options={{ headerShown: false }} />
-            <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-            {/* Остальные экраны... */}
-            <Stack.Screen name="onboarding/welcome" options={{ headerShown: false }} />
-            <Stack.Screen name="onboarding/gender" options={{ headerShown: false }} />
-            <Stack.Screen name="onboarding/ethnicity" options={{ headerShown: false }} />
-            <Stack.Screen name="onboarding/interests" options={{ headerShown: false }} />
-            <Stack.Screen name="onboarding/religion" options={{ headerShown: false }} />
-            <Stack.Screen name="onboarding/zodiac" options={{ headerShown: false }} />
-            <Stack.Screen name="profile/onboarding" options={{ headerShown: false }} />
-            <Stack.Screen name="profile/edit" options={{ title: 'Редактировать профиль' }} />
-          </Stack>
+          <MenuProvider>
+            <Stack screenOptions={{ headerShown: false, animation: 'fade' }}>
+              <Stack.Screen name="splash" />
+              <Stack.Screen name="(auth)" />
+              <Stack.Screen name="onboarding" />
+              <Stack.Screen name="(tabs)" />
+              <Stack.Screen name="chat/[id]" />
+              <Stack.Screen name="profile/[id]" />
+              <Stack.Screen name="profile/edit" />
+              <Stack.Screen name="notifications" />
+            </Stack>
+            <MenuModalWrapper />
+          </MenuProvider>
         </NotificationProvider>
       </ThemeProvider>
     </TelegramProvider>
   );
+}
+
+// Wrapper component to use menu context
+function MenuModalWrapper() {
+  const { isMenuOpen, closeMenu } = useMenu();
+  return <MenuModal visible={isMenuOpen} onClose={closeMenu} />;
 }

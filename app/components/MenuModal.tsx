@@ -1,0 +1,283 @@
+// app/components/MenuModal.tsx
+import { Ionicons } from '@expo/vector-icons';
+import { useRouter } from 'expo-router';
+import React from 'react';
+import {
+    Modal,
+    Pressable,
+    ScrollView,
+    StyleSheet,
+    Text,
+    View,
+} from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useNotifications } from '../context/NotificationContext';
+import { useTheme } from '../context/ThemeContext';
+import { yandexAuth } from '../services/yandex/AuthService';
+
+interface MenuModalProps {
+    visible: boolean;
+    onClose: () => void;
+}
+
+export const MenuModal = ({ visible, onClose }: MenuModalProps) => {
+    const { theme, themeType, setTheme } = useTheme();
+    const { unreadMessagesCount } = useNotifications();
+    const router = useRouter();
+    const insets = useSafeAreaInsets();
+    const isLight = themeType === 'light';
+
+    const handleLogout = async () => {
+        try {
+            await yandexAuth.logout();
+            onClose();
+            router.replace('/(auth)');
+        } catch (error) {
+            console.error('Logout error:', error);
+        }
+    };
+
+    const handleNavigation = (path: string) => {
+        onClose();
+        router.push(path as any);
+    };
+
+    return (
+        <Modal
+            visible={visible}
+            transparent
+            animationType="slide"
+            onRequestClose={onClose}
+        >
+            <Pressable style={styles.backdrop} onPress={onClose}>
+                <Pressable
+                    style={[
+                        styles.menuContainer,
+                        {
+                            backgroundColor: theme.background,
+                            paddingBottom: insets.bottom + 20,
+                        }
+                    ]}
+                    onPress={(e) => e.stopPropagation()}
+                >
+                    {/* Header */}
+                    <View style={styles.header}>
+                        <Text style={[styles.headerTitle, { color: theme.text }]}>Меню</Text>
+                        <Pressable onPress={onClose} style={styles.closeButton}>
+                            <Ionicons name="close" size={24} color={theme.text} />
+                        </Pressable>
+                    </View>
+
+                    {/* Menu Items */}
+                    <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
+                        {/* Edit Profile */}
+                        <Pressable
+                            style={[styles.menuItem, { backgroundColor: theme.cardBg }]}
+                            onPress={() => handleNavigation('/profile/edit')}
+                        >
+                            <View style={[styles.iconContainer, { backgroundColor: isLight ? '#f0f0f0' : 'rgba(255,255,255,0.1)' }]}>
+                                <Ionicons name="create-outline" size={24} color={theme.text} />
+                            </View>
+                            <View style={styles.menuTextContainer}>
+                                <Text style={[styles.menuText, { color: theme.text }]}>Редактировать профиль</Text>
+                                <Text style={[styles.menuSubtext, { color: theme.subText }]}>Изменить фото и информацию</Text>
+                            </View>
+                            <Ionicons name="chevron-forward" size={20} color={theme.subText} />
+                        </Pressable>
+
+                        {/* Notifications */}
+                        <Pressable
+                            style={[styles.menuItem, { backgroundColor: theme.cardBg }]}
+                            onPress={() => handleNavigation('/notifications')}
+                        >
+                            <View style={[styles.iconContainer, { backgroundColor: isLight ? '#f0f0f0' : 'rgba(255,255,255,0.1)' }]}>
+                                <Ionicons name="notifications-outline" size={24} color={theme.text} />
+                                {unreadMessagesCount > 0 && (
+                                    <View style={styles.badge}>
+                                        <Text style={styles.badgeText}>{unreadMessagesCount > 99 ? '99+' : unreadMessagesCount}</Text>
+                                    </View>
+                                )}
+                            </View>
+                            <View style={styles.menuTextContainer}>
+                                <Text style={[styles.menuText, { color: theme.text }]}>Уведомления</Text>
+                                <Text style={[styles.menuSubtext, { color: theme.subText }]}>Активность и новости</Text>
+                            </View>
+                            <Ionicons name="chevron-forward" size={20} color={theme.subText} />
+                        </Pressable>
+
+                        {/* Theme Settings */}
+                        <View style={[styles.menuItem, { backgroundColor: theme.cardBg }]}>
+                            <View style={[styles.iconContainer, { backgroundColor: isLight ? '#f0f0f0' : 'rgba(255,255,255,0.1)' }]}>
+                                <Ionicons name="color-palette-outline" size={24} color={theme.text} />
+                            </View>
+                            <View style={styles.menuTextContainer}>
+                                <Text style={[styles.menuText, { color: theme.text }]}>Оформление</Text>
+                                <Text style={[styles.menuSubtext, { color: theme.subText }]}>Выберите тему приложения</Text>
+                            </View>
+                        </View>
+
+                        {/* Theme Options */}
+                        <View style={styles.themeOptions}>
+                            <Pressable
+                                style={[
+                                    styles.themeOption,
+                                    { backgroundColor: theme.cardBg },
+                                    themeType === 'light' && styles.themeOptionActive
+                                ]}
+                                onPress={() => setTheme('light')}
+                            >
+                                <Ionicons name="sunny" size={20} color={themeType === 'light' ? '#FFD700' : theme.subText} />
+                                <Text style={[styles.themeOptionText, { color: themeType === 'light' ? theme.text : theme.subText }]}>
+                                    Светлая
+                                </Text>
+                            </Pressable>
+
+                            <Pressable
+                                style={[
+                                    styles.themeOption,
+                                    { backgroundColor: theme.cardBg },
+                                    themeType === 'space' && styles.themeOptionActive
+                                ]}
+                                onPress={() => setTheme('space')}
+                            >
+                                <Ionicons name="moon" size={20} color={themeType === 'space' ? '#9D84FF' : theme.subText} />
+                                <Text style={[styles.themeOptionText, { color: themeType === 'space' ? theme.text : theme.subText }]}>
+                                    Space
+                                </Text>
+                            </Pressable>
+
+                            <Pressable
+                                style={[
+                                    styles.themeOption,
+                                    { backgroundColor: theme.cardBg },
+                                    themeType === 'aura' && styles.themeOptionActive
+                                ]}
+                                onPress={() => setTheme('aura')}
+                            >
+                                <Ionicons name="sparkles" size={20} color={themeType === 'aura' ? '#FF6B9D' : theme.subText} />
+                                <Text style={[styles.themeOptionText, { color: themeType === 'aura' ? theme.text : theme.subText }]}>
+                                    Aura
+                                </Text>
+                            </Pressable>
+                        </View>
+
+                        {/* Logout */}
+                        <Pressable
+                            style={[styles.menuItem, styles.logoutItem, { backgroundColor: theme.cardBg }]}
+                            onPress={handleLogout}
+                        >
+                            <View style={[styles.iconContainer, { backgroundColor: 'rgba(255,59,48,0.1)' }]}>
+                                <Ionicons name="log-out-outline" size={24} color="#FF3B30" />
+                            </View>
+                            <View style={styles.menuTextContainer}>
+                                <Text style={[styles.menuText, { color: '#FF3B30' }]}>Выйти</Text>
+                                <Text style={[styles.menuSubtext, { color: theme.subText }]}>Выход из аккаунта</Text>
+                            </View>
+                        </Pressable>
+                    </ScrollView>
+                </Pressable>
+            </Pressable>
+        </Modal>
+    );
+};
+
+const styles = StyleSheet.create({
+    backdrop: {
+        flex: 1,
+        backgroundColor: 'rgba(0, 0, 0, 0.5)',
+        justifyContent: 'flex-end',
+    },
+    menuContainer: {
+        borderTopLeftRadius: 24,
+        borderTopRightRadius: 24,
+        paddingTop: 20,
+        maxHeight: '80%',
+    },
+    header: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        paddingHorizontal: 20,
+        paddingBottom: 15,
+    },
+    headerTitle: {
+        fontSize: 24,
+        fontWeight: '600',
+    },
+    closeButton: {
+        padding: 4,
+    },
+    scrollView: {
+        paddingHorizontal: 20,
+    },
+    menuItem: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        padding: 16,
+        borderRadius: 16,
+        marginBottom: 12,
+    },
+    iconContainer: {
+        width: 48,
+        height: 48,
+        borderRadius: 24,
+        justifyContent: 'center',
+        alignItems: 'center',
+        marginRight: 12,
+        position: 'relative',
+    },
+    badge: {
+        position: 'absolute',
+        top: -4,
+        right: -4,
+        backgroundColor: '#FF3B30',
+        borderRadius: 10,
+        minWidth: 20,
+        height: 20,
+        justifyContent: 'center',
+        alignItems: 'center',
+        paddingHorizontal: 6,
+    },
+    badgeText: {
+        color: '#fff',
+        fontSize: 11,
+        fontWeight: '600',
+    },
+    menuTextContainer: {
+        flex: 1,
+    },
+    menuText: {
+        fontSize: 16,
+        fontWeight: '500',
+        marginBottom: 2,
+    },
+    menuSubtext: {
+        fontSize: 13,
+    },
+    themeOptions: {
+        flexDirection: 'row',
+        gap: 8,
+        marginBottom: 12,
+        paddingHorizontal: 4,
+    },
+    themeOption: {
+        flex: 1,
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'center',
+        padding: 12,
+        borderRadius: 12,
+        gap: 6,
+    },
+    themeOptionActive: {
+        borderWidth: 2,
+        borderColor: '#4A9EFF',
+    },
+    themeOptionText: {
+        fontSize: 14,
+        fontWeight: '500',
+    },
+    logoutItem: {
+        marginTop: 8,
+    },
+});

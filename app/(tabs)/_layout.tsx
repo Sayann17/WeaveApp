@@ -2,12 +2,14 @@
 import { Ionicons } from '@expo/vector-icons';
 import { Tabs } from 'expo-router';
 import { Text, View } from 'react-native';
+import { useMenu } from '../context/MenuContext';
 import { useNotifications } from '../context/NotificationContext';
 import { useTheme } from '../context/ThemeContext';
 
 export default function TabLayout() {
   const { theme, themeType } = useTheme();
   const { unreadMessagesCount, newLikesCount } = useNotifications();
+  const { openMenu } = useMenu();
   const isLight = themeType === 'light';
 
   // Helper to render icon with optional badge
@@ -29,7 +31,7 @@ export default function TabLayout() {
           position: 'absolute',
           right: -6,
           top: -3,
-          backgroundColor: '#e1306c', // Instagram badge color
+          backgroundColor: '#e1306c',
           borderRadius: 10,
           minWidth: 16,
           height: 16,
@@ -37,7 +39,7 @@ export default function TabLayout() {
           alignItems: 'center',
           borderWidth: 1.5,
           borderColor: theme.background,
-          zIndex: 10, // 🔥 На всякий случай
+          zIndex: 10,
         }}>
           <Text style={{
             color: 'white',
@@ -59,7 +61,6 @@ export default function TabLayout() {
         tabBarStyle: {
           backgroundColor: theme.background,
           borderTopColor: isLight ? theme.border : '#1a1a1a',
-          // Optional: Add shadow/elevation for better look
           elevation: 0,
           borderTopWidth: 1,
         },
@@ -73,7 +74,7 @@ export default function TabLayout() {
           tabBarIcon: ({ color, size }) => (
             <TabIconWithBadge name="home" size={size} color={color} />
           ),
-          href: null, // Hide from tab bar
+          href: null,
         }}
       />
       <Tabs.Screen
@@ -90,7 +91,6 @@ export default function TabLayout() {
         options={{
           title: 'Чаты',
           tabBarIcon: ({ color, size }) => (
-            // 🔥 Badge for Unread Messages
             <TabIconWithBadge name="chatbubble-ellipses" size={size} color={color} badgeCount={unreadMessagesCount} />
           ),
         }}
@@ -100,7 +100,6 @@ export default function TabLayout() {
         options={{
           title: 'Мэтчи',
           tabBarIcon: ({ color, size }) => (
-            // 🔥 Badge for New Likes (Matches incoming)
             <TabIconWithBadge name="heart" size={size} color={color} badgeCount={newLikesCount} />
           ),
         }}
@@ -121,6 +120,13 @@ export default function TabLayout() {
           tabBarIcon: ({ color, size }) => (
             <TabIconWithBadge name="menu" size={size} color={color} />
           ),
+          href: null,
+        }}
+        listeners={{
+          tabPress: (e) => {
+            e.preventDefault();
+            openMenu();
+          },
         }}
       />
     </Tabs>
