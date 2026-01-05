@@ -148,7 +148,7 @@ async function handleDisconnect(driver, connectionId) {
 
 async function handleMessage(driver, event, connectionId) {
     const body = JSON.parse(event.body);
-    const { action, chatId, text, recipientId } = body;
+    const { action, chatId, text, recipientId, replyToId, messageId } = body;
 
     if (action === 'sendMessage') {
         console.log('[WS] Sending message from:', connectionId, 'to chatId:', chatId);
@@ -158,7 +158,7 @@ async function handleMessage(driver, event, connectionId) {
             return { statusCode: 403 };
         }
 
-        const messageId = uuidv4();
+        const newMessageId = uuidv4();
         const timestamp = new Date();
 
         // 1. Save to database
@@ -171,35 +171,38 @@ async function handleMessage(driver, event, connectionId) {
                 DECLARE $timestamp AS Timestamp;
                 DECLARE $isRead AS Bool;
                 DECLARE $type AS Utf8;
+                DECLARE $replyToId AS Utf8;
 
-                INSERT INTO messages (id, chat_id, sender_id, text, timestamp, is_read, type)
-                VALUES ($id, $chatId, $senderId, $text, $timestamp, $isRead, $type);
+                INSERT INTO messages (id, chat_id, sender_id, text, timestamp, is_read, type, reply_to_id)
+                VALUES ($id, $chatId, $senderId, $text, $timestamp, $isRead, $type, $replyToId);
 
                 UPDATE chats SET last_message = $text, last_message_time = $timestamp
                 WHERE id = $chatId;
             `;
             await session.executeQuery(query, {
-                '$id': TypedValues.utf8(messageId),
+                '$id': TypedValues.utf8(newMessageId),
                 '$chatId': TypedValues.utf8(chatId),
                 '$senderId': TypedValues.utf8(userId),
                 '$text': TypedValues.utf8(text),
                 '$timestamp': TypedValues.timestamp(timestamp),
                 '$isRead': TypedValues.bool(false),
-                '$type': TypedValues.utf8('text')
+                '$type': TypedValues.utf8('text'),
+                '$replyToId': TypedValues.utf8(replyToId || '') // Handle null/undefined
             });
         });
-        console.log('[WS] Message saved to YDB:', messageId);
+        console.log('[WS] Message saved to YDB:', newMessageId);
 
         // 2. Broadcast to sender and recipient if online
         const messageEvent = {
             type: 'newMessage',
             message: {
-                id: messageId,
+                id: newMessageId,
                 chatId,
                 text,
                 senderId: userId,
                 timestamp,
-                type: 'text'
+                type: 'text',
+                replyToId: replyToId || null
             }
         };
 
@@ -216,7 +219,62 @@ async function handleMessage(driver, event, connectionId) {
         if (!recipientConnectionId) {
             await sendMessageNotification(driver, userId, recipientId, text);
         }
+    } else if (action === 'editMessage') {
+        return await handleEditMessage(driver, connectionId, chatId, messageId, text, recipientId);
     }
+    return { statusCode: 200 };
+}
+
+async function handleEditMessage(driver, connectionId, chatId, messageId, newText, recipientId) {
+    console.log('[WS] Editing message:', messageId, 'from:', connectionId);
+    const userId = await getUserIdByConnection(driver, connectionId);
+    if (!userId) return { statusCode: 403 };
+
+    const timestamp = new Date();
+
+    // Verify ownership and update
+    await driver.tableClient.withSession(async (session) => {
+        // We do this in one transaction ideally, or check then update. 
+        // For YDB simple query: check sender_id match
+        const query = `
+            DECLARE $id AS Utf8;
+            DECLARE $chatId AS Utf8;
+            DECLARE $senderId AS Utf8;
+            DECLARE $text AS Utf8;
+            DECLARE $editedAt AS Timestamp;
+
+            -- Only update if sender matches (security)
+            UPDATE messages 
+            SET text = $text, is_edited = true, edited_at = $editedAt
+            WHERE id = $id AND chat_id = $chatId AND sender_id = $senderId;
+        `;
+        await session.executeQuery(query, {
+            '$id': TypedValues.utf8(messageId),
+            '$chatId': TypedValues.utf8(chatId),
+            '$senderId': TypedValues.utf8(userId),
+            '$text': TypedValues.utf8(newText),
+            '$editedAt': TypedValues.timestamp(timestamp)
+        });
+    });
+
+    const editEvent = {
+        type: 'messageEdited',
+        message: {
+            id: messageId,
+            chatId,
+            text: newText,
+            senderId: userId, // needed?
+            editedAt: timestamp
+        }
+    };
+
+    // Broadcast update
+    await sendToConnection(connectionId, editEvent);
+    const recipientConn = await getConnectionIdByUserId(driver, recipientId);
+    if (recipientConn) {
+        await sendToConnection(recipientConn, editEvent);
+    }
+
     return { statusCode: 200 };
 }
 
@@ -357,7 +415,20 @@ async function getHistory(driver, requestHeaders, chatId, responseHeaders) {
         const { resultSets } = await session.executeQuery(query, {
             '$chatId': TypedValues.utf8(chatId)
         });
-        messages = TypedData.createNativeObjects(resultSets[0]);
+        const getVal = (obj, key) => obj[key.toLowerCase()] || obj[key.charAt(0).toUpperCase() + key.slice(1)] || obj[key];
+
+        messages = TypedData.createNativeObjects(resultSets[0]).map(m => ({
+            id: getVal(m, 'id'),
+            chat_id: getVal(m, 'chat_id'),
+            sender_id: getVal(m, 'sender_id'),
+            text: getVal(m, 'text'),
+            timestamp: getVal(m, 'timestamp'),
+            is_read: getVal(m, 'is_read'),
+            type: getVal(m, 'type'),
+            replyToId: getVal(m, 'reply_to_id') || null, // Map new field
+            isEdited: !!getVal(m, 'is_edited'),           // Map new field
+            editedAt: getVal(m, 'edited_at') || null      // Map new field
+        }));
     });
     return { statusCode: 200, headers: responseHeaders, body: JSON.stringify({ messages }) };
 }

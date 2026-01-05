@@ -8,7 +8,7 @@ import {
   Image,
   KeyboardAvoidingView,
   Platform,
-  Pressable, // Added FlatList
+  Pressable,
   StatusBar,
   StyleSheet,
   Text,
@@ -38,11 +38,14 @@ export default function ChatScreen() {
   const [isLoading, setIsLoading] = useState(true);
   const [isSending, setIsSending] = useState(false);
   const [error, setError] = useState<string>('');
-  const [keyboardVisible, setKeyboardVisible] = useState(false);
+  const [replyingTo, setReplyingTo] = useState<Message | null>(null);
+  const [editingMessage, setEditingMessage] = useState<Message | null>(null);
+
   const flatListRef = useRef<FlatList>(null);
   const router = useRouter();
   const { setBackButtonHandler, showBackButton, hideBackButton, isMobile } = useTelegram();
 
+  // ... (useEffects for params, participant, history remain same) ...
   // Проверка параметров
   useEffect(() => {
     if (!participantId || typeof participantId !== 'string' || !chatId || typeof chatId !== 'string') {
@@ -76,7 +79,6 @@ export default function ChatScreen() {
   useEffect(() => {
     if (!chatId || typeof chatId !== 'string') return;
 
-    // Ensure WebSocket is connected
     yandexChat.connect().catch(console.error);
 
     const loadHistory = async () => {
@@ -94,57 +96,34 @@ export default function ChatScreen() {
 
     loadHistory();
 
-    const unsubscribe = yandexChat.onMessage((msg) => {
-      console.log('[Chat] 🔔 WebSocket message received:', {
-        messageId: msg.id,
-        chatId: msg.chatId,
-        currentChatId: chatId,
-        senderId: msg.senderId,
-        text: msg.text.substring(0, 30)
-      });
-
+    const unsubscribe = yandexChat.onMessage((msg, eventType) => {
       if (msg.chatId === chatId) {
-        console.log('[Chat] ✅ Message matches current chat, updating UI');
         setMessages(prev => {
-          // 1. Check if we already have this exact message ID
-          if (prev.some(m => m.id === msg.id)) {
-            console.log('[Chat] ⚠️ Duplicate message, skipping');
-            return prev;
+          if (eventType === 'messageEdited') {
+            // Update existing message
+            return prev.map(m => m.id === msg.id ? { ...m, ...msg, text: msg.text, isEdited: true, editedAt: msg.editedAt } : m);
           }
 
-          // 2. If it's my message, try to find and replace the optimistic "temp" message
+          // New Message Logic
+          if (prev.some(m => m.id === msg.id)) return prev;
+
+          // Optimistic replacement logic
           const myId = yandexAuth.getCurrentUser()?.uid;
           if (msg.senderId === myId) {
             const tempIndex = prev.findIndex(m =>
               m.id.startsWith('temp-') &&
-              m.text === msg.text &&
-              Math.abs(m.timestamp.getTime() - msg.timestamp.getTime()) < 30000 // 30 sec window
+              m.text === msg.text // simplistic check
             );
-
             if (tempIndex !== -1) {
-              console.log('[Chat] 🔄 Replacing temp message with real one');
               const newMessages = [...prev];
-              newMessages[tempIndex] = msg; // Replace temp with real
+              newMessages[tempIndex] = msg;
               return newMessages;
             }
           }
-
-          // 3. New message from other user or no temp found
-          console.log('[Chat] ➕ Adding new message to list');
-          const newMessages = [...prev, msg];
-          return newMessages.sort((a, b) => a.timestamp.getTime() - b.timestamp.getTime());
+          return [...prev, msg].sort((a, b) => a.timestamp.getTime() - b.timestamp.getTime());
         });
-        // With inverted list, new messages are at index 0 (bottom).
-        // FlatList usually auto-updates correctly. 
-        // If we want to force scroll to bottom (which is top of inverted list):
-        // setTimeout(() => flatListRef.current?.scrollToOffset({ offset: 0, animated: true }), 100);
-      } else {
-        console.log('[Chat] ⚠️ Message for different chat, ignoring');
       }
     });
-
-    // Keyboard handling is automatic with KeyboardAvoidingView + Inverted FlatList
-    // We don't need manual listeners usually.
 
     return () => {
       unsubscribe();
@@ -155,9 +134,8 @@ export default function ChatScreen() {
   useEffect(() => {
     showBackButton();
     setBackButtonHandler(() => {
-      router.back(); // Navigate back to chats list
+      router.back();
     });
-
     return () => {
       hideBackButton();
       setBackButtonHandler(null);
@@ -171,7 +149,29 @@ export default function ChatScreen() {
     if (!currentUser) return;
 
     const text = newMessage.trim();
+
+    // Clear Input
     setNewMessage('');
+
+    if (editingMessage) {
+      // Handle Edit
+      const updatedMsg = { ...editingMessage, text: text, isEdited: true, editedAt: new Date() };
+      setMessages(prev => prev.map(m => m.id === editingMessage.id ? updatedMsg : m));
+      setEditingMessage(null);
+
+      try {
+        await yandexChat.editMessage(chatId as string, editingMessage.id, text, participantId);
+      } catch (e) {
+        console.error(e);
+        Alert.alert('Error', 'Failed to edit message');
+        // Revert?
+      }
+      return;
+    }
+
+    // Handle Send (Reply or Normal)
+    const replyId = replyingTo ? replyingTo.id : undefined;
+    setReplyingTo(null);
 
     // Optimistic Update
     const tempId = `temp-${Date.now()}`;
@@ -181,25 +181,57 @@ export default function ChatScreen() {
       text,
       senderId: currentUser.uid,
       timestamp: new Date(),
-      type: 'text'
+      type: 'text',
+      replyToId: replyId
     };
 
     setMessages(prev => [...prev, optimisticMessage]);
-
-    // Scroll to bottom (start of inverted list)
-    // flatListRef.current?.scrollToOffset({ offset: 0, animated: true });
-
     setIsSending(true);
+
     try {
-      await yandexChat.sendMessage(chatId as string, text, participantId);
+      await yandexChat.sendMessage(chatId as string, text, participantId, replyId);
     } catch (error: any) {
-      // Remove optimistic message on error
       setMessages(prev => prev.filter(m => m.id !== tempId));
-      setNewMessage(text); // Restore text
+      setNewMessage(text);
       Alert.alert('Ошибка', 'Не удалось отправить сообщение');
     } finally {
       setIsSending(false);
     }
+  };
+
+  const onMessageLongPress = (item: Message) => {
+    const isMine = isMyMessage(item);
+    const options = ['Ответить'];
+    if (isMine) options.push('Редактировать');
+    options.push('Отмена');
+
+    const handleAction = (index: number) => {
+      if (index === 0) { // Reply
+        setReplyingTo(item);
+        setEditingMessage(null);
+      } else if (index === 1 && isMine) { // Edit
+        setEditingMessage(item);
+        setReplyingTo(null);
+        setNewMessage(item.text);
+      }
+    };
+
+    // Use ActionSheet for iOS/Native look if possible, else Alert
+    Alert.alert(
+      'Действия',
+      undefined,
+      [
+        { text: 'Ответить', onPress: () => handleAction(0) },
+        isMine ? { text: 'Редактировать', onPress: () => handleAction(1) } : null,
+        { text: 'Отмена', style: 'cancel' }
+      ].filter(Boolean) as any
+    );
+  };
+
+  const cancelAction = () => {
+    setReplyingTo(null);
+    setEditingMessage(null);
+    setNewMessage('');
   };
 
   const formatMessageTime = (date: Date) => {
@@ -218,9 +250,13 @@ export default function ChatScreen() {
     }
 
     const isMine = isMyMessage(item);
+    // Find replied message if exists
+    const repliedMsg = item.replyToId ? messages.find(m => m.id === item.replyToId) : null;
 
     return (
-      <View
+      <Pressable
+        onLongPress={() => onMessageLongPress(item)}
+        delayLongPress={200}
         key={item.id}
         style={[
           styles.messageContainer,
@@ -233,20 +269,35 @@ export default function ChatScreen() {
           isMine ? styles.myBubble : styles.theirBubble,
           !isMine && { borderWidth: 1, borderColor: theme.border }
         ]}>
+          {/* Reply Preview */}
+          {repliedMsg && (
+            <View style={[styles.replyPreview, { borderLeftColor: theme.accent }]}>
+              <Text style={[styles.replySender, { color: theme.accent }]}>
+                {isMyMessage(repliedMsg) ? 'Вы' : (participant?.name || 'Собеседник')}
+              </Text>
+              <Text style={[styles.replyText, { color: theme.subText }]} numberOfLines={1}>
+                {repliedMsg.text}
+              </Text>
+            </View>
+          )}
+
           <Text style={[
             styles.messageText,
             isMine ? styles.myMessageText : { color: theme.text }
           ]}>
             {item.text}
           </Text>
-          <Text style={[
-            styles.messageTime,
-            isMine ? styles.myMessageTime : { color: theme.subText }
-          ]}>
-            {formatMessageTime(item.timestamp)}
-          </Text>
+          <View style={styles.metaContainer}>
+            {item.isEdited && <Text style={[styles.editedLabel, { color: isMine ? 'rgba(255,255,255,0.6)' : theme.subText }]}>изм.</Text>}
+            <Text style={[
+              styles.messageTime,
+              isMine ? styles.myMessageTime : { color: theme.subText }
+            ]}>
+              {formatMessageTime(item.timestamp)}
+            </Text>
+          </View>
         </View>
-      </View>
+      </Pressable>
     );
   };
 
@@ -258,9 +309,6 @@ export default function ChatScreen() {
     );
   }
 
-  // Calculate Reversed Messages for Inverted List
-  // messages is sorted [Old -> New]
-  // Inverted List wants [New -> Old] at indices [0, 1, 2...] which render at Bottom -> Top
   const invertedMessages = [...messages].reverse();
 
   return (
@@ -308,22 +356,24 @@ export default function ChatScreen() {
               keyboardDismissMode="interactive"
               keyboardShouldPersistTaps="handled"
               showsVerticalScrollIndicator={false}
-              ListEmptyComponent={
-                <View style={[styles.emptyChat, { transform: [{ scaleY: -1 }] }]}>
-                  {/* Inverted list flips the component, so we flip it back if needed, 
-                       but ListEmptyComponent in inverted list renders at top? 
-                       Actually inverted list renders items starting from bottom.
-                       Empty component might behave normally. Let's start without transform. 
-                       Wait, inverted flatlist flips the coordinate system. 
-                   */}
-                  <View style={{ transform: [{ scaleY: -1 }] }}>
-                    <Text style={[styles.emptyChatText, { color: theme.subText }]}>
-                      Начните общение ✨{'\n'}Первое слово важнее всего.
-                    </Text>
-                  </View>
-                </View>
-              }
             />
+
+            {/* ACTION BANNER (Reply/Edit) */}
+            {(replyingTo || editingMessage) && (
+              <View style={[styles.actionBanner, { backgroundColor: theme.cardBg, borderColor: theme.border }]}>
+                <View style={styles.actionInfo}>
+                  <Text style={[styles.actionTitle, { color: theme.accent }]}>
+                    {editingMessage ? 'Редактирование' : `Ответ ${isMyMessage(replyingTo!) ? 'себе' : participant?.name}`}
+                  </Text>
+                  <Text style={[styles.actionText, { color: theme.subText }]} numberOfLines={1}>
+                    {editingMessage ? editingMessage.text : replyingTo!.text}
+                  </Text>
+                </View>
+                <Pressable onPress={cancelAction} style={styles.closeAction}>
+                  <Ionicons name="close" size={20} color={theme.subText} />
+                </Pressable>
+              </View>
+            )}
 
             {/* ПОЛЕ ВВОДА */}
             <View style={[styles.inputWrapper]}>
@@ -341,14 +391,14 @@ export default function ChatScreen() {
                 <Pressable
                   style={[
                     styles.sendButton,
-                    { backgroundColor: '#2a2a2a' },
+                    { backgroundColor: editingMessage ? theme.accent : '#2a2a2a' },
                     (!newMessage.trim() || isSending) && styles.sendButtonDisabled
                   ]}
                   onPress={handleSendMessage}
                   disabled={!newMessage.trim() || isSending}
                 >
                   <Ionicons
-                    name="arrow-up"
+                    name={editingMessage ? "checkmark" : "arrow-up"}
                     size={20}
                     color="#ffffff"
                   />
@@ -372,7 +422,6 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
     borderBottomWidth: 1,
   },
-  backButton: { padding: 5 },
   participantInfo: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -401,7 +450,6 @@ const styles = StyleSheet.create({
 
   // CHAT AREA
   chatContainer: { flex: 1 },
-  // messagesList: { flex: 1 }, // Removed
   messagesContent: { padding: 15, paddingBottom: 20 },
 
   // MESSAGES
@@ -424,9 +472,19 @@ const styles = StyleSheet.create({
   messageText: { fontSize: 16, lineHeight: 22 },
   myMessageText: { color: '#ffffff' },
 
-  messageTime: { fontSize: 11, marginTop: 4, textAlign: 'right' },
+  metaContainer: { flexDirection: 'row', justifyContent: 'flex-end', marginTop: 4, alignItems: 'center' },
+  messageTime: { fontSize: 11, textAlign: 'right' },
   myMessageTime: { color: 'rgba(255,255,255,0.6)' },
-  readStatus: { fontSize: 10 },
+  editedLabel: { fontSize: 10, marginRight: 4 },
+
+  replyPreview: {
+    borderLeftWidth: 2,
+    paddingLeft: 8,
+    marginBottom: 8,
+    opacity: 0.8
+  },
+  replySender: { fontWeight: '600', fontSize: 12, marginBottom: 2 },
+  replyText: { fontSize: 12 },
 
   systemMessageContainer: { alignItems: 'center', marginVertical: 15 },
   systemMessageText: {
@@ -437,8 +495,18 @@ const styles = StyleSheet.create({
     borderRadius: 10,
   },
 
-  emptyChat: { flex: 1, alignItems: 'center', justifyContent: 'center', height: 400 },
-  emptyChatText: { textAlign: 'center', lineHeight: 22 },
+  // ACTION BANNER
+  actionBanner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 10,
+    borderTopWidth: 1,
+    borderBottomWidth: 1,
+  },
+  actionInfo: { flex: 1, paddingRight: 10 },
+  actionTitle: { fontWeight: '600', fontSize: 12, marginBottom: 2 },
+  actionText: { fontSize: 12 },
+  closeAction: { padding: 5 },
 
   // INPUT
   inputWrapper: {
