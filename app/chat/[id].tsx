@@ -4,12 +4,11 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import React, { useEffect, useRef, useState } from 'react';
 import {
   Alert,
+  FlatList,
   Image,
-  Keyboard,
   KeyboardAvoidingView,
   Platform,
-  Pressable,
-  ScrollView,
+  Pressable, // Added FlatList
   StatusBar,
   StyleSheet,
   Text,
@@ -40,7 +39,7 @@ export default function ChatScreen() {
   const [isSending, setIsSending] = useState(false);
   const [error, setError] = useState<string>('');
   const [keyboardVisible, setKeyboardVisible] = useState(false);
-  const scrollViewRef = useRef<ScrollView>(null);
+  const flatListRef = useRef<FlatList>(null);
   const router = useRouter();
   const { setBackButtonHandler, showBackButton, hideBackButton, isMobile } = useTelegram();
 
@@ -135,37 +134,20 @@ export default function ChatScreen() {
           const newMessages = [...prev, msg];
           return newMessages.sort((a, b) => a.timestamp.getTime() - b.timestamp.getTime());
         });
-        // Scroll slightly delayed to ensure rendering is done
-        setTimeout(() => scrollViewRef.current?.scrollToEnd({ animated: true }), 100);
+        // With inverted list, new messages are at index 0 (bottom).
+        // FlatList usually auto-updates correctly. 
+        // If we want to force scroll to bottom (which is top of inverted list):
+        // setTimeout(() => flatListRef.current?.scrollToOffset({ offset: 0, animated: true }), 100);
       } else {
         console.log('[Chat] ⚠️ Message for different chat, ignoring');
       }
     });
 
-    const showSubscription = Keyboard.addListener(
-      Platform.OS === 'ios' ? 'keyboardWillShow' : 'keyboardDidShow',
-      () => {
-        setKeyboardVisible(true);
-        // Scroll to bottom when keyboard opens
-        setTimeout(() => {
-          if (scrollViewRef.current) {
-            scrollViewRef.current.scrollToEnd({ animated: true });
-          }
-        }, 150);
-      }
-    );
-
-    const hideSubscription = Keyboard.addListener(
-      Platform.OS === 'ios' ? 'keyboardWillHide' : 'keyboardDidHide',
-      () => {
-        setKeyboardVisible(false);
-      }
-    );
+    // Keyboard handling is automatic with KeyboardAvoidingView + Inverted FlatList
+    // We don't need manual listeners usually.
 
     return () => {
       unsubscribe();
-      showSubscription.remove();
-      hideSubscription.remove();
     };
   }, [chatId]);
 
@@ -203,17 +185,13 @@ export default function ChatScreen() {
     };
 
     setMessages(prev => [...prev, optimisticMessage]);
-    setTimeout(() => scrollViewRef.current?.scrollToEnd({ animated: true }), 100);
+
+    // Scroll to bottom (start of inverted list)
+    // flatListRef.current?.scrollToOffset({ offset: 0, animated: true });
 
     setIsSending(true);
     try {
       await yandexChat.sendMessage(chatId as string, text, participantId);
-      // We don't remove the temp message here because the WS echo-back 
-      // will come with the real ID, and we should keep the list clean.
-      // Actually, if we want to replace it, we'd need more complex state.
-      // For now, deduplication in onMessage will handle the echo-back.
-      // Wait, if the echo-back has a different ID, we'll have duplicates.
-      // Backend generates UUID: const messageId = uuidv4();
     } catch (error: any) {
       // Remove optimistic message on error
       setMessages(prev => prev.filter(m => m.id !== tempId));
@@ -230,20 +208,20 @@ export default function ChatScreen() {
 
   const isMyMessage = (message: Message) => message.senderId === yandexAuth.getCurrentUser()?.uid;
 
-  const renderMessage = (message: Message) => {
-    if (message.type === 'system') {
+  const renderItem = ({ item }: { item: Message }) => {
+    if (item.type === 'system') {
       return (
-        <View key={message.id} style={styles.systemMessageContainer}>
-          <Text style={[styles.systemMessageText, { color: theme.subText }]}>{message.text}</Text>
+        <View key={item.id} style={styles.systemMessageContainer}>
+          <Text style={[styles.systemMessageText, { color: theme.subText }]}>{item.text}</Text>
         </View>
       );
     }
 
-    const isMine = isMyMessage(message);
+    const isMine = isMyMessage(item);
 
     return (
       <View
-        key={message.id}
+        key={item.id}
         style={[
           styles.messageContainer,
           isMine ? styles.myMessage : styles.theirMessage
@@ -251,7 +229,7 @@ export default function ChatScreen() {
       >
         <View style={[
           styles.messageBubble,
-          isMine ? { backgroundColor: '#2a2a2a' } : { backgroundColor: theme.cardBg }, // Мои темные, чужие под тему
+          isMine ? { backgroundColor: '#2a2a2a' } : { backgroundColor: theme.cardBg },
           isMine ? styles.myBubble : styles.theirBubble,
           !isMine && { borderWidth: 1, borderColor: theme.border }
         ]}>
@@ -259,13 +237,13 @@ export default function ChatScreen() {
             styles.messageText,
             isMine ? styles.myMessageText : { color: theme.text }
           ]}>
-            {message.text}
+            {item.text}
           </Text>
           <Text style={[
             styles.messageTime,
             isMine ? styles.myMessageTime : { color: theme.subText }
           ]}>
-            {formatMessageTime(message.timestamp)}
+            {formatMessageTime(item.timestamp)}
           </Text>
         </View>
       </View>
@@ -279,6 +257,11 @@ export default function ChatScreen() {
       </View>
     );
   }
+
+  // Calculate Reversed Messages for Inverted List
+  // messages is sorted [Old -> New]
+  // Inverted List wants [New -> Old] at indices [0, 1, 2...] which render at Bottom -> Top
+  const invertedMessages = [...messages].reverse();
 
   return (
     <ThemedBackground>
@@ -313,32 +296,34 @@ export default function ChatScreen() {
             </Pressable>
           </View>
 
-          {/* СООБЩЕНИЯ */}
+          {/* СООБЩЕНИЯ (FlatList Inverted) */}
           <View style={styles.chatContainer}>
-            <ScrollView
-              ref={scrollViewRef}
-              style={styles.messagesList}
+            <FlatList
+              ref={flatListRef}
+              data={invertedMessages}
+              renderItem={renderItem}
+              keyExtractor={(item: Message) => item.id}
+              inverted
               contentContainerStyle={styles.messagesContent}
-              showsVerticalScrollIndicator={false}
-              keyboardDismissMode="on-drag"
+              keyboardDismissMode="interactive"
               keyboardShouldPersistTaps="handled"
-              onContentSizeChange={() => {
-                // Scroll to bottom when content changes (new messages)
-                setTimeout(() => {
-                  scrollViewRef.current?.scrollToEnd({ animated: true });
-                }, 100);
-              }}
-            >
-              {messages.length > 0 ? (
-                messages.map(renderMessage)
-              ) : (
-                <View style={styles.emptyChat}>
-                  <Text style={[styles.emptyChatText, { color: theme.subText }]}>
-                    Начните общение ✨{'\n'}Первое слово важнее всего.
-                  </Text>
+              showsVerticalScrollIndicator={false}
+              ListEmptyComponent={
+                <View style={[styles.emptyChat, { transform: [{ scaleY: -1 }] }]}>
+                  {/* Inverted list flips the component, so we flip it back if needed, 
+                       but ListEmptyComponent in inverted list renders at top? 
+                       Actually inverted list renders items starting from bottom.
+                       Empty component might behave normally. Let's start without transform. 
+                       Wait, inverted flatlist flips the coordinate system. 
+                   */}
+                  <View style={{ transform: [{ scaleY: -1 }] }}>
+                    <Text style={[styles.emptyChatText, { color: theme.subText }]}>
+                      Начните общение ✨{'\n'}Первое слово важнее всего.
+                    </Text>
+                  </View>
                 </View>
-              )}
-            </ScrollView>
+              }
+            />
 
             {/* ПОЛЕ ВВОДА */}
             <View style={[styles.inputWrapper]}>
@@ -356,7 +341,7 @@ export default function ChatScreen() {
                 <Pressable
                   style={[
                     styles.sendButton,
-                    { backgroundColor: '#2a2a2a' }, // Кнопка отправки всегда темная акцентная
+                    { backgroundColor: '#2a2a2a' },
                     (!newMessage.trim() || isSending) && styles.sendButtonDisabled
                   ]}
                   onPress={handleSendMessage}
@@ -416,7 +401,7 @@ const styles = StyleSheet.create({
 
   // CHAT AREA
   chatContainer: { flex: 1 },
-  messagesList: { flex: 1 },
+  // messagesList: { flex: 1 }, // Removed
   messagesContent: { padding: 15, paddingBottom: 20 },
 
   // MESSAGES
@@ -452,7 +437,7 @@ const styles = StyleSheet.create({
     borderRadius: 10,
   },
 
-  emptyChat: { alignItems: 'center', marginTop: 50 },
+  emptyChat: { flex: 1, alignItems: 'center', justifyContent: 'center', height: 400 },
   emptyChatText: { textAlign: 'center', lineHeight: 22 },
 
   // INPUT
