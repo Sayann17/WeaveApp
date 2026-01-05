@@ -84,6 +84,9 @@ export default function ChatsScreen() {
 
       loadChats();
 
+      // Ensure we are connected for real-time updates
+      yandexChat.connect().catch(console.error);
+
       // Real-time update listener
       const unsubscribe = yandexChat.onMessage((message) => {
         loadChats(); // Refresh on any new message

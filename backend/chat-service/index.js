@@ -9,14 +9,17 @@ const { sendLikeNotification, sendMatchNotifications, sendMessageNotification } 
 const JWT_SECRET = process.env.JWT_SECRET || 'dev-secret-key-change-me';
 
 module.exports.handler = async function (event, context) {
-    const { httpMethod, path, body, headers, requestContext } = event;
+    const { httpMethod, path, body, headers, requestContext, queryStringParameters } = event;
 
     // IMPORTANT: Keep this log to verify if the request reaches the function!
-    console.log('[DEBUG] Request received:', {
+    console.log('[DEBUG] Request received FULL EVENT:', JSON.stringify(event, null, 2));
+
+    console.log('[DEBUG] Request details:', {
         type: requestContext?.eventType || 'REST',
         path: path,
         method: httpMethod,
-        connectionId: requestContext?.connectionId
+        connectionId: requestContext?.connectionId,
+        queryParams: queryStringParameters
     });
 
     const responseHeaders = {
@@ -123,18 +126,24 @@ async function handleConnect(driver, event, connectionId) {
 }
 
 async function handleDisconnect(driver, connectionId) {
-    await driver.tableClient.withSession(async (session) => {
-        const query = `
-            DECLARE $connectionId AS Utf8;
-            DELETE FROM socket_connections WHERE connection_id = $connectionId;
-        `;
-        // Note: This might be slow if we don't have an index on connection_id.
-        // In a real production app, we'd store connection_id as a primary key or index it.
-        await session.executeQuery(query, {
-            '$connectionId': TypedValues.utf8(connectionId)
+    try {
+        await driver.tableClient.withSession(async (session) => {
+            const query = `
+                DECLARE $connectionId AS Utf8;
+                DELETE FROM socket_connections WHERE connection_id = $connectionId;
+            `;
+            // Note: This might be slow if we don't have an index on connection_id.
+            // In a real production app, we'd store connection_id as a primary key or index it.
+            await session.executeQuery(query, {
+                '$connectionId': TypedValues.utf8(connectionId)
+            });
         });
-    });
-    return { statusCode: 200 };
+        console.log('[WS] Disconnect successful for:', connectionId);
+        return { statusCode: 200 };
+    } catch (e) {
+        console.error('[WS] Disconnect error:', e);
+        return { statusCode: 200 }; // Return 200 even on error to not block gateway
+    }
 }
 
 async function handleMessage(driver, event, connectionId) {

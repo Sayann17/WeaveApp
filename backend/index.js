@@ -39,6 +39,8 @@ module.exports.handler = async function (event, context) {
     try {
         if (path === '/me' && httpMethod === 'GET') {
             return await me(driver, headers, responseHeaders);
+        } else if (path === '/me' && httpMethod === 'DELETE') {
+            return await deleteAccount(driver, headers, responseHeaders);
         } else if (path === '/profile' && httpMethod === 'POST') {
             return await updateProfile(driver, headers, JSON.parse(body), responseHeaders);
         } else if (path === '/telegram-login' && httpMethod === 'POST') {
@@ -119,7 +121,9 @@ async function updateProfile(driver, requestHeaders, data, headers) {
         'love_language': 'utf8',
         'family_memory': 'utf8',
         'stereotype_true': 'utf8',
-        'stereotype_false': 'utf8'
+        'stereotype_true': 'utf8',
+        'stereotype_false': 'utf8',
+        'is_visible': 'bool'
     };
 
     const updates = [];
@@ -134,7 +138,9 @@ async function updateProfile(driver, requestHeaders, data, headers) {
         'loveLanguage': 'love_language',
         'familyMemory': 'family_memory',
         'stereotypeTrue': 'stereotype_true',
-        'stereotypeFalse': 'stereotype_false'
+        'stereotypeTrue': 'stereotype_true',
+        'stereotypeFalse': 'stereotype_false',
+        'isVisible': 'is_visible'
     };
 
     // Explicitly handle each field to ensure types
@@ -156,6 +162,8 @@ async function updateProfile(driver, requestHeaders, data, headers) {
             updates.push(`${key} = $${key}`);
             if (type === 'uint32') {
                 params[`$${key}`] = TypedValues.uint32(parseInt(incomingValue) || 0);
+            } else if (type === 'bool') {
+                params[`$${key}`] = TypedValues.bool(Boolean(incomingValue));
             } else if (jsonFields.includes(key)) {
                 const value = typeof incomingValue === 'string' ? incomingValue : JSON.stringify(incomingValue);
                 params[`$${key}`] = TypedValues.utf8(value);
@@ -175,11 +183,38 @@ async function updateProfile(driver, requestHeaders, data, headers) {
     await driver.tableClient.withSession(async (session) => {
         const query = `
             DECLARE $id AS Utf8;
-            ${Object.keys(params).filter(k => k !== '$id').map(k => `DECLARE ${k} AS ${k === '$updated_at' ? 'Datetime' : allowedFields[k.substring(1)] === 'uint32' ? 'Uint32' : 'Utf8'};`).join('\n')}
+            ${Object.keys(params).filter(k => k !== '$id').map(k => `DECLARE ${k} AS ${k === '$updated_at' ? 'Datetime' : allowedFields[k.substring(1)] === 'uint32' ? 'Uint32' : allowedFields[k.substring(1)] === 'bool' ? 'Bool' : 'Utf8'};`).join('\n')}
             
             UPDATE users SET ${updates.join(', ')} WHERE id = $id;
         `;
         await session.executeQuery(query, params);
+    });
+
+    return { statusCode: 200, headers, body: JSON.stringify({ success: true }) };
+}
+
+async function deleteAccount(driver, requestHeaders, headers) {
+    const authHeader = requestHeaders['Authorization'] || requestHeaders['authorization'];
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+        return { statusCode: 401, headers, body: JSON.stringify({ error: 'No token provided' }) };
+    }
+    const token = authHeader.split(' ')[1];
+    let decoded;
+    try {
+        decoded = jwt.verify(token, JWT_SECRET);
+    } catch (e) {
+        return { statusCode: 401, headers, body: JSON.stringify({ error: 'Invalid token' }) };
+    }
+    const id = decoded.uid;
+
+    await driver.tableClient.withSession(async (session) => {
+        const query = `
+            DECLARE $id AS Utf8;
+            DELETE FROM users WHERE id = $id;
+        `;
+        await session.executeQuery(query, {
+            '$id': TypedValues.utf8(id)
+        });
     });
 
     return { statusCode: 200, headers, body: JSON.stringify({ success: true }) };
@@ -248,7 +283,9 @@ async function me(driver, requestHeaders, headers) {
             loveLanguage: user.love_language,
             familyMemory: user.family_memory,
             stereotypeTrue: user.stereotype_true,
-            stereotypeFalse: user.stereotype_false
+            stereotypeTrue: user.stereotype_true,
+            stereotypeFalse: user.stereotype_false,
+            isVisible: user.is_visible !== undefined ? user.is_visible : true
         };
 
         console.log('[/me] Returning user:', {

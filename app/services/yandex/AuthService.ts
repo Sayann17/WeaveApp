@@ -112,6 +112,25 @@ class YandexAuthService implements IAuthService {
         this._notifyListeners();
     }
 
+    async deleteAccount(): Promise<void> {
+        const token = await AsyncStorage.getItem('auth_token');
+        if (!token) throw new Error('Not authenticated');
+
+        const response = await fetch(`${API_URL}/me`, {
+            method: 'DELETE',
+            headers: {
+                'Authorization': `Bearer ${token}`
+            }
+        });
+
+        if (!response.ok) {
+            const data = await response.json().catch(() => ({}));
+            throw new Error(data.error || 'Failed to delete account');
+        }
+
+        await this.logout();
+    }
+
     onAuthStateChanged(callback: (user: User | null) => void): () => void {
         this._listeners.push(callback);
         // Immediate callback
@@ -173,7 +192,8 @@ class YandexAuthService implements IAuthService {
             photos: tryParse(user.photos),
             interests: tryParse(user.interests),
             religions: tryParse(user.religions || user.religion),
-            macroGroups: tryParse(user.macroGroups || user.macro_groups)
+            macroGroups: tryParse(user.macroGroups || user.macro_groups),
+            isVisible: user.isVisible
         };
     }
 }

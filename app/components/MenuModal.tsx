@@ -3,10 +3,12 @@ import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import React from 'react';
 import {
+    Alert,
     Modal,
     Pressable,
     ScrollView,
     StyleSheet,
+    Switch,
     Text,
     View,
 } from 'react-native';
@@ -24,6 +26,49 @@ export const MenuModal = ({ visible, onClose }: MenuModalProps) => {
     const router = useRouter();
     const insets = useSafeAreaInsets();
     const isLight = themeType === 'light';
+    const [isVisibleProfile, setIsVisibleProfile] = React.useState(true);
+
+    React.useEffect(() => {
+        if (visible) {
+            const user = yandexAuth.getCurrentUser();
+            setIsVisibleProfile(user?.isVisible ?? true);
+        }
+    }, [visible]);
+
+    const toggleVisibility = async (value: boolean) => {
+        setIsVisibleProfile(value);
+        try {
+            await yandexAuth.updateProfile({ isVisible: value });
+        } catch (error) {
+            console.error(error);
+            setIsVisibleProfile(!value);
+            Alert.alert('Ошибка', 'Не удалось обновить видимость профиля');
+        }
+    };
+
+    const handleDeleteAccount = () => {
+        Alert.alert(
+            'Удалить аккаунт',
+            'Вы уверены? Это действие нельзя отменить. Все ваши данные будут удалены.',
+            [
+                { text: 'Отмена', style: 'cancel' },
+                {
+                    text: 'Удалить',
+                    style: 'destructive',
+                    onPress: async () => {
+                        try {
+                            await yandexAuth.deleteAccount();
+                            onClose();
+                            router.replace('/(auth)');
+                        } catch (error) {
+                            console.error('Delete account error:', error);
+                            Alert.alert('Ошибка', 'Не удалось удалить аккаунт');
+                        }
+                    }
+                }
+            ]
+        );
+    };
 
     const handleLogout = async () => {
         try {
@@ -83,6 +128,27 @@ export const MenuModal = ({ visible, onClose }: MenuModalProps) => {
                             <Ionicons name="chevron-forward" size={20} color={theme.subText} />
                         </Pressable>
 
+                        {/* Visibility Toggle */}
+                        <View style={[styles.menuItem, { backgroundColor: theme.cardBg }]}>
+                            <View style={[styles.iconContainer, { backgroundColor: isLight ? '#f0f0f0' : 'rgba(255,255,255,0.1)' }]}>
+                                <Ionicons name={isVisibleProfile ? "eye-outline" : "eye-off-outline"} size={24} color={theme.text} />
+                            </View>
+                            <View style={styles.menuTextContainer}>
+                                <Text style={[styles.menuText, { color: theme.text }]}>
+                                    {isVisibleProfile ? 'Профиль виден' : 'Профиль скрыт'}
+                                </Text>
+                                <Text style={[styles.menuSubtext, { color: theme.subText }]}>
+                                    {isVisibleProfile ? 'Вас могут найти в поиске' : 'Вас никто не увидит'}
+                                </Text>
+                            </View>
+                            <Switch
+                                value={isVisibleProfile}
+                                onValueChange={toggleVisibility}
+                                trackColor={{ false: '#767577', true: '#4A9EFF' }}
+                                thumbColor={'#fff'}
+                            />
+                        </View>
+
                         {/* Theme Options */}
                         <View style={styles.themeOptions}>
                             <Pressable
@@ -141,10 +207,24 @@ export const MenuModal = ({ visible, onClose }: MenuModalProps) => {
                                 <Text style={[styles.menuSubtext, { color: theme.subText }]}>Выход из аккаунта</Text>
                             </View>
                         </Pressable>
+
+                        {/* Delete Account */}
+                        <Pressable
+                            style={[styles.menuItem, styles.deleteItem, { backgroundColor: theme.cardBg }]}
+                            onPress={handleDeleteAccount}
+                        >
+                            <View style={[styles.iconContainer, { backgroundColor: 'rgba(255,59,48,0.1)' }]}>
+                                <Ionicons name="trash-outline" size={24} color="#FF3B30" />
+                            </View>
+                            <View style={styles.menuTextContainer}>
+                                <Text style={[styles.menuText, { color: "#FF3B30" }]}>Удалить аккаунт</Text>
+                                <Text style={[styles.menuSubtext, { color: theme.subText }]}>Безвозвратно</Text>
+                            </View>
+                        </Pressable>
                     </ScrollView>
                 </Pressable>
-            </Pressable>
-        </Modal>
+            </Pressable >
+        </Modal >
     );
 };
 
@@ -230,4 +310,8 @@ const styles = StyleSheet.create({
     logoutItem: {
         marginTop: 8,
     },
+    deleteItem: {
+        marginTop: 8,
+        opacity: 0.8,
+    }
 });

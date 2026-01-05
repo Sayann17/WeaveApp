@@ -26,6 +26,7 @@ export interface User {
     familyMemory?: string;
     stereotypeTrue?: string;
     stereotypeFalse?: string;
+    isVisible?: boolean;
 }
 
 export interface IAuthService {
@@ -49,4 +50,9 @@ export interface IAuthService {
      * Update user profile
      */
     updateProfile(data: Partial<User> & Record<string, any>): Promise<void>;
+
+    /**
+     * Delete the current user account
+     */
+    deleteAccount(): Promise<void>;
 }
