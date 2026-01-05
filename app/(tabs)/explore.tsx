@@ -85,6 +85,7 @@ export default function ExploreScreen() {
 
     // Temp state for filter modal (to confirm changes only on "Apply")
     const [tempFilters, setTempFilters] = useState<Filters>(filters);
+    const [filtersInitialized, setFiltersInitialized] = useState(false);
 
     useFocusEffect(
         useCallback(() => {
@@ -98,13 +99,23 @@ export default function ExploreScreen() {
             const userData = await userService.getCurrentUser();
             if (userData) {
                 setCurrentUser(userData);
-                // Set default gender filter on first load
-                if (filters.gender === 'all') {
+
+                // Set default gender filter ONLY on first load
+                if (!filtersInitialized) {
                     const defaultGender = userData.gender === 'male' ? 'female' : userData.gender === 'female' ? 'male' : 'all';
-                    setFilters(prev => ({ ...prev, gender: defaultGender }));
-                    setTempFilters(prev => ({ ...prev, gender: defaultGender }));
+                    setFiltersInitialized(true);
+
+                    // Only update if different from current
+                    if (filters.gender !== defaultGender) {
+                        setFilters(prev => ({ ...prev, gender: defaultGender }));
+                        setTempFilters(prev => ({ ...prev, gender: defaultGender }));
+                        // The effect will trigger a reload with new filters, so we stop here
+                        setIsLoading(false);
+                        return;
+                    }
                 }
-                await loadProfiles(userData, filters, 'smart'); // Always use smart mode
+
+                await loadProfiles(userData, filters, 'custom');
             }
         } catch (error) {
             console.error(error);
@@ -186,7 +197,6 @@ export default function ExploreScreen() {
     const applyFilters = () => {
         setFilters(tempFilters);
         setShowFilters(false);
-        loadData(); // Reload with new filters
     };
 
     const openFilters = () => {
