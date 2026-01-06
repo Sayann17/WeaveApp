@@ -69,6 +69,10 @@ module.exports.handler = async function (event, context) {
             return await getLikesYou(driver, headers, responseHeaders);
         } else if ((path === '/your-likes' || path === '/your-likes/') && httpMethod === 'GET') {
             return await getYourLikes(driver, headers, responseHeaders);
+        } else if ((path === '/notifications/stats' || path === '/notifications/stats/') && httpMethod === 'GET') {
+            return await getNotificationStats(driver, headers, responseHeaders);
+        } else if ((path === '/mark-read' || path === '/mark-read/') && httpMethod === 'POST') {
+            return await markAsRead(driver, headers, JSON.parse(body), responseHeaders);
         }
 
         return {
@@ -148,51 +152,75 @@ async function handleDisconnect(driver, connectionId) {
     }
 }
 
+async function sendMessageNotification(driver, userId, recipientId, text) {
+    // ... imported from helper
+    try {
+        const { sendMessageNotification } = require('./telegram-helpers');
+        await sendMessageNotification(driver, userId, recipientId, text);
+    } catch (e) {
+        console.error('[WS] Error sending Telegram notification:', e);
+    }
+}
+
 async function handleMessage(driver, event, connectionId) {
-    const body = JSON.parse(event.body);
+    console.log('[WS] handleMessage called from:', connectionId);
+    let body;
+    try {
+        body = JSON.parse(event.body);
+    } catch (e) {
+        console.error('[WS] Failed to parse message body:', event.body);
+        return { statusCode: 400 };
+    }
+
     const { action, chatId, text, recipientId, replyToId, messageId } = body;
 
     if (action === 'sendMessage') {
-        console.log('[WS] Sending message from:', connectionId, 'to chatId:', chatId);
+        console.log(`[WS] Sending message: text="${text && text.substring(0, 20)}...", chatId=${chatId}, recipientId=${recipientId}`);
         const userId = await getUserIdByConnection(driver, connectionId);
         if (!userId) {
             console.error('[WS] Sender userId not found for connectionId:', connectionId);
             return { statusCode: 403 };
         }
+        console.log('[WS] Sender identified:', userId);
 
         const newMessageId = uuidv4();
         const timestamp = new Date();
 
         // 1. Save to database
-        await driver.tableClient.withSession(async (session) => {
-            const query = `
-                DECLARE $id AS Utf8;
-                DECLARE $chatId AS Utf8;
-                DECLARE $senderId AS Utf8;
-                DECLARE $text AS Utf8;
-                DECLARE $timestamp AS Timestamp;
-                DECLARE $isRead AS Bool;
-                DECLARE $type AS Utf8;
-                DECLARE $replyToId AS Utf8;
+        try {
+            await driver.tableClient.withSession(async (session) => {
+                const query = `
+                    DECLARE $id AS Utf8;
+                    DECLARE $chatId AS Utf8;
+                    DECLARE $senderId AS Utf8;
+                    DECLARE $text AS Utf8;
+                    DECLARE $timestamp AS Timestamp;
+                    DECLARE $isRead AS Bool;
+                    DECLARE $type AS Utf8;
+                    DECLARE $replyToId AS Utf8;
 
-                INSERT INTO messages (id, chat_id, sender_id, text, timestamp, is_read, type, reply_to_id)
-                VALUES ($id, $chatId, $senderId, $text, $timestamp, $isRead, $type, $replyToId);
+                    INSERT INTO messages (id, chat_id, sender_id, text, timestamp, is_read, type, reply_to_id)
+                    VALUES ($id, $chatId, $senderId, $text, $timestamp, $isRead, $type, $replyToId);
 
-                UPDATE chats SET last_message = $text, last_message_time = $timestamp
-                WHERE id = $chatId;
-            `;
-            await session.executeQuery(query, {
-                '$id': TypedValues.utf8(newMessageId),
-                '$chatId': TypedValues.utf8(chatId),
-                '$senderId': TypedValues.utf8(userId),
-                '$text': TypedValues.utf8(text),
-                '$timestamp': TypedValues.timestamp(timestamp),
-                '$isRead': TypedValues.bool(false),
-                '$type': TypedValues.utf8('text'),
-                '$replyToId': TypedValues.utf8(replyToId || '') // Handle null/undefined
+                    UPDATE chats SET last_message = $text, last_message_time = $timestamp
+                    WHERE id = $chatId;
+                `;
+                await session.executeQuery(query, {
+                    '$id': TypedValues.utf8(newMessageId),
+                    '$chatId': TypedValues.utf8(chatId),
+                    '$senderId': TypedValues.utf8(userId),
+                    '$text': TypedValues.utf8(text),
+                    '$timestamp': TypedValues.timestamp(timestamp),
+                    '$isRead': TypedValues.bool(false),
+                    '$type': TypedValues.utf8('text'),
+                    '$replyToId': TypedValues.utf8(replyToId || '')
+                });
             });
-        });
-        console.log('[WS] Message saved to YDB:', newMessageId);
+            console.log('[WS] Message saved to YDB:', newMessageId);
+        } catch (dbError) {
+            console.error('[WS] Database save error:', dbError);
+            return { statusCode: 500 };
+        }
 
         // 2. Broadcast to sender and recipient if online
         const messageEvent = {
@@ -210,423 +238,31 @@ async function handleMessage(driver, event, connectionId) {
 
         // Notify recipient
         const recipientConnectionId = await getConnectionIdByUserId(driver, recipientId);
+        console.log(`[WS] Recipient ${recipientId} connectionId:`, recipientConnectionId || 'OFFLINE');
+
         if (recipientConnectionId) {
             await sendToConnection(recipientConnectionId, messageEvent);
         }
 
-        // Notify sender (echo back for UI update)
+        // Notify sender (echo back)
+        console.log('[WS] Echoing back to sender:', connectionId);
         await sendToConnection(connectionId, messageEvent);
 
         // 🔔 Send Telegram notification if recipient is offline
         if (!recipientConnectionId) {
-            await sendMessageNotification(driver, userId, recipientId, text);
+            console.log('[WS] Recipient offline, sending Telegram notification...');
+            // Need to require helper if not in scope or just call if imported at top
+            try {
+                const { sendMessageNotification } = require('./telegram-helpers');
+                await sendMessageNotification(driver, userId, recipientId, text);
+            } catch (tnErr) {
+                console.error('[WS] Telegram notification error:', tnErr);
+            }
         }
     } else if (action === 'editMessage') {
         return await handleEditMessage(driver, connectionId, chatId, messageId, text, recipientId);
     }
     return { statusCode: 200 };
-}
-
-async function handleEditMessage(driver, connectionId, chatId, messageId, newText, recipientId) {
-    console.log('[WS] Editing message:', messageId, 'from:', connectionId);
-    const userId = await getUserIdByConnection(driver, connectionId);
-    if (!userId) return { statusCode: 403 };
-
-    const timestamp = new Date();
-
-    // Verify ownership and update
-    await driver.tableClient.withSession(async (session) => {
-        // We do this in one transaction ideally, or check then update. 
-        // For YDB simple query: check sender_id match
-        const query = `
-            DECLARE $id AS Utf8;
-            DECLARE $chatId AS Utf8;
-            DECLARE $senderId AS Utf8;
-            DECLARE $text AS Utf8;
-            DECLARE $editedAt AS Timestamp;
-
-            -- Only update if sender matches (security)
-            UPDATE messages 
-            SET text = $text, is_edited = true, edited_at = $editedAt
-            WHERE id = $id AND chat_id = $chatId AND sender_id = $senderId;
-        `;
-        await session.executeQuery(query, {
-            '$id': TypedValues.utf8(messageId),
-            '$chatId': TypedValues.utf8(chatId),
-            '$senderId': TypedValues.utf8(userId),
-            '$text': TypedValues.utf8(newText),
-            '$editedAt': TypedValues.timestamp(timestamp)
-        });
-    });
-
-    const editEvent = {
-        type: 'messageEdited',
-        message: {
-            id: messageId,
-            chatId,
-            text: newText,
-            senderId: userId, // needed?
-            editedAt: timestamp
-        }
-    };
-
-    // Broadcast update
-    await sendToConnection(connectionId, editEvent);
-    const recipientConn = await getConnectionIdByUserId(driver, recipientId);
-    if (recipientConn) {
-        await sendToConnection(recipientConn, editEvent);
-    }
-
-    return { statusCode: 200 };
-}
-
-async function getMatches(driver, requestHeaders, responseHeaders) {
-    const userId = checkAuth(requestHeaders);
-    if (!userId) return { statusCode: 401, headers: responseHeaders, body: JSON.stringify({ error: 'Unauthorized' }) };
-
-    let matches = [];
-    await driver.tableClient.withSession(async (session) => {
-        // Query to get matches with partner details
-        const query = `
-            DECLARE $userId AS Utf8;
-            
-            -- Matches where current user is user1
-            SELECT 
-                m.user2_id as id, 
-                u.name as name, 
-                u.age as age, 
-                u.photos as photos, 
-                u.ethnicity as ethnicity,
-                u.macro_groups as macro_groups,
-                m.created_at as created_at
-            FROM matches m
-            JOIN users u ON m.user2_id = u.id
-            WHERE m.user1_id = $userId
-            
-            UNION ALL
-            
-            -- Matches where current user is user2
-            SELECT 
-                m.user1_id as id, 
-                u.name as name, 
-                u.age as age, 
-                u.photos as photos, 
-                u.ethnicity as ethnicity,
-                u.macro_groups as macro_groups,
-                m.created_at as created_at
-            FROM matches m
-            JOIN users u ON m.user1_id = u.id
-            WHERE m.user2_id = $userId;
-        `;
-        const { resultSets } = await session.executeQuery(query, {
-            '$userId': TypedValues.utf8(userId)
-        });
-
-        const getVal = (obj, key) => obj[key.toLowerCase()] || obj[key.charAt(0).toUpperCase() + key.slice(1)] || obj[key];
-
-        matches = TypedData.createNativeObjects(resultSets[0]).map(m => {
-            const mId = getVal(m, 'id');
-            const mPhotos = getVal(m, 'photos');
-            return {
-                id: mId,
-                name: getVal(m, 'name'),
-                age: getVal(m, 'age'),
-                age: getVal(m, 'age'),
-                ethnicity: getVal(m, 'ethnicity'),
-                macroGroups: typeof getVal(m, 'macro_groups') === 'string' ? JSON.parse(getVal(m, 'macro_groups')) : getVal(m, 'macro_groups'),
-                photos: typeof mPhotos === 'string' ? (mPhotos.startsWith('[') ? JSON.parse(mPhotos) : [mPhotos]) : mPhotos,
-                chatId: [userId, mId].sort().join('_'),
-                created_at: getVal(m, 'created_at')
-            };
-        });
-    });
-    return { statusCode: 200, headers: responseHeaders, body: JSON.stringify({ matches }) };
-}
-
-async function getLikesYou(driver, requestHeaders, responseHeaders) {
-    const userId = checkAuth(requestHeaders);
-    if (!userId) return { statusCode: 401, headers: responseHeaders, body: JSON.stringify({ error: 'Unauthorized' }) };
-
-    let likes = [];
-    await driver.tableClient.withSession(async (session) => {
-        // Get users who liked me, but we haven't liked them back (otherwise they'd be matches)
-        const query = `
-            DECLARE $userId AS Utf8;
-            $my_likes = (SELECT to_user_id FROM likes WHERE from_user_id = $userId);
-            
-            SELECT 
-                u.id as id, 
-                u.name as name, 
-                u.age as age, 
-                u.photos as photos, 
-                u.ethnicity as ethnicity,
-                u.macro_groups as macro_groups,
-                l.created_at as created_at
-                l.created_at as created_at
-            FROM likes l
-            JOIN users u ON l.from_user_id = u.id
-            LEFT JOIN $my_likes m ON m.to_user_id = l.from_user_id
-            WHERE l.to_user_id = $userId
-            AND m.to_user_id IS NULL;
-        `;
-        const { resultSets } = await session.executeQuery(query, {
-            '$userId': TypedValues.utf8(userId)
-        });
-
-        const getVal = (obj, key) => obj[key.toLowerCase()] || obj[key.charAt(0).toUpperCase() + key.slice(1)] || obj[key];
-
-        if (resultSets && resultSets.length > 0) {
-            likes = TypedData.createNativeObjects(resultSets[0]).map(l => {
-                const lPhotos = getVal(l, 'photos');
-                return {
-                    id: getVal(l, 'id'),
-                    name: getVal(l, 'name'),
-                    age: getVal(l, 'age'),
-                    ethnicity: getVal(l, 'ethnicity'),
-                    macroGroups: typeof getVal(l, 'macro_groups') === 'string' ? JSON.parse(getVal(l, 'macro_groups')) : getVal(l, 'macro_groups'),
-                    photos: typeof lPhotos === 'string' ? (lPhotos.startsWith('[') ? JSON.parse(lPhotos) : [lPhotos]) : lPhotos,
-                    created_at: getVal(l, 'created_at')
-                };
-            });
-        }
-    });
-    return { statusCode: 200, headers: responseHeaders, body: JSON.stringify({ profiles: likes }) };
-}
-
-async function getYourLikes(driver, requestHeaders, responseHeaders) {
-    const userId = checkAuth(requestHeaders);
-    if (!userId) return { statusCode: 401, headers: responseHeaders, body: JSON.stringify({ error: 'Unauthorized' }) };
-
-    let likes = [];
-    await driver.tableClient.withSession(async (session) => {
-        // Get users I liked, but who haven't liked me back (otherwise match)
-        const query = `
-            DECLARE $userId AS Utf8;
-            $liked_me = (SELECT from_user_id FROM likes WHERE to_user_id = $userId);
-            
-            SELECT 
-                u.id as id, 
-                u.name as name, 
-                u.age as age, 
-                u.photos as photos, 
-                u.ethnicity as ethnicity,
-                u.macro_groups as macro_groups,
-                l.created_at as created_at
-            FROM likes l
-            JOIN users u ON l.to_user_id = u.id
-            LEFT JOIN $liked_me m ON m.from_user_id = l.to_user_id
-            WHERE l.from_user_id = $userId
-            AND m.from_user_id IS NULL;
-        `;
-        const { resultSets } = await session.executeQuery(query, {
-            '$userId': TypedValues.utf8(userId)
-        });
-
-        const getVal = (obj, key) => obj[key.toLowerCase()] || obj[key.charAt(0).toUpperCase() + key.slice(1)] || obj[key];
-
-        if (resultSets && resultSets.length > 0) {
-            likes = TypedData.createNativeObjects(resultSets[0]).map(l => {
-                const lPhotos = getVal(l, 'photos');
-                return {
-                    id: getVal(l, 'id'),
-                    name: getVal(l, 'name'),
-                    age: getVal(l, 'age'),
-                    ethnicity: getVal(l, 'ethnicity'),
-                    macroGroups: typeof getVal(l, 'macro_groups') === 'string' ? JSON.parse(getVal(l, 'macro_groups')) : getVal(l, 'macro_groups'),
-                    photos: typeof lPhotos === 'string' ? (lPhotos.startsWith('[') ? JSON.parse(lPhotos) : [lPhotos]) : lPhotos,
-                    created_at: getVal(l, 'created_at')
-                };
-            });
-        }
-    });
-    return { statusCode: 200, headers: responseHeaders, body: JSON.stringify({ profiles: likes }) };
-}
-
-async function getChats(driver, requestHeaders, responseHeaders) {
-    const userId = checkAuth(requestHeaders);
-    if (!userId) return { statusCode: 401, headers: responseHeaders, body: JSON.stringify({ error: 'Unauthorized' }) };
-
-    let chats = [];
-    await driver.tableClient.withSession(async (session) => {
-        const query = `
-            DECLARE $userId AS Utf8;
-            SELECT * FROM chats WHERE id LIKE $userId || '_%' OR id LIKE '%_' || $userId;
-        `;
-        const { resultSets } = await session.executeQuery(query, {
-            '$userId': TypedValues.utf8(userId)
-        });
-        chats = TypedData.createNativeObjects(resultSets[0]);
-    });
-    return { statusCode: 200, headers: responseHeaders, body: JSON.stringify({ chats }) };
-}
-
-async function getHistory(driver, requestHeaders, chatId, responseHeaders) {
-    const userId = checkAuth(requestHeaders);
-    if (!userId) return { statusCode: 401, headers: responseHeaders, body: JSON.stringify({ error: 'Unauthorized' }) };
-
-    let messages = [];
-    await driver.tableClient.withSession(async (session) => {
-        const query = `
-            DECLARE $chatId AS Utf8;
-            SELECT * FROM messages WHERE chat_id = $chatId ORDER BY timestamp ASC;
-        `;
-        const { resultSets } = await session.executeQuery(query, {
-            '$chatId': TypedValues.utf8(chatId)
-        });
-        const getVal = (obj, key) => obj[key.toLowerCase()] || obj[key.charAt(0).toUpperCase() + key.slice(1)] || obj[key];
-
-        messages = TypedData.createNativeObjects(resultSets[0]).map(m => ({
-            id: getVal(m, 'id'),
-            chat_id: getVal(m, 'chat_id'),
-            sender_id: getVal(m, 'sender_id'),
-            text: getVal(m, 'text'),
-            timestamp: getVal(m, 'timestamp'),
-            is_read: getVal(m, 'is_read'),
-            type: getVal(m, 'type'),
-            replyToId: getVal(m, 'reply_to_id') || null, // Map new field
-            isEdited: !!getVal(m, 'is_edited'),           // Map new field
-            editedAt: getVal(m, 'edited_at') || null      // Map new field
-        }));
-    });
-    return { statusCode: 200, headers: responseHeaders, body: JSON.stringify({ messages }) };
-}
-
-async function handleLike(driver, requestHeaders, body, responseHeaders) {
-    const userId = checkAuth(requestHeaders);
-    if (!userId) return { statusCode: 401, headers: responseHeaders, body: JSON.stringify({ error: 'Unauthorized' }) };
-
-    const { targetUserId } = body;
-    const timestamp = new Date();
-
-    const result = await driver.tableClient.withSession(async (session) => {
-        // 1. Check if recipient already liked us
-        const checkQuery = `
-            DECLARE $userId AS Utf8;
-            DECLARE $targetId AS Utf8;
-            SELECT * FROM likes WHERE from_user_id = $targetId AND to_user_id = $userId;
-        `;
-        const { resultSets } = await session.executeQuery(checkQuery, {
-            '$userId': TypedValues.utf8(userId),
-            '$targetId': TypedValues.utf8(targetUserId)
-        });
-        const rows = TypedData.createNativeObjects(resultSets[0]);
-        const isMutual = rows.length > 0;
-
-        // 2. Save our like
-        const saveLikeQuery = `
-            DECLARE $fromId AS Utf8;
-            DECLARE $toId AS Utf8;
-            DECLARE $createdAt AS Timestamp;
-            REPLACE INTO likes (from_user_id, to_user_id, created_at)
-            VALUES ($fromId, $toId, $createdAt);
-        `;
-        await session.executeQuery(saveLikeQuery, {
-            '$fromId': TypedValues.utf8(userId),
-            '$toId': TypedValues.utf8(targetUserId),
-            '$createdAt': TypedValues.timestamp(timestamp)
-        });
-
-        if (isMutual) {
-            const chatId = [userId, targetUserId].sort().join('_');
-            const matchQuery = `
-                DECLARE $u1 AS Utf8;
-                DECLARE $u2 AS Utf8;
-                DECLARE $chatId AS Utf8;
-                DECLARE $createdAt AS Timestamp;
-                
-                REPLACE INTO matches (user1_id, user2_id, created_at)
-                VALUES ($u1, $u2, $createdAt);
-
-                REPLACE INTO chats (id, last_message, last_message_time, created_at, is_match_chat)
-                VALUES ($chatId, 'Вы понравились друг другу!', $createdAt, $createdAt, true);
-            `;
-            const sorted = [userId, targetUserId].sort();
-            await session.executeQuery(matchQuery, {
-                '$u1': TypedValues.utf8(sorted[0]),
-                '$u2': TypedValues.utf8(sorted[1]),
-                '$chatId': TypedValues.utf8(chatId),
-                '$createdAt': TypedValues.timestamp(timestamp)
-            });
-
-            // Notify both users via WebSocket
-            await notifyMatchViaWebSocket(driver, userId, targetUserId, chatId);
-
-            // 🔔 Send Telegram notifications for match
-            await sendMatchNotifications(driver, userId, targetUserId);
-
-            return { type: 'match', chatId };
-        }
-
-        // 🔔 Send Telegram notification for like (not a match)
-        await sendLikeNotification(driver, targetUserId);
-
-        // 🔔 Send WebSocket notification to recipient if online
-        const recipientConn = await getConnectionIdByUserId(driver, targetUserId);
-        if (recipientConn) {
-            await sendToConnection(recipientConn, {
-                type: 'newLike',
-                fromUserId: userId
-            });
-        }
-
-        return { type: 'like' };
-    });
-
-    return { statusCode: 200, headers: responseHeaders, body: JSON.stringify(result) };
-}
-
-function checkAuth(headers) {
-    const authHeader = headers['Authorization'] || headers['authorization'];
-    if (!authHeader || !authHeader.startsWith('Bearer ')) return null;
-    const token = authHeader.split(' ')[1];
-    try {
-        const decoded = jwt.verify(token, JWT_SECRET);
-        return decoded.uid;
-    } catch (e) {
-        return null;
-    }
-}
-
-async function notifyMatchViaWebSocket(driver, user1Id, user2Id, chatId) {
-    const conn1 = await getConnectionIdByUserId(driver, user1Id);
-    const conn2 = await getConnectionIdByUserId(driver, user2Id);
-
-    const matchEvent = { type: 'match', chatId };
-
-    if (conn1) await sendToConnection(conn1, matchEvent);
-    if (conn2) await sendToConnection(conn2, matchEvent);
-}
-
-async function getUserIdByConnection(driver, connectionId) {
-    let userId = null;
-    await driver.tableClient.withSession(async (session) => {
-        const query = `
-            DECLARE $connectionId AS Utf8;
-            SELECT user_id FROM socket_connections WHERE connection_id = $connectionId LIMIT 1;
-        `;
-        const { resultSets } = await session.executeQuery(query, {
-            '$connectionId': TypedValues.utf8(connectionId)
-        });
-        const rows = TypedData.createNativeObjects(resultSets[0]);
-        if (rows.length > 0) userId = rows[0].user_id;
-    });
-    return userId;
-}
-
-async function getConnectionIdByUserId(driver, userId) {
-    let connectionId = null;
-    await driver.tableClient.withSession(async (session) => {
-        const query = `
-            DECLARE $userId AS Utf8;
-            SELECT connection_id FROM socket_connections WHERE user_id = $userId LIMIT 1;
-        `;
-        const { resultSets } = await session.executeQuery(query, {
-            '$userId': TypedValues.utf8(userId)
-        });
-        const rows = TypedData.createNativeObjects(resultSets[0]);
-        if (rows.length > 0) connectionId = rows[0].connection_id;
-    });
-    return connectionId;
 }
 
 async function sendToConnection(connectionId, message) {
@@ -636,15 +272,23 @@ async function sendToConnection(connectionId, message) {
         return;
     }
 
-    console.log(`[WS] Sending to ${connectionId} via ${gatewayUrl}`);
+    const fullUrl = `${gatewayUrl}${connectionId}`;
+    console.log(`[WS] Sending to ${connectionId} via ${fullUrl}`);
 
     try {
-        const response = await fetch(`${gatewayUrl}${connectionId}`, {
+        const response = await fetch(fullUrl, {
             method: 'POST',
             body: JSON.stringify(message),
             headers: { 'Content-Type': 'application/json' }
         });
-        console.log(`[WS] Send to ${connectionId} result: ${response.status} ${response.statusText}`);
+
+        if (!response.ok) {
+            console.error(`[WS] Send failed. Status: ${response.status} ${response.statusText}`);
+            const errText = await response.text().catch(() => '');
+            console.error(`[WS] Error body:`, errText);
+        } else {
+            console.log(`[WS] Send success: ${response.status}`);
+        }
     } catch (e) {
         console.error('[WS] Broadcast error details:', e);
     }
@@ -822,4 +466,79 @@ async function getDiscovery(driver, requestHeaders, filters, responseHeaders) {
         headers: responseHeaders,
         body: JSON.stringify({ profiles })
     };
+}
+
+async function getNotificationStats(driver, requestHeaders, responseHeaders) {
+    const userId = checkAuth(requestHeaders);
+    if (!userId) return { statusCode: 401, headers: responseHeaders, body: JSON.stringify({ error: 'Unauthorized' }) };
+
+    let unreadMessages = 0;
+    let newLikes = 0;
+
+    await driver.tableClient.withSession(async (session) => {
+        const msgQuery = `
+            DECLARE $userId AS Utf8;
+            SELECT COUNT(*) as count 
+            FROM messages 
+            WHERE (chat_id LIKE $userId || '_%' OR chat_id LIKE '%_' || $userId)
+            AND sender_id != $userId 
+            AND is_read = false;
+        `;
+        const { resultSets: msgRes } = await session.executeQuery(msgQuery, { '$userId': TypedValues.utf8(userId) });
+
+        // Handle YDB count result safely
+        if (msgRes[0] && msgRes[0].rows && msgRes[0].rows.length > 0) {
+            const countVal = msgRes[0].rows[0].items[0].uint64Value || msgRes[0].rows[0].items[0].int64Value;
+            unreadMessages = Number(countVal);
+        }
+
+        const likeQuery = `
+            DECLARE $userId AS Utf8;
+            $my_likes = (SELECT to_user_id FROM likes WHERE from_user_id = $userId);
+            
+            SELECT COUNT(*) as count
+            FROM likes l
+            LEFT JOIN $my_likes m ON m.to_user_id = l.from_user_id
+            WHERE l.to_user_id = $userId
+            AND m.to_user_id IS NULL; 
+        `;
+        const { resultSets: likeRes } = await session.executeQuery(likeQuery, { '$userId': TypedValues.utf8(userId) });
+
+        if (likeRes[0] && likeRes[0].rows && likeRes[0].rows.length > 0) {
+            const countVal = likeRes[0].rows[0].items[0].uint64Value || likeRes[0].rows[0].items[0].int64Value;
+            newLikes = Number(countVal);
+        }
+    });
+
+    return {
+        statusCode: 200,
+        headers: responseHeaders,
+        body: JSON.stringify({ unreadMessages, newLikes })
+    };
+}
+
+async function markAsRead(driver, requestHeaders, body, responseHeaders) {
+    const userId = checkAuth(requestHeaders);
+    if (!userId) return { statusCode: 401, headers: responseHeaders, body: JSON.stringify({ error: 'Unauthorized' }) };
+
+    const { chatId } = body;
+    if (!chatId) return { statusCode: 400, headers: responseHeaders, body: JSON.stringify({ error: 'Missing chatId' }) };
+
+    await driver.tableClient.withSession(async (session) => {
+        const query = `
+            DECLARE $chatId AS Utf8;
+            DECLARE $userId AS Utf8;
+            
+            UPDATE messages 
+            SET is_read = true 
+            WHERE chat_id = $chatId 
+            AND sender_id != $userId;
+        `;
+        await session.executeQuery(query, {
+            '$chatId': TypedValues.utf8(chatId),
+            '$userId': TypedValues.utf8(userId)
+        });
+    });
+
+    return { statusCode: 200, headers: responseHeaders, body: JSON.stringify({ success: true }) };
 }

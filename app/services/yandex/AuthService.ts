@@ -74,16 +74,21 @@ class YandexAuthService implements IAuthService {
                         console.log('[AuthService] User loaded successfully');
                     } else {
                         console.error('[AuthService] Invalid user data from backend:', data);
+                        // Don't clear token blindly on malformed data, but maybe we should?
+                        // Safe bet: keep token, retry later? Or clear?
+                        // If data is invalid structure, maybe backend is broken. 
+                        // Let's NOT clear token here unless we are sure.
+                    }
+                } else {
+                    // Token invalid only if 401
+                    if (response.status === 401) {
+                        console.log('[AuthService] Token expired or invalid (401), clearing');
                         this._currentUser = null;
                         this._notifyListeners();
                         await AsyncStorage.removeItem('auth_token');
+                    } else {
+                        console.log(`[AuthService] Server returned ${response.status}, keeping token`);
                     }
-                } else {
-                    // Token invalid
-                    console.log('[AuthService] Token validation failed, clearing token');
-                    this._currentUser = null;
-                    this._notifyListeners();
-                    await AsyncStorage.removeItem('auth_token');
                 }
             } else {
                 // No token
@@ -92,11 +97,10 @@ class YandexAuthService implements IAuthService {
                 this._notifyListeners();
             }
         } catch (e) {
-            console.error('[AuthService] Failed to load session', e);
-            // Clear invalid token on error
-            this._currentUser = null;
-            this._notifyListeners();
-            await AsyncStorage.removeItem('auth_token');
+            console.error('[AuthService] Failed to load session (network/other)', e);
+            // DO NOT clear token on network error! 
+            // Keep _currentUser as null (or previous?), but don't logout.
+            // If we have no cached user, we can't do much, but we shouldn't destroy the session.
         }
     }
 

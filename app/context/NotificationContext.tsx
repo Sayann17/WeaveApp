@@ -48,11 +48,9 @@ export const NotificationProvider = ({ children }: { children: React.ReactNode }
     const fetchStats = async () => {
         if (!user) return;
         try {
-            // In a real app we would call the API.
-            // For now, let's just rely on local state or implement the API endpoint later.
-            // const stats = await yandexChat.getNotificationsStats();
-            // setUnreadMessagesCount(stats.unreadMessages);
-            // setNewLikesCount(stats.newLikes);
+            const stats = await yandexChat.getNotificationsStats();
+            setUnreadMessagesCount(stats.unreadMessages);
+            setNewLikesCount(stats.newLikes);
         } catch (e) { console.error(e); }
     };
 

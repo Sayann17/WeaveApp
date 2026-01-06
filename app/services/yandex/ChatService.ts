@@ -217,6 +217,24 @@ class YandexChatService {
             return { unreadMessages: 0, newLikes: 0 };
         }
     }
+
+    async markAsRead(chatId: string): Promise<void> {
+        const token = await AsyncStorage.getItem('auth_token');
+        if (!token) return;
+
+        try {
+            await fetch(`${API_URL}/mark-read`, {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ chatId })
+            });
+        } catch (e) {
+            console.error('Failed to mark as read', e);
+        }
+    }
 }
 
 export const yandexChat = new YandexChatService();

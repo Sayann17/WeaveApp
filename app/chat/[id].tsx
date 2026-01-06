@@ -105,6 +105,9 @@ export default function ChatScreen() {
 
     const unsubscribe = yandexChat.onMessage((msg, eventType) => {
       if (msg.chatId === chatId) {
+        if (eventType !== 'messageEdited') {
+          yandexChat.markAsRead(chatId);
+        }
         setMessages(prev => {
           if (eventType === 'messageEdited') {
             return prev.map(m => m.id === msg.id ? { ...m, ...msg, text: msg.text, isEdited: true, editedAt: msg.editedAt } : m);
