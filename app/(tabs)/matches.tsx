@@ -4,6 +4,7 @@ import { useFocusEffect, useRouter } from 'expo-router';
 import React, { useCallback, useState } from 'react';
 import {
     ActivityIndicator,
+    Alert,
     Pressable,
     ScrollView,
     StatusBar,
@@ -64,6 +65,41 @@ export default function MatchesScreen() {
             </View>
         );
     }
+
+    const handleLikeBack = async (profile: any) => {
+        try {
+            const result = await yandexMatch.likeUser(profile.id);
+            if (result.type === 'match') {
+                // Show Match Alert
+                Alert.alert("It's a Match!", `Вы и ${profile.name} лайкнули друг друга!`);
+
+                // Remove from Likes You
+                setLikesYou(prev => prev.filter(p => p.id !== profile.id));
+
+                // Add to Matches (optimistic)
+                const newMatch = {
+                    ...profile,
+                    chatId: result.chatId // Assuming backend returns chatId on match
+                };
+                setMatches(prev => [newMatch, ...prev]);
+            } else {
+                // Should not happen if they liked us, but just in case
+                setLikesYou(prev => prev.filter(p => p.id !== profile.id));
+            }
+        } catch (e) {
+            console.error(e);
+            Alert.alert('Ошибка', 'Не удалось лайкнуть пользователя');
+        }
+    };
+
+    const handleDislike = async (profile: any) => {
+        try {
+            await yandexMatch.dislikeUser(profile.id);
+            setLikesYou(prev => prev.filter(p => p.id !== profile.id));
+        } catch (e) {
+            console.error(e);
+        }
+    };
 
     return (
         <ThemedBackground>
@@ -152,7 +188,22 @@ export default function MatchesScreen() {
                                             </Text>
                                         </View>
                                     </Pressable>
-                                    {/* No chat button for likes - they need to match first */}
+
+                                    {/* Action Buttons for Likes */}
+                                    <View style={{ flexDirection: 'row', gap: 10 }}>
+                                        <Pressable
+                                            style={[styles.iconBtn, { backgroundColor: isLight ? '#fff0f0' : 'rgba(255,0,0,0.1)' }]}
+                                            onPress={() => handleDislike(profile)}
+                                        >
+                                            <Ionicons name="close" size={20} color="#ff4444" />
+                                        </Pressable>
+                                        <Pressable
+                                            style={[styles.iconBtn, { backgroundColor: isLight ? '#f0f8ff' : 'rgba(0,100,255,0.1)' }]}
+                                            onPress={() => handleLikeBack(profile)}
+                                        >
+                                            <Ionicons name="heart" size={20} color="#e1306c" />
+                                        </Pressable>
+                                    </View>
                                 </View>
                             ))
                         ) : (

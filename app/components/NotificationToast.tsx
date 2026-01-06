@@ -30,7 +30,7 @@ export const NotificationToast: React.FC<NotificationToastProps> = ({
             Animated.spring(translateY, {
                 toValue: insets.top + 10,
                 useNativeDriver: true,
-                bg: 4, // bounciness
+                bounciness: 4,
             }).start();
 
             const timer = setTimeout(() => {
