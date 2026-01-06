@@ -594,6 +594,24 @@ async function getUserIdByConnection(driver, connectionId) {
     return userId;
 }
 
+async function getConnectionIdByUserId(driver, userId) {
+    let connectionId = null;
+    await driver.tableClient.withSession(async (session) => {
+        const query = `
+            DECLARE $userId AS Utf8;
+            SELECT connection_id FROM socket_connections WHERE user_id = $userId;
+        `;
+        const { resultSets } = await session.executeQuery(query, {
+            '$userId': TypedValues.utf8(userId)
+        });
+        const rows = TypedData.createNativeObjects(resultSets[0]);
+        if (rows.length > 0) {
+            connectionId = rows[0].connection_id;
+        }
+    });
+    return connectionId;
+}
+
 async function getMatches(driver, requestHeaders, responseHeaders) {
     const userId = checkAuth(requestHeaders);
     if (!userId) return { statusCode: 401, headers: responseHeaders, body: JSON.stringify({ error: 'Unauthorized' }) };
@@ -822,8 +840,12 @@ async function handleLike(driver, requestHeaders, body, responseHeaders) {
     if (!targetUserId) return { statusCode: 400, headers: responseHeaders, body: JSON.stringify({ error: 'Missing targetUserId' }) };
 
     let isMatch = false;
+    let recipientConnectionId = null;
+    let senderConnectionId = null;
+
+    // OPTIMIZED: All database operations in ONE session
     await driver.tableClient.withSession(async (session) => {
-        // Insert the like
+        // Step 1: Insert the like
         const insertQuery = `
             DECLARE $fromUserId AS Utf8;
             DECLARE $toUserId AS Utf8;
@@ -839,7 +861,7 @@ async function handleLike(driver, requestHeaders, body, responseHeaders) {
             '$timestamp': TypedValues.timestamp(new Date())
         });
 
-        // Check if it's a match (mutual like)
+        // Step 2: Check if it's a match (mutual like)
         const checkQuery = `
             DECLARE $userId AS Utf8;
             DECLARE $targetUserId AS Utf8;
@@ -850,35 +872,42 @@ async function handleLike(driver, requestHeaders, body, responseHeaders) {
             AND to_user_id = $userId;
         `;
 
-        const { resultSets } = await session.executeQuery(checkQuery, {
+        const { resultSets: matchResults } = await session.executeQuery(checkQuery, {
             '$userId': TypedValues.utf8(userId),
             '$targetUserId': TypedValues.utf8(targetUserId)
         });
 
-        if (resultSets[0] && resultSets[0].rows && resultSets[0].rows.length > 0) {
-            const countVal = resultSets[0].rows[0].items[0].uint64Value || resultSets[0].rows[0].items[0].int64Value;
+        if (matchResults[0] && matchResults[0].rows && matchResults[0].rows.length > 0) {
+            const countVal = matchResults[0].rows[0].items[0].uint64Value || matchResults[0].rows[0].items[0].int64Value;
             isMatch = Number(countVal) > 0;
+        }
+
+        // Step 3: Get connection IDs for both users (in same session)
+        const connectionsQuery = `
+            DECLARE $userId AS Utf8;
+            DECLARE $targetUserId AS Utf8;
+            
+            SELECT user_id, connection_id FROM socket_connections 
+            WHERE user_id = $userId OR user_id = $targetUserId;
+        `;
+
+        const { resultSets: connResults } = await session.executeQuery(connectionsQuery, {
+            '$userId': TypedValues.utf8(userId),
+            '$targetUserId': TypedValues.utf8(targetUserId)
+        });
+
+        const connections = TypedData.createNativeObjects(connResults[0]);
+        for (const conn of connections) {
+            if (conn.user_id === targetUserId) {
+                recipientConnectionId = conn.connection_id;
+            } else if (conn.user_id === userId) {
+                senderConnectionId = conn.connection_id;
+            }
         }
     });
 
-    // Send WebSocket notifications
+    // Send WebSocket notifications (outside session)
     try {
-        // Get the recipient's connection ID
-        let recipientConnectionId = null;
-        await driver.tableClient.withSession(async (session) => {
-            const query = `
-                DECLARE $userId AS Utf8;
-                SELECT connection_id FROM socket_connections WHERE user_id = $userId;
-            `;
-            const { resultSets } = await session.executeQuery(query, {
-                '$userId': TypedValues.utf8(targetUserId)
-            });
-            const rows = TypedData.createNativeObjects(resultSets[0]);
-            if (rows.length > 0) {
-                recipientConnectionId = rows[0].connection_id;
-            }
-        });
-
         if (recipientConnectionId) {
             if (isMatch) {
                 // Send match notification to recipient
@@ -888,21 +917,6 @@ async function handleLike(driver, requestHeaders, body, responseHeaders) {
                 });
 
                 // Also send match notification to the current user
-                let senderConnectionId = null;
-                await driver.tableClient.withSession(async (session) => {
-                    const query = `
-                        DECLARE $userId AS Utf8;
-                        SELECT connection_id FROM socket_connections WHERE user_id = $userId;
-                    `;
-                    const { resultSets } = await session.executeQuery(query, {
-                        '$userId': TypedValues.utf8(userId)
-                    });
-                    const rows = TypedData.createNativeObjects(resultSets[0]);
-                    if (rows.length > 0) {
-                        senderConnectionId = rows[0].connection_id;
-                    }
-                });
-
                 if (senderConnectionId) {
                     await sendToConnection(senderConnectionId, {
                         type: 'newMatch',
