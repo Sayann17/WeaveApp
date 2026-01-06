@@ -24,6 +24,9 @@ import { yandexChat, type Message } from '../services/yandex/ChatService';
 import { YandexUserService } from '../services/yandex/UserService';
 import { getPlatformPadding } from '../utils/platformPadding';
 
+
+import { MessageActionModal } from '../components/MessageActionModal';
+
 const userService = new YandexUserService();
 
 export default function ChatScreen() {
@@ -41,11 +44,15 @@ export default function ChatScreen() {
   const [replyingTo, setReplyingTo] = useState<Message | null>(null);
   const [editingMessage, setEditingMessage] = useState<Message | null>(null);
 
+  // Custom Menu State
+  const [menuVisible, setMenuVisible] = useState(false);
+  const [selectedMessage, setSelectedMessage] = useState<Message | null>(null);
+
   const flatListRef = useRef<FlatList>(null);
   const router = useRouter();
   const { setBackButtonHandler, showBackButton, hideBackButton, isMobile } = useTelegram();
 
-  // ... (useEffects for params, participant, history remain same) ...
+  // ... (useEffects remain same) ...
   // Проверка параметров
   useEffect(() => {
     if (!participantId || typeof participantId !== 'string' || !chatId || typeof chatId !== 'string') {
@@ -100,20 +107,12 @@ export default function ChatScreen() {
       if (msg.chatId === chatId) {
         setMessages(prev => {
           if (eventType === 'messageEdited') {
-            // Update existing message
             return prev.map(m => m.id === msg.id ? { ...m, ...msg, text: msg.text, isEdited: true, editedAt: msg.editedAt } : m);
           }
-
-          // New Message Logic
           if (prev.some(m => m.id === msg.id)) return prev;
-
-          // Optimistic replacement logic
           const myId = yandexAuth.getCurrentUser()?.uid;
           if (msg.senderId === myId) {
-            const tempIndex = prev.findIndex(m =>
-              m.id.startsWith('temp-') &&
-              m.text === msg.text // simplistic check
-            );
+            const tempIndex = prev.findIndex(m => m.id.startsWith('temp-') && m.text === msg.text);
             if (tempIndex !== -1) {
               const newMessages = [...prev];
               newMessages[tempIndex] = msg;
@@ -149,12 +148,9 @@ export default function ChatScreen() {
     if (!currentUser) return;
 
     const text = newMessage.trim();
-
-    // Clear Input
     setNewMessage('');
 
     if (editingMessage) {
-      // Handle Edit
       const updatedMsg = { ...editingMessage, text: text, isEdited: true, editedAt: new Date() };
       setMessages(prev => prev.map(m => m.id === editingMessage.id ? updatedMsg : m));
       setEditingMessage(null);
@@ -164,16 +160,13 @@ export default function ChatScreen() {
       } catch (e) {
         console.error(e);
         Alert.alert('Error', 'Failed to edit message');
-        // Revert?
       }
       return;
     }
 
-    // Handle Send (Reply or Normal)
     const replyId = replyingTo ? replyingTo.id : undefined;
     setReplyingTo(null);
 
-    // Optimistic Update
     const tempId = `temp-${Date.now()}`;
     const optimisticMessage: Message = {
       id: tempId,
@@ -200,32 +193,32 @@ export default function ChatScreen() {
   };
 
   const onMessageLongPress = (item: Message) => {
-    const isMine = isMyMessage(item);
-    const options = ['Ответить'];
-    if (isMine) options.push('Редактировать');
-    options.push('Отмена');
+    setSelectedMessage(item);
+    setMenuVisible(true);
+  };
 
-    const handleAction = (index: number) => {
-      if (index === 0) { // Reply
-        setReplyingTo(item);
-        setEditingMessage(null);
-      } else if (index === 1 && isMine) { // Edit
-        setEditingMessage(item);
-        setReplyingTo(null);
-        setNewMessage(item.text);
-      }
-    };
+  const handleReply = () => {
+    if (selectedMessage) {
+      setReplyingTo(selectedMessage);
+      setEditingMessage(null);
+      setMenuVisible(false);
+      setSelectedMessage(null);
+    }
+  };
 
-    // Use ActionSheet for iOS/Native look if possible, else Alert
-    Alert.alert(
-      'Действия',
-      undefined,
-      [
-        { text: 'Ответить', onPress: () => handleAction(0) },
-        isMine ? { text: 'Редактировать', onPress: () => handleAction(1) } : null,
-        { text: 'Отмена', style: 'cancel' }
-      ].filter(Boolean) as any
-    );
+  const handleEdit = () => {
+    if (selectedMessage) {
+      setEditingMessage(selectedMessage);
+      setReplyingTo(null);
+      setNewMessage(selectedMessage.text);
+      setMenuVisible(false);
+      setSelectedMessage(null);
+    }
+  };
+
+  const handleModalClose = () => {
+    setMenuVisible(false);
+    setSelectedMessage(null);
   };
 
   const cancelAction = () => {
@@ -250,7 +243,6 @@ export default function ChatScreen() {
     }
 
     const isMine = isMyMessage(item);
-    // Find replied message if exists
     const repliedMsg = item.replyToId ? messages.find(m => m.id === item.replyToId) : null;
 
     return (
@@ -269,7 +261,6 @@ export default function ChatScreen() {
           isMine ? styles.myBubble : styles.theirBubble,
           !isMine && { borderWidth: 1, borderColor: theme.border }
         ]}>
-          {/* Reply Preview */}
           {repliedMsg && (
             <View style={[styles.replyPreview, { borderLeftColor: theme.accent }]}>
               <Text style={[styles.replySender, { color: theme.accent }]}>
@@ -321,6 +312,14 @@ export default function ChatScreen() {
         keyboardVerticalOffset={0}
       >
         <View style={{ flex: 1, paddingTop: getPlatformPadding(insets, isMobile, 78) }}>
+
+          <MessageActionModal
+            visible={menuVisible}
+            onClose={handleModalClose}
+            onReply={handleReply}
+            onEdit={selectedMessage && isMyMessage(selectedMessage) ? handleEdit : undefined}
+            isMine={selectedMessage ? isMyMessage(selectedMessage) : false}
+          />
 
           {/* ХЕДЕР */}
           <View style={[styles.header, { borderBottomColor: theme.border }]}>
