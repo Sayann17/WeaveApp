@@ -170,6 +170,7 @@ async function updateProfile(driver, requestHeaders, data, headers) {
         }
 
         if (incomingValue !== undefined) {
+            console.log(`[updateProfile] Field matched: ${key}, Value: ${typeof incomingValue === 'object' ? JSON.stringify(incomingValue) : incomingValue}`); // ADDED LOG
             updates.push(`${key} = $${key}`);
             if (type === 'uint32') {
                 params[`$${key}`] = TypedValues.uint32(parseInt(incomingValue) || 0);
@@ -187,11 +188,15 @@ async function updateProfile(driver, requestHeaders, data, headers) {
     }
 
     if (updates.length === 0) {
+        console.log('[updateProfile] No updates to apply!'); // ADDED LOG
         return { statusCode: 200, headers, body: JSON.stringify({ message: 'No updates' }) };
     }
 
     updates.push(`updated_at = $updated_at`);
     params['$updated_at'] = TypedValues.datetime(new Date());
+
+    console.log('[updateProfile] Executing SQL:', `UPDATE users SET ${updates.join(', ')} WHERE id = $id`); // ADDED LOG
+    console.log('[updateProfile] Params keys:', Object.keys(params)); // ADDED LOG
 
     await driver.tableClient.withSession(async (session) => {
         const query = `
