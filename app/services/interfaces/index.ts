@@ -17,10 +17,9 @@ export interface UserProfile {
     familyMemory?: string;
     stereotypeTrue?: string;
     stereotypeFalse?: string;
-    location?: {
-        latitude: number;
-        longitude: number;
-    };
+    latitude?: number;
+    longitude?: number;
+    city?: string;
     lastActive?: number;
     // Preferences
     preferences?: {

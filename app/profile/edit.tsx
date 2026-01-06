@@ -1,4 +1,5 @@
 // app/profile/edit.tsx
+import { Ionicons } from '@expo/vector-icons';
 import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
 import React, { useCallback, useEffect, useState } from 'react';
 import {
@@ -10,6 +11,7 @@ import {
   StyleSheet,
   Text,
   TextInput,
+  TouchableOpacity,
   View
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -66,6 +68,12 @@ export default function EditProfileScreen() {
   const [stereotypeTrue, setStereotypeTrue] = useState('');
   const [stereotypeFalse, setStereotypeFalse] = useState('');
 
+  // Location State
+  const [city, setCity] = useState('');
+  const [latitude, setLatitude] = useState<number | null>(null);
+  const [longitude, setLongitude] = useState<number | null>(null);
+  const [isLocationLoading, setIsLocationLoading] = useState(false);
+
   useFocusEffect(
     useCallback(() => {
       loadUserData();
@@ -114,6 +122,11 @@ export default function EditProfileScreen() {
       setFamilyMemory(data.familyMemory || '');
       setStereotypeTrue(data.stereotypeTrue || '');
       setStereotypeFalse(data.stereotypeFalse || '');
+
+      setCity(data.city || '');
+      setLatitude(data.latitude || null);
+      setLongitude(data.longitude || null);
+
       console.log('[EditProfile] State set successfully');
     } catch (error) {
       console.error('[EditProfile] Error loading user data:', error);
@@ -164,7 +177,10 @@ export default function EditProfileScreen() {
         loveLanguage: loveLanguage.trim(),
         familyMemory: familyMemory.trim(),
         stereotypeTrue: stereotypeTrue.trim(),
-        stereotypeFalse: stereotypeFalse.trim()
+        stereotypeFalse: stereotypeFalse.trim(),
+        city: city.trim(),
+        latitude: latitude !== null ? latitude : undefined,
+        longitude: longitude !== null ? longitude : undefined
       });
 
       if (isFirstEdit) {
@@ -177,6 +193,30 @@ export default function EditProfileScreen() {
       Alert.alert('Ошибка', 'Не удалось сохранить профиль');
     } finally {
       setIsSaving(false);
+    }
+  };
+
+  const handleUpdateLocation = () => {
+    setIsLocationLoading(true);
+    // @ts-ignore
+    const Telegram = window.Telegram;
+
+    if (Telegram?.WebApp?.LocationManager) {
+      Telegram.WebApp.LocationManager.init(() => {
+        Telegram.WebApp.LocationManager.getLocation((data: any) => {
+          if (data) {
+            setLatitude(data.latitude);
+            setLongitude(data.longitude);
+            Alert.alert('Успех', 'Геолокация обновлена!');
+          } else {
+            Alert.alert('Ошибка', 'Не удалось получить геопозицию. Проверьте настройки Telegram.');
+          }
+          setIsLocationLoading(false);
+        });
+      });
+    } else {
+      Alert.alert('Ошибка', 'Геолокация недоступна в этом клиенте. Попробуйте на мобильном устройстве.');
+      setIsLocationLoading(false);
     }
   };
 
@@ -223,6 +263,38 @@ export default function EditProfileScreen() {
               age={age} setAge={setAge}
               isFirstEdit={isFirstEdit}
             />
+
+            {/* 3.5. Город и Локация */}
+            <View style={styles.inputContainer}>
+              <Text style={[styles.sectionTitle, { color: theme.text }]}>Где вы находитесь?</Text>
+
+              <TextInput
+                style={[styles.input, {
+                  backgroundColor: theme.cardBg,
+                  borderColor: theme.border,
+                  color: theme.text
+                }]}
+                placeholder="Ваш город (например, Москва)"
+                placeholderTextColor={theme.subText}
+                value={city}
+                onChangeText={setCity}
+              />
+
+              <TouchableOpacity
+                style={[styles.locationButton, { backgroundColor: theme.cardBg, borderColor: theme.border }]}
+                onPress={handleUpdateLocation}
+                disabled={isLocationLoading}
+              >
+                {isLocationLoading ? (
+                  <ActivityIndicator size="small" color={Colors.primary} />
+                ) : (
+                  <Ionicons name="location-outline" size={20} color={Colors.primary} />
+                )}
+                <Text style={[styles.locationButtonText, { color: theme.text }]}>
+                  {latitude && longitude ? 'Геолокация обновлена (GPS)' : 'Обновить геолокацию (GPS)'}
+                </Text>
+              </TouchableOpacity>
+            </View>
 
             {/* 4. Вероисповедание */}
             <ReligionSection
@@ -425,4 +497,18 @@ const styles = StyleSheet.create({
     textAlignVertical: 'top',
     lineHeight: 22,
   },
+  locationButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: 12,
+    marginTop: 10,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderStyle: 'dashed',
+  },
+  locationButtonText: {
+    marginLeft: 8,
+    fontWeight: '500',
+  }
 });

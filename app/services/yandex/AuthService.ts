@@ -193,7 +193,10 @@ class YandexAuthService implements IAuthService {
             interests: tryParse(user.interests),
             religions: tryParse(user.religions || user.religion),
             macroGroups: tryParse(user.macroGroups || user.macro_groups),
-            isVisible: user.isVisible
+            isVisible: user.isVisible,
+            latitude: user.latitude,
+            longitude: user.longitude,
+            city: user.city
         };
     }
 }

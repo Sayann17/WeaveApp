@@ -27,6 +27,9 @@ export interface User {
     stereotypeTrue?: string;
     stereotypeFalse?: string;
     isVisible?: boolean;
+    latitude?: number;
+    longitude?: number;
+    city?: string;
 }
 
 export interface IAuthService {

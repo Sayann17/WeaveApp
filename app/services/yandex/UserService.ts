@@ -82,6 +82,9 @@ export class YandexUserService implements IUserService {
             familyMemory: data.family_memory || data.familyMemory,
             stereotypeTrue: data.stereotype_true || data.stereotypeTrue,
             stereotypeFalse: data.stereotype_false || data.stereotypeFalse,
+            latitude: data.latitude,
+            longitude: data.longitude,
+            city: data.city,
             likes: [], // To be implemented
             dislikes: [] // To be implemented
         };

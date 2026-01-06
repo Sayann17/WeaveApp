@@ -123,7 +123,10 @@ async function updateProfile(driver, requestHeaders, data, headers) {
         'stereotype_true': 'utf8',
         'stereotype_true': 'utf8',
         'stereotype_false': 'utf8',
-        'is_visible': 'bool'
+        'is_visible': 'bool',
+        'latitude': 'double',
+        'longitude': 'double',
+        'city': 'utf8'
     };
 
     const updates = [];
@@ -140,7 +143,10 @@ async function updateProfile(driver, requestHeaders, data, headers) {
         'stereotypeTrue': 'stereotype_true',
         'stereotypeTrue': 'stereotype_true',
         'stereotypeFalse': 'stereotype_false',
-        'isVisible': 'is_visible'
+        'isVisible': 'is_visible',
+        'latitude': 'latitude',
+        'longitude': 'longitude',
+        'city': 'city'
     };
 
     // Explicitly handle each field to ensure types
@@ -164,6 +170,8 @@ async function updateProfile(driver, requestHeaders, data, headers) {
                 params[`$${key}`] = TypedValues.uint32(parseInt(incomingValue) || 0);
             } else if (type === 'bool') {
                 params[`$${key}`] = TypedValues.bool(Boolean(incomingValue));
+            } else if (type === 'double') {
+                params[`$${key}`] = TypedValues.double(parseFloat(incomingValue) || 0);
             } else if (jsonFields.includes(key)) {
                 const value = typeof incomingValue === 'string' ? incomingValue : JSON.stringify(incomingValue);
                 params[`$${key}`] = TypedValues.utf8(value);
@@ -183,7 +191,7 @@ async function updateProfile(driver, requestHeaders, data, headers) {
     await driver.tableClient.withSession(async (session) => {
         const query = `
             DECLARE $id AS Utf8;
-            ${Object.keys(params).filter(k => k !== '$id').map(k => `DECLARE ${k} AS ${k === '$updated_at' ? 'Datetime' : allowedFields[k.substring(1)] === 'uint32' ? 'Uint32' : allowedFields[k.substring(1)] === 'bool' ? 'Bool' : 'Utf8'};`).join('\n')}
+            ${Object.keys(params).filter(k => k !== '$id').map(k => `DECLARE ${k} AS ${k === '$updated_at' ? 'Datetime' : allowedFields[k.substring(1)] === 'uint32' ? 'Uint32' : allowedFields[k.substring(1)] === 'bool' ? 'Bool' : allowedFields[k.substring(1)] === 'double' ? 'Double' : 'Utf8'};`).join('\n')}
             
             UPDATE users SET ${updates.join(', ')} WHERE id = $id;
         `;
@@ -285,7 +293,10 @@ async function me(driver, requestHeaders, headers) {
             stereotypeTrue: user.stereotype_true,
             stereotypeTrue: user.stereotype_true,
             stereotypeFalse: user.stereotype_false,
-            isVisible: user.is_visible !== undefined ? user.is_visible : true
+            isVisible: user.is_visible !== undefined ? user.is_visible : true,
+            latitude: user.latitude,
+            longitude: user.longitude,
+            city: user.city
         };
 
         console.log('[/me] Returning user:', {

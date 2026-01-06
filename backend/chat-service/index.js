@@ -648,31 +648,32 @@ async function getDiscovery(driver, requestHeaders, filters, responseHeaders) {
     if (!userId) return { statusCode: 401, headers: responseHeaders, body: JSON.stringify({ error: 'Unauthorized' }) };
 
     console.log('[getDiscovery] User ID:', userId);
-    console.log('[getDiscovery] Filters:', filters);
 
     const tryParse = (val) => {
         if (!val) return [];
         if (Array.isArray(val)) return val;
-        try {
-            return JSON.parse(val);
-        } catch (e) {
-            console.error('[getDiscovery] JSON parse error for value:', val, e);
-            return [];
-        }
+        try { return JSON.parse(val); } catch (e) { return []; }
     };
 
     let profiles = [];
     await driver.tableClient.withSession(async (session) => {
-        // 1. Get IDs already liked/disliked to exclude
-        const excludeQuery = `
+        // 1. Get current user's location & excluded IDs
+        const currentUserQuery = `
             DECLARE $userId AS Utf8;
             SELECT to_user_id FROM likes WHERE from_user_id = $userId;
+            SELECT latitude, longitude, city FROM users WHERE id = $userId;
         `;
-        const { resultSets: resLikes } = await session.executeQuery(excludeQuery, { '$userId': TypedValues.utf8(userId) });
-        const excludedIds = TypedData.createNativeObjects(resLikes[0]).map(r => r.to_user_id);
+        const { resultSets: resData } = await session.executeQuery(currentUserQuery, { '$userId': TypedValues.utf8(userId) });
+
+        const excludedIds = TypedData.createNativeObjects(resData[0]).map(r => r.to_user_id);
         excludedIds.push(userId); // Exclude self
 
-        console.log('[getDiscovery] Excluded IDs count:', excludedIds.length);
+        const currentUserData = TypedData.createNativeObjects(resData[1])[0] || {};
+        const myLat = currentUserData.latitude;
+        const myLon = currentUserData.longitude;
+        const myCity = currentUserData.city ? currentUserData.city.toLowerCase().trim() : null;
+
+        console.log('[getDiscovery] My Location:', { myCity, myLat, myLon });
 
         // 2. Fetch users with filters
         let usersQuery = `SELECT * FROM users WHERE profile_completed = 1`;
@@ -701,40 +702,59 @@ async function getDiscovery(driver, requestHeaders, filters, responseHeaders) {
             }
         }
 
-        console.log('[getDiscovery] Query:', usersQuery);
-        console.log('[getDiscovery] Params:', Object.keys(params));
-
         const { resultSets: resUsers } = await session.executeQuery(usersQuery, params);
         const allUsers = TypedData.createNativeObjects(resUsers[0]);
 
-        console.log('[getDiscovery] Total users from DB:', allUsers.length);
-        if (allUsers.length > 0) {
-            console.log('[getDiscovery] Sample user:', {
-                id: allUsers[0].id,
-                name: allUsers[0].name,
-                profile_completed: allUsers[0].profile_completed
-            });
-        }
+        // Helper for Haversine Distance (in km)
+        const getDistance = (lat1, lon1, lat2, lon2) => {
+            if (!lat1 || !lon1 || !lat2 || !lon2) return Infinity;
+            const R = 6371; // Radius of the earth in km
+            const dLat = (lat2 - lat1) * (Math.PI / 180);
+            const dLon = (lon2 - lon1) * (Math.PI / 180);
+            const a =
+                Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+                Math.cos(lat1 * (Math.PI / 180)) * Math.cos(lat2 * (Math.PI / 180)) *
+                Math.sin(dLon / 2) * Math.sin(dLon / 2);
+            const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+            return R * c;
+        };
 
-        // Filter out excluded IDs and map
+        // Filter and Map
         profiles = allUsers
             .filter(u => !excludedIds.includes(u.id))
-            .map(u => ({
-                id: u.id,
-                name: u.name,
-                age: u.age,
-                photos: tryParse(u.photos),
-                bio: u.about,
-                gender: u.gender,
-                ethnicity: u.ethnicity,
-                religion: u.religion,
-                macroGroups: tryParse(u.macro_groups),
-                zodiac: u.zodiac,
-                religions: tryParse(u.religion),
-                profileCompleted: true
-            }));
+            .map(u => {
+                const uCity = u.city ? u.city.toLowerCase().trim() : null;
+                const distance = getDistance(myLat, myLon, u.latitude, u.longitude);
+                const isCityMatch = myCity && uCity && myCity === uCity;
 
-        console.log('[getDiscovery] Profiles after filtering:', profiles.length);
+                return {
+                    id: u.id,
+                    name: u.name,
+                    age: u.age,
+                    photos: tryParse(u.photos),
+                    bio: u.about,
+                    gender: u.gender,
+                    ethnicity: u.ethnicity,
+                    religion: u.religion,
+                    macroGroups: tryParse(u.macro_groups),
+                    zodiac: u.zodiac,
+                    religions: tryParse(u.religion),
+                    profileCompleted: true,
+                    // Sorting helpers (not sent to client usually, but useful for debugging)
+                    _distance: distance,
+                    _isCityMatch: isCityMatch,
+                    city: u.city // Send city to frontend to show it
+                };
+            });
+
+        // Sort: 
+        // 1. City Match (Top)
+        // 2. Distance (Ascending)
+        profiles.sort((a, b) => {
+            if (a._isCityMatch && !b._isCityMatch) return -1;
+            if (!a._isCityMatch && b._isCityMatch) return 1;
+            return a._distance - b._distance;
+        });
     });
 
     console.log('[getDiscovery] Returning profiles:', profiles.length);
