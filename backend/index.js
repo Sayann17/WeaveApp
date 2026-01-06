@@ -205,7 +205,8 @@ async function updateProfile(driver, requestHeaders, data, headers) {
             
             UPDATE users SET ${updates.join(', ')} WHERE id = $id;
         `;
-        await session.executeQuery(query, params);
+        // Explicitly commit the transaction
+        await session.executeQuery(query, params, { commitTx: true });
     });
 
     return { statusCode: 200, headers, body: JSON.stringify({ success: true }) };
@@ -232,7 +233,7 @@ async function deleteAccount(driver, requestHeaders, headers) {
         `;
         await session.executeQuery(query, {
             '$id': TypedValues.utf8(id)
-        });
+        }, { commitTx: true });
     });
 
     return { statusCode: 200, headers, body: JSON.stringify({ success: true }) };
