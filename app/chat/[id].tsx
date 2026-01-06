@@ -17,6 +17,7 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { ThemedBackground } from '../components/ThemedBackground';
+import { useNotifications } from '../context/NotificationContext';
 import { useTelegram } from '../context/TelegramProvider';
 import { useTheme } from '../context/ThemeContext';
 import { yandexAuth } from '../services/yandex/AuthService';
@@ -34,6 +35,7 @@ export default function ChatScreen() {
   const { theme, themeType } = useTheme();
   const isLight = themeType === 'light';
   const insets = useSafeAreaInsets();
+  const { refreshNotifications } = useNotifications();
 
   const [messages, setMessages] = useState<Message[]>([]);
   const [newMessage, setNewMessage] = useState('');
@@ -91,6 +93,8 @@ export default function ChatScreen() {
     const loadHistory = async () => {
       setIsLoading(true);
       try {
+        await yandexChat.markAsRead(chatId); // Mark as read immediately on load
+        refreshNotifications();
         const history = await yandexChat.getHistory(chatId);
         setMessages(history);
       } catch (err) {
@@ -107,6 +111,7 @@ export default function ChatScreen() {
       if (msg.chatId === chatId) {
         if (eventType !== 'messageEdited') {
           yandexChat.markAsRead(chatId);
+          refreshNotifications(); // Updates global badge
         }
         setMessages(prev => {
           if (eventType === 'messageEdited') {

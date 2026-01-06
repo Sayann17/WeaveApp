@@ -28,26 +28,18 @@ class YandexChatService {
     private messageListeners: ((message: Message, eventType?: 'newMessage' | 'messageEdited') => void)[] = [];
     private likeListeners: ((fromUserId: string) => void)[] = [];
 
-    async connect(): Promise<void> {
-        if (this.socket && this.socket.readyState === WebSocket.OPEN) return;
-        if (this.socket && this.socket.readyState === WebSocket.CONNECTING) {
-            return new Promise((resolve, reject) => {
-                const interval = setInterval(() => {
-                    if (this.socket?.readyState === WebSocket.OPEN) {
-                        clearInterval(interval);
-                        resolve();
-                    } else if (this.socket?.readyState === WebSocket.CLOSED) {
-                        clearInterval(interval);
-                        reject(new Error('WebSocket closed during connection'));
-                    }
-                }, 100);
-            });
-        }
+    private manuallyClosed = false;
+    private reconnectTimer: NodeJS.Timeout | null = null;
+    private keepAliveTimer: NodeJS.Timeout | null = null;
 
+    async connect(): Promise<void> {
+        if (this.socket && (this.socket.readyState === WebSocket.OPEN || this.socket.readyState === WebSocket.CONNECTING)) return;
+
+        this.manuallyClosed = false;
         const token = await AsyncStorage.getItem('auth_token');
         if (!token) throw new Error('Not authenticated');
 
-        console.log('[ChatService] Connecting to WebSocket...');
+        console.log('[ChatService] Connecting to WebSocket...', WS_URL);
 
         return new Promise((resolve, reject) => {
             try {
@@ -55,51 +47,79 @@ class YandexChatService {
 
                 this.socket.onopen = () => {
                     console.log('[ChatService] WebSocket Connected');
+                    this.startKeepAlive();
                     resolve();
                 };
 
                 this.socket.onmessage = (event) => {
                     console.log('[ChatService] Message received:', event.data);
-                    const data = JSON.parse(event.data);
-
-                    if (data.type === 'newMessage') {
-                        const message: Message = {
-                            ...data.message,
-                            timestamp: new Date(data.message.timestamp),
-                            editedAt: data.message.editedAt ? new Date(data.message.editedAt) : undefined
-                        };
-                        this.messageListeners.forEach(listener => listener(message, 'newMessage'));
-                    } else if (data.type === 'messageEdited') {
-                        const message: Message = {
-                            ...data.message,
-                            timestamp: new Date(data.message.timestamp || Date.now()),
-                            editedAt: new Date(data.message.editedAt)
-                        };
-                        this.messageListeners.forEach(listener => listener(message, 'messageEdited'));
-                    } else if (data.type === 'newLike') {
-                        this.likeListeners.forEach(listener => listener(data.fromUserId));
-                    } else if (data.type === 'newMatch') {
-                        // Treat matches as likes for badge purposes
-                        this.likeListeners.forEach(listener => listener(data.fromUserId));
+                    try {
+                        const data = JSON.parse(event.data);
+                        if (data.type === 'newMessage') {
+                            const message: Message = {
+                                ...data.message,
+                                timestamp: new Date(data.message.timestamp),
+                                editedAt: data.message.editedAt ? new Date(data.message.editedAt) : undefined
+                            };
+                            this.messageListeners.forEach(listener => listener(message, 'newMessage'));
+                        } else if (data.type === 'messageEdited') {
+                            const message: Message = {
+                                ...data.message,
+                                timestamp: new Date(data.message.timestamp || Date.now()),
+                                editedAt: new Date(data.message.editedAt)
+                            };
+                            this.messageListeners.forEach(listener => listener(message, 'messageEdited'));
+                        } else if (data.type === 'newLike' || data.type === 'newMatch') {
+                            this.likeListeners.forEach(listener => listener(data.fromUserId));
+                        }
+                    } catch (e) {
+                        console.error('[ChatService] Failed to parse message:', e);
                     }
                 };
 
                 this.socket.onerror = (e) => {
-                    console.error('[ChatService] WebSocket Error details:', e);
-                    if (this.socket?.readyState !== WebSocket.OPEN) {
-                        reject(new Error('WebSocket connection failed during handshake'));
-                    }
+                    console.error('[ChatService] WebSocket Error:', e);
                 };
 
                 this.socket.onclose = (event) => {
-                    console.log(`[ChatService] WebSocket Closed: Code=${event.code}, Reason=${event.reason}`);
+                    console.log(`[ChatService] WebSocket Closed, code=${event.code}`);
+                    this.stopKeepAlive();
                     this.socket = null;
+                    if (!this.manuallyClosed) {
+                        this.scheduleReconnect();
+                    }
                 };
             } catch (err) {
-                console.error('[ChatService] Error creating WebSocket:', err);
+                console.error('[ChatService] Connection error:', err);
+                this.scheduleReconnect();
                 reject(err);
             }
         });
+    }
+
+    private scheduleReconnect() {
+        if (this.reconnectTimer) return;
+        console.log('[ChatService] Scheduling reconnect in 3s...');
+        this.reconnectTimer = setTimeout(() => {
+            this.reconnectTimer = null;
+            this.connect().catch(() => { });
+        }, 3000);
+    }
+
+    private startKeepAlive() {
+        this.stopKeepAlive();
+        this.keepAliveTimer = setInterval(() => {
+            if (this.socket?.readyState === WebSocket.OPEN) {
+                this.socket.send(JSON.stringify({ action: 'ping' }));
+            }
+        }, 30000); // Send ping every 30s to keep connection alive
+    }
+
+    private stopKeepAlive() {
+        if (this.keepAliveTimer) {
+            clearInterval(this.keepAliveTimer);
+            this.keepAliveTimer = null;
+        }
     }
 
     disconnect() {
@@ -172,9 +192,9 @@ class YandexChatService {
         return data.chats.map((c: any) => ({
             id: c.id,
             participants: c.id.split('_'),
-            lastMessage: c.last_message,
-            lastMessageTime: c.last_message_time ? new Date(c.last_message_time) : undefined,
-            isMatchChat: !!c.is_match_chat
+            lastMessage: c.lastMessage,
+            lastMessageTime: c.lastMessageTime ? new Date(c.lastMessageTime) : undefined,
+            isMatchChat: true // All chats from /chats are match chats
         }));
     }
 

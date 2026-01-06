@@ -12,6 +12,7 @@ interface NotificationContextType {
     incomingLikesUserIds: string[];
     resetUnreadMessages: () => void;
     resetNewLikes: () => void;
+    refreshNotifications: () => void;
 }
 
 const NotificationContext = createContext<NotificationContextType>({
@@ -21,6 +22,7 @@ const NotificationContext = createContext<NotificationContextType>({
     incomingLikesUserIds: [],
     resetUnreadMessages: () => { },
     resetNewLikes: () => { },
+    refreshNotifications: () => { },
 });
 
 export const useNotifications = () => useContext(NotificationContext);
@@ -102,7 +104,8 @@ export const NotificationProvider = ({ children }: { children: React.ReactNode }
             unreadChatIds,
             incomingLikesUserIds,
             resetUnreadMessages,
-            resetNewLikes
+            resetNewLikes,
+            refreshNotifications: fetchStats
         }}>
             {children}
             <NotificationToast

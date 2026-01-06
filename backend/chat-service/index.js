@@ -182,18 +182,21 @@ async function handleMessage(driver, event, connectionId) {
     const { action, chatId, text, recipientId, replyToId, messageId } = body;
 
     if (action === 'sendMessage') {
-        console.log(`[WS] Sending message: text="${text && text.substring(0, 20)}...", chatId=${chatId}, recipientId=${recipientId}`);
         const userId = await getUserIdByConnection(driver, connectionId);
         if (!userId) {
             console.error('[WS] Sender userId not found for connectionId:', connectionId);
             return { statusCode: 403 };
         }
-        console.log('[WS] Sender identified:', userId);
+        console.log(`[WS] Sending message from ${userId} to ${recipientId}`);
+
+        // FORCE SAFE CHAT ID: Ensure we always use the canonical ID format
+        const safeChatId = [userId, recipientId].sort().join('_');
+        console.log(`[WS] Computed safeChatId: ${safeChatId} (Input was: ${chatId})`);
 
         const newMessageId = uuidv4();
         const timestamp = new Date();
 
-        // 1. Save to database
+        // 1. Save to database using safeChatId
         try {
             await driver.tableClient.withSession(async (session) => {
                 const query = `
@@ -205,22 +208,26 @@ async function handleMessage(driver, event, connectionId) {
                     DECLARE $isRead AS Bool;
                     DECLARE $type AS Utf8;
                     DECLARE $replyToId AS Utf8;
+                    DECLARE $isEdited AS Bool;
+                    DECLARE $editedAt AS Timestamp;
 
-                    INSERT INTO messages (id, chat_id, sender_id, text, timestamp, is_read, type, reply_to_id)
-                    VALUES ($id, $chatId, $senderId, $text, $timestamp, $isRead, $type, $replyToId);
+                    INSERT INTO messages (id, chat_id, sender_id, text, timestamp, is_read, type, reply_to_id, is_edited, edited_at)
+                    VALUES ($id, $chatId, $senderId, $text, $timestamp, $isRead, $type, $replyToId, $isEdited, $editedAt);
 
                     UPDATE chats SET last_message = $text, last_message_time = $timestamp
                     WHERE id = $chatId;
                 `;
                 await session.executeQuery(query, {
                     '$id': TypedValues.utf8(newMessageId),
-                    '$chatId': TypedValues.utf8(chatId),
+                    '$chatId': TypedValues.utf8(safeChatId), // Use safeChatId
                     '$senderId': TypedValues.utf8(userId),
                     '$text': TypedValues.utf8(text),
                     '$timestamp': TypedValues.timestamp(timestamp),
                     '$isRead': TypedValues.bool(false),
                     '$type': TypedValues.utf8('text'),
-                    '$replyToId': TypedValues.utf8(replyToId || '')
+                    '$replyToId': TypedValues.utf8(replyToId || ''),
+                    '$isEdited': TypedValues.bool(false),
+                    '$editedAt': TypedValues.timestamp(null)
                 });
             });
             console.log('[WS] Message saved to YDB:', newMessageId);
@@ -234,12 +241,13 @@ async function handleMessage(driver, event, connectionId) {
             type: 'newMessage',
             message: {
                 id: newMessageId,
-                chatId,
+                chatId: safeChatId, // Use safeChatId
                 text,
                 senderId: userId,
                 timestamp,
                 type: 'text',
-                replyToId: replyToId || null
+                replyToId: replyToId || null,
+                editedAt: undefined
             }
         };
 
@@ -249,25 +257,22 @@ async function handleMessage(driver, event, connectionId) {
 
         if (recipientConnectionId) {
             await sendToConnection(recipientConnectionId, messageEvent);
+        } else {
+            // User is OFFLINE: Send Telegram Notification
+            console.log('[WS] Recipient offline, sending Telegram notification');
+            await sendMessageNotification(driver, userId, recipientId, text);
         }
 
-        // Notify sender (echo back)
-        console.log('[WS] Echoing back to sender:', connectionId);
+        // Notify sender (echo)
         await sendToConnection(connectionId, messageEvent);
 
-        // 🔔 Send Telegram notification if recipient is offline
-        if (!recipientConnectionId) {
-            console.log('[WS] Recipient offline, sending Telegram notification...');
-            // Need to require helper if not in scope or just call if imported at top
-            // try {
-            //     const { sendMessageNotification } = require('./telegram-helpers');
-            //     await sendMessageNotification(driver, userId, recipientId, text);
-            // } catch (tnErr) {
-            //     console.error('[WS] Telegram notification error:', tnErr);
-            // }
-        }
+        return { statusCode: 200 };
     } else if (action === 'editMessage') {
+        const { messageId, text, recipientId } = body;
         return await handleEditMessage(driver, connectionId, chatId, messageId, text, recipientId);
+    } else if (action === 'deleteMessage') {
+        const { messageIds, recipientId } = body;
+        return await handleDeleteMessage(driver, connectionId, chatId, messageIds, recipientId);
     }
     return { statusCode: 200 };
 }
@@ -624,30 +629,63 @@ async function getMatches(driver, requestHeaders, responseHeaders) {
 
     let matches = [];
     await driver.tableClient.withSession(async (session) => {
-        // Find mutual likes (matches)
-        const query = `
+        // Step 1: Find all users who liked current user
+        const likesQuery = `
             DECLARE $userId AS Utf8;
-            
-            SELECT u.id, u.name, u.age, u.photos, u.about, u.gender, u.ethnicity
-            FROM users AS u
-            INNER JOIN likes AS l1 ON l1.to_user_id = u.id
-            INNER JOIN likes AS l2 ON l2.from_user_id = u.id
-            WHERE l1.from_user_id = $userId
-            AND l2.to_user_id = $userId;
+            SELECT from_user_id FROM likes WHERE to_user_id = $userId;
         `;
+        const { resultSets: likesResults } = await session.executeQuery(likesQuery, {
+            '$userId': TypedValues.utf8(userId)
+        });
+        const likedByUsers = likesResults[0] ? TypedData.createNativeObjects(likesResults[0]).map(r => r.from_user_id) : [];
 
-        const { resultSets } = await session.executeQuery(query, { '$userId': TypedValues.utf8(userId) });
-        const users = TypedData.createNativeObjects(resultSets[0]);
+        if (likedByUsers.length === 0) {
+            return; // No one liked the user
+        }
 
-        matches = users.map(u => ({
-            id: u.id,
-            name: u.name,
-            age: u.age,
-            photos: tryParse(u.photos),
-            bio: u.about,
-            gender: u.gender,
-            ethnicity: u.ethnicity
-        }));
+        // Step 2: Find mutual likes (users current user also liked)
+        const mutualQuery = `
+            DECLARE $userId AS Utf8;
+            SELECT to_user_id FROM likes WHERE from_user_id = $userId;
+        `;
+        const { resultSets: mutualResults } = await session.executeQuery(mutualQuery, {
+            '$userId': TypedValues.utf8(userId)
+        });
+        const userLiked = mutualResults[0] ? TypedData.createNativeObjects(mutualResults[0]).map(r => r.to_user_id) : [];
+
+        // Find intersection (mutual likes)
+        const matchIds = likedByUsers.filter(id => userLiked.includes(id));
+
+        if (matchIds.length === 0) {
+            return; // No matches
+        }
+
+        // Step 3: Get user data for each match
+        for (const matchId of matchIds) {
+            const userQuery = `
+                DECLARE $matchId AS Utf8;
+                SELECT id, name, age, photos, about, gender, ethnicity
+                FROM users
+                WHERE id = $matchId;
+            `;
+            const { resultSets: userResults } = await session.executeQuery(userQuery, {
+                '$matchId': TypedValues.utf8(matchId)
+            });
+            const users = userResults[0] ? TypedData.createNativeObjects(userResults[0]) : [];
+            if (users.length === 0) continue;
+
+            const u = users[0];
+            matches.push({
+                id: u.id,
+                chatId: [userId, matchId].sort().join('_'),
+                name: u.name,
+                age: u.age,
+                photos: tryParse(u.photos),
+                bio: u.about,
+                gender: u.gender,
+                ethnicity: u.ethnicity
+            });
+        }
     });
 
     return { statusCode: 200, headers: responseHeaders, body: JSON.stringify({ matches }) };
@@ -665,30 +703,57 @@ async function getLikesYou(driver, requestHeaders, responseHeaders) {
 
     let profiles = [];
     await driver.tableClient.withSession(async (session) => {
-        // Get users who liked me, but I haven't liked back
-        const query = `
+        // Step 1: Find users who liked me
+        const likedByQuery = `
             DECLARE $userId AS Utf8;
-            
-            SELECT u.id, u.name, u.age, u.photos, u.about, u.gender, u.ethnicity
-            FROM users AS u
-            INNER JOIN likes AS l ON l.from_user_id = u.id
-            LEFT JOIN likes AS l2 ON l2.from_user_id = $userId AND l2.to_user_id = u.id
-            WHERE l.to_user_id = $userId
-            AND l2.from_user_id IS NULL;
+            SELECT from_user_id FROM likes WHERE to_user_id = $userId;
         `;
+        const { resultSets: likedByResults } = await session.executeQuery(likedByQuery, {
+            '$userId': TypedValues.utf8(userId)
+        });
+        const likedByMeIds = likedByResults[0] ? TypedData.createNativeObjects(likedByResults[0]).map(r => r.from_user_id) : [];
 
-        const { resultSets } = await session.executeQuery(query, { '$userId': TypedValues.utf8(userId) });
-        const users = TypedData.createNativeObjects(resultSets[0]);
+        if (likedByMeIds.length === 0) return;
 
-        profiles = users.map(u => ({
-            id: u.id,
-            name: u.name,
-            age: u.age,
-            photos: tryParse(u.photos),
-            bio: u.about,
-            gender: u.gender,
-            ethnicity: u.ethnicity
-        }));
+        // Step 2: Find users I already liked (to exclude them - because those are matches)
+        const myLikesQuery = `
+            DECLARE $userId AS Utf8;
+            SELECT to_user_id FROM likes WHERE from_user_id = $userId;
+        `;
+        const { resultSets: myLikesResults } = await session.executeQuery(myLikesQuery, {
+            '$userId': TypedValues.utf8(userId)
+        });
+        const myLikesIds = myLikesResults[0] ? TypedData.createNativeObjects(myLikesResults[0]).map(r => r.to_user_id) : [];
+
+        // Filter: Users who liked me AND I haven't liked them back
+        const targetIds = likedByMeIds.filter(id => !myLikesIds.includes(id));
+
+        if (targetIds.length === 0) return;
+
+        // Step 3: Fetch user details
+        for (const targetId of targetIds) {
+            const userQuery = `
+                DECLARE $id AS Utf8;
+                SELECT id, name, age, photos, about, gender, ethnicity FROM users WHERE id = $id;
+            `;
+            const { resultSets: userResults } = await session.executeQuery(userQuery, {
+                '$id': TypedValues.utf8(targetId)
+            });
+            const users = userResults[0] ? TypedData.createNativeObjects(userResults[0]) : [];
+
+            if (users.length > 0) {
+                const u = users[0];
+                profiles.push({
+                    id: u.id,
+                    name: u.name,
+                    age: u.age,
+                    photos: tryParse(u.photos),
+                    bio: u.about,
+                    gender: u.gender,
+                    ethnicity: u.ethnicity
+                });
+            }
+        }
     });
 
     return { statusCode: 200, headers: responseHeaders, body: JSON.stringify({ profiles }) };
@@ -706,30 +771,57 @@ async function getYourLikes(driver, requestHeaders, responseHeaders) {
 
     let profiles = [];
     await driver.tableClient.withSession(async (session) => {
-        // Get users I liked, but they haven't liked me back
-        const query = `
+        // Step 1: Find users I liked
+        const myLikesQuery = `
             DECLARE $userId AS Utf8;
-            
-            SELECT u.id, u.name, u.age, u.photos, u.about, u.gender, u.ethnicity
-            FROM users AS u
-            INNER JOIN likes AS l ON l.to_user_id = u.id
-            LEFT JOIN likes AS l2 ON l2.from_user_id = u.id AND l2.to_user_id = $userId
-            WHERE l.from_user_id = $userId
-            AND l2.from_user_id IS NULL;
+            SELECT to_user_id FROM likes WHERE from_user_id = $userId;
         `;
+        const { resultSets: myLikesResults } = await session.executeQuery(myLikesQuery, {
+            '$userId': TypedValues.utf8(userId)
+        });
+        const myLikesIds = myLikesResults[0] ? TypedData.createNativeObjects(myLikesResults[0]).map(r => r.to_user_id) : [];
 
-        const { resultSets } = await session.executeQuery(query, { '$userId': TypedValues.utf8(userId) });
-        const users = TypedData.createNativeObjects(resultSets[0]);
+        if (myLikesIds.length === 0) return;
 
-        profiles = users.map(u => ({
-            id: u.id,
-            name: u.name,
-            age: u.age,
-            photos: tryParse(u.photos),
-            bio: u.about,
-            gender: u.gender,
-            ethnicity: u.ethnicity
-        }));
+        // Step 2: Find users who liked me (to exclude matches)
+        const likedByQuery = `
+            DECLARE $userId AS Utf8;
+            SELECT from_user_id FROM likes WHERE to_user_id = $userId;
+        `;
+        const { resultSets: likedByResults } = await session.executeQuery(likedByQuery, {
+            '$userId': TypedValues.utf8(userId)
+        });
+        const likedByMeIds = likedByResults[0] ? TypedData.createNativeObjects(likedByResults[0]).map(r => r.from_user_id) : [];
+
+        // Filter: Users I liked AND who haven't liked me back
+        const targetIds = myLikesIds.filter(id => !likedByMeIds.includes(id));
+
+        if (targetIds.length === 0) return;
+
+        // Step 3: Fetch user details
+        for (const targetId of targetIds) {
+            const userQuery = `
+                DECLARE $id AS Utf8;
+                SELECT id, name, age, photos, about, gender, ethnicity FROM users WHERE id = $id;
+            `;
+            const { resultSets: userResults } = await session.executeQuery(userQuery, {
+                '$id': TypedValues.utf8(targetId)
+            });
+            const users = userResults[0] ? TypedData.createNativeObjects(userResults[0]) : [];
+
+            if (users.length > 0) {
+                const u = users[0];
+                profiles.push({
+                    id: u.id,
+                    name: u.name,
+                    age: u.age,
+                    photos: tryParse(u.photos),
+                    bio: u.about,
+                    gender: u.gender,
+                    ethnicity: u.ethnicity
+                });
+            }
+        }
     });
 
     return { statusCode: 200, headers: responseHeaders, body: JSON.stringify({ profiles }) };
@@ -747,46 +839,83 @@ async function getChats(driver, requestHeaders, responseHeaders) {
 
     let chats = [];
     await driver.tableClient.withSession(async (session) => {
-        // Get all matches (mutual likes) with last message info
-        const query = `
+        // Step 1: Find all users who liked current user
+        const likesQuery = `
             DECLARE $userId AS Utf8;
-            
-            SELECT 
-                u.id AS match_id,
-                u.name,
-                u.photos,
-                m.text AS last_message,
-                m.timestamp AS last_message_time,
-                m.sender_id AS last_sender_id
-            FROM users AS u
-            INNER JOIN likes AS l1 ON l1.to_user_id = u.id
-            INNER JOIN likes AS l2 ON l2.from_user_id = u.id
-            LEFT JOIN (
-                SELECT chat_id, text, timestamp, sender_id
-                FROM messages
-                WHERE chat_id LIKE $userId || '_%' OR chat_id LIKE '%_' || $userId
-                ORDER BY timestamp DESC
-                LIMIT 1
-            ) AS m ON (m.chat_id = $userId || '_' || u.id OR m.chat_id = u.id || '_' || $userId)
-            WHERE l1.from_user_id = $userId
-            AND l2.to_user_id = $userId
-            ORDER BY m.timestamp DESC;
+            SELECT from_user_id FROM likes WHERE to_user_id = $userId;
         `;
+        const { resultSets: likesResults } = await session.executeQuery(likesQuery, {
+            '$userId': TypedValues.utf8(userId)
+        });
+        const likedByUsers = likesResults[0] ? TypedData.createNativeObjects(likesResults[0]).map(r => r.from_user_id) : [];
 
-        const { resultSets } = await session.executeQuery(query, { '$userId': TypedValues.utf8(userId) });
-        const rows = TypedData.createNativeObjects(resultSets[0]);
+        if (likedByUsers.length === 0) {
+            return; // No one liked the user
+        }
 
-        chats = rows.map(row => {
-            const chatId = [userId, row.match_id].sort().join('_');
-            return {
-                chatId,
-                matchId: row.match_id,
-                name: row.name,
-                photo: tryParse(row.photos)[0] || null,
-                lastMessage: row.last_message || '',
-                lastMessageTime: row.last_message_time ? new Date(row.last_message_time).toISOString() : null,
-                isOwnMessage: row.last_sender_id === userId
-            };
+        // Step 2: Find mutual likes (users current user also liked)
+        const mutualQuery = `
+            DECLARE $userId AS Utf8;
+            SELECT to_user_id FROM likes WHERE from_user_id = $userId;
+        `;
+        const { resultSets: mutualResults } = await session.executeQuery(mutualQuery, {
+            '$userId': TypedValues.utf8(userId)
+        });
+        const userLiked = mutualResults[0] ? TypedData.createNativeObjects(mutualResults[0]).map(r => r.to_user_id) : [];
+
+        // Find intersection (mutual likes)
+        const matchIds = likedByUsers.filter(id => userLiked.includes(id));
+
+        if (matchIds.length === 0) {
+            return; // No matches
+        }
+
+        // Step 3: Get user data for each match
+        for (const matchId of matchIds) {
+            const userQuery = `
+                DECLARE $matchId AS Utf8;
+                SELECT id, name, photos FROM users WHERE id = $matchId;
+            `;
+            const { resultSets: userResults } = await session.executeQuery(userQuery, {
+                '$matchId': TypedValues.utf8(matchId)
+            });
+            const users = userResults[0] ? TypedData.createNativeObjects(userResults[0]) : [];
+            if (users.length === 0) continue;
+
+            const match = users[0];
+            const chatId = [userId, matchId].sort().join('_');
+
+            // Step 4: Get last message for this chat
+            const msgQuery = `
+                DECLARE $chatId AS Utf8;
+                SELECT text, timestamp, sender_id
+                FROM messages
+                WHERE chat_id = $chatId
+                ORDER BY timestamp DESC
+                LIMIT 1;
+            `;
+            const { resultSets: msgResults } = await session.executeQuery(msgQuery, {
+                '$chatId': TypedValues.utf8(chatId)
+            });
+            const msgRows = msgResults[0] ? TypedData.createNativeObjects(msgResults[0]) : [];
+            const lastMsg = msgRows[0] || null;
+
+            chats.push({
+                id: chatId,
+                matchId: match.id,
+                name: match.name,
+                photo: tryParse(match.photos)[0] || null,
+                lastMessage: lastMsg ? lastMsg.text : '',
+                lastMessageTime: lastMsg ? new Date(lastMsg.timestamp).toISOString() : null,
+                isOwnMessage: lastMsg ? lastMsg.sender_id === userId : false
+            });
+        }
+
+        // Sort by last message time
+        chats.sort((a, b) => {
+            if (!a.lastMessageTime) return 1;
+            if (!b.lastMessageTime) return -1;
+            return new Date(b.lastMessageTime) - new Date(a.lastMessageTime);
         });
     });
 
@@ -808,14 +937,14 @@ async function getHistory(driver, requestHeaders, chatId, responseHeaders) {
     await driver.tableClient.withSession(async (session) => {
         const query = `
             DECLARE $chatId AS Utf8;
-            SELECT id, sender_id, text, timestamp, is_read, type, reply_to_id, media
+            SELECT id, sender_id, text, timestamp, is_read, type, reply_to_id, is_edited, edited_at
             FROM messages
             WHERE chat_id = $chatId
             ORDER BY timestamp ASC;
         `;
 
         const { resultSets } = await session.executeQuery(query, { '$chatId': TypedValues.utf8(chatId) });
-        const rows = TypedData.createNativeObjects(resultSets[0]);
+        const rows = resultSets[0] ? TypedData.createNativeObjects(resultSets[0]) : [];
 
         messages = rows.map(row => ({
             id: row.id,
@@ -824,8 +953,9 @@ async function getHistory(driver, requestHeaders, chatId, responseHeaders) {
             timestamp: new Date(row.timestamp).toISOString(),
             isRead: row.is_read,
             type: row.type || 'text',
-            replyToId: row.reply_to_id || null,
-            media: tryParse(row.media)
+            replyToId: row.reply_to_id || null, // Now exists!
+            isEdited: row.is_edited || false,   // Now exists!
+            editedAt: row.edited_at ? new Date(row.edited_at).toISOString() : null // Now exists!
         }));
     });
 
@@ -849,16 +979,16 @@ async function handleLike(driver, requestHeaders, body, responseHeaders) {
         const insertQuery = `
             DECLARE $fromUserId AS Utf8;
             DECLARE $toUserId AS Utf8;
-            DECLARE $timestamp AS Timestamp;
+            DECLARE $createdAt AS Timestamp;
             
-            UPSERT INTO likes (from_user_id, to_user_id, timestamp)
-            VALUES ($fromUserId, $toUserId, $timestamp);
+            UPSERT INTO likes (from_user_id, to_user_id, created_at)
+            VALUES ($fromUserId, $toUserId, $createdAt);
         `;
 
         await session.executeQuery(insertQuery, {
             '$fromUserId': TypedValues.utf8(userId),
             '$toUserId': TypedValues.utf8(targetUserId),
-            '$timestamp': TypedValues.timestamp(new Date())
+            '$createdAt': TypedValues.timestamp(new Date())
         });
 
         // Step 2: Check if it's a match (mutual like)
@@ -906,21 +1036,30 @@ async function handleLike(driver, requestHeaders, body, responseHeaders) {
         }
     });
 
+
+
     // Send WebSocket notifications (outside session)
+    let chatId = null;
+    if (isMatch) {
+        chatId = [userId, targetUserId].sort().join('_');
+    }
+
     try {
         if (recipientConnectionId) {
             if (isMatch) {
                 // Send match notification to recipient
                 await sendToConnection(recipientConnectionId, {
                     type: 'newMatch',
-                    fromUserId: userId
+                    fromUserId: userId,
+                    chatId: chatId
                 });
 
                 // Also send match notification to the current user
                 if (senderConnectionId) {
                     await sendToConnection(senderConnectionId, {
                         type: 'newMatch',
-                        fromUserId: targetUserId
+                        fromUserId: targetUserId,
+                        chatId: chatId
                     });
                 }
             } else {
@@ -936,9 +1075,109 @@ async function handleLike(driver, requestHeaders, body, responseHeaders) {
         // Don't fail the request if notification fails
     }
 
+    // Send Telegram notifications if user is offline or just as a backup? 
+    // Usually we want real-time if online, push if offline.
+    // The previous logic for messages was: if (!recipientConnectionId) sendTelegram.
+    // We should follow the same pattern here.
+
+    if (!recipientConnectionId) {
+        try {
+            console.log('[handleLike] Recipient offline, sending Telegram notification');
+            const { sendLikeNotification, sendMatchNotifications } = require('./telegram-helpers');
+
+            if (isMatch) {
+                // For matches, we notify BOTH if possible, but sendMatchNotifications handles that.
+                await sendMatchNotifications(driver, userId, targetUserId);
+            } else {
+                // Just a like
+                await sendLikeNotification(driver, targetUserId);
+            }
+        } catch (e) {
+            console.error('[handleLike] Error sending Telegram notification:', e);
+        }
+    }
+
     return {
         statusCode: 200,
         headers: responseHeaders,
-        body: JSON.stringify({ success: true, isMatch })
+        body: JSON.stringify({ success: true, isMatch, chatId })
     };
 }
+
+async function handleEditMessage(driver, connectionId, chatId, messageId, text, recipientId) {
+    const userId = await getUserIdByConnection(driver, connectionId);
+    if (!userId) return { statusCode: 403 };
+
+    await driver.tableClient.withSession(async (session) => {
+        const query = `
+            DECLARE $messageId AS Utf8;
+            DECLARE $userId AS Utf8;
+            DECLARE $text AS Utf8;
+            DECLARE $editedAt AS Timestamp;
+
+            UPDATE messages
+            SET text = $text, is_edited = true, edited_at = $editedAt
+            WHERE id = $messageId AND sender_id = $userId;
+        `;
+        await session.executeQuery(query, {
+            '$messageId': TypedValues.utf8(messageId),
+            '$userId': TypedValues.utf8(userId),
+            '$text': TypedValues.utf8(text),
+            '$editedAt': TypedValues.timestamp(new Date())
+        });
+    });
+
+    const editEvent = {
+        type: 'messageEdited',
+        message: {
+            id: messageId,
+            chatId,
+            text,
+            isEdited: true,
+            editedAt: new Date()
+        }
+    };
+
+    const recipientConnectionId = await getConnectionIdByUserId(driver, recipientId);
+    if (recipientConnectionId) {
+        await sendToConnection(recipientConnectionId, editEvent);
+    }
+    await sendToConnection(connectionId, editEvent);
+
+    return { statusCode: 200 };
+}
+
+async function handleDeleteMessage(driver, connectionId, chatId, messageIds, recipientId) {
+    const userId = await getUserIdByConnection(driver, connectionId);
+    if (!userId) return { statusCode: 403 };
+
+    await driver.tableClient.withSession(async (session) => {
+        for (const msgId of messageIds) {
+            const query = `
+                DECLARE $messageId AS Utf8;
+                DECLARE $userId AS Utf8;
+                DELETE FROM messages WHERE id = $messageId AND sender_id = $userId;
+             `;
+            await session.executeQuery(query, {
+                '$messageId': TypedValues.utf8(msgId),
+                '$userId': TypedValues.utf8(userId)
+            });
+        }
+    });
+
+    const deleteEvent = {
+        type: 'messageDeleted',
+        chatId,
+        messageIds
+    };
+
+    const recipientConnectionId = await getConnectionIdByUserId(driver, recipientId);
+    if (recipientConnectionId) {
+        await sendToConnection(recipientConnectionId, deleteEvent);
+    }
+    await sendToConnection(connectionId, deleteEvent);
+
+    return { statusCode: 200 };
+}
+
+
