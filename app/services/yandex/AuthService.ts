@@ -174,10 +174,23 @@ class YandexAuthService implements IAuthService {
             throw new Error(`Failed to update profile: ${response.status} ${text}`);
         }
 
-        console.log('[AuthService] Profile updated successfully, refreshing session...');
-        // Refresh user data from server to ensure consistency
-        await this.refreshSession();
-        console.log('[AuthService] Session refreshed');
+        // OPTIMISTIC UPDATE: Update local state immediately
+        console.log('[AuthService] Profile updated on server, applying optimistic update...');
+        if (this._currentUser) {
+            this._currentUser = { ...this._currentUser, ...data };
+            this._notifyListeners();
+        }
+
+        console.log('[AuthService] Optimistic update applied. Refreshing session in background...');
+
+        // Refresh user data from server to ensure consistency, but don't fail the operation if it fails
+        try {
+            await this.refreshSession();
+            console.log('[AuthService] Session refreshed successfully');
+        } catch (e) {
+            console.warn('[AuthService] Background session refresh failed, but profile was saved:', e);
+            // We suppress the error here because the save was successful and we updated the UI optimistically
+        }
     }
 
     private _transformUser(user: any): User {
