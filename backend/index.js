@@ -13,7 +13,9 @@ module.exports.handler = async function (event, context) {
     console.log('Event method:', event.httpMethod);
 
     const { httpMethod, path, body, headers } = event;
+    console.log('[handler] Function "v2-fixed-transactions" loaded'); // Deployment verification log
     let driver;
+    // Test database connection
     try {
         driver = await getDriver();
     } catch (dbError) {
@@ -212,7 +214,11 @@ async function updateProfile(driver, requestHeaders, data, headers) {
             await tx.commit();
         } catch (err) {
             console.error('[updateProfile] Transaction failed:', err);
-            await tx.rollback();
+            if (tx && typeof tx.rollback === 'function') {
+                await tx.rollback();
+            } else {
+                console.warn('[updateProfile] Cannot rollback: tx is invalid or rollback is not a function');
+            }
             throw err;
         }
     });
@@ -247,7 +253,11 @@ async function deleteAccount(driver, requestHeaders, headers) {
             await tx.commit();
         } catch (err) {
             console.error('[deleteAccount] Transaction failed:', err);
-            await tx.rollback();
+            if (tx && typeof tx.rollback === 'function') {
+                await tx.rollback();
+            } else {
+                console.warn('[deleteAccount] Cannot rollback: tx is invalid or rollback is not a function');
+            }
             throw err;
         }
     });
