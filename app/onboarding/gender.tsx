@@ -33,7 +33,7 @@ export default function OnboardingGenderScreen() {
             router.replace('/onboarding/ethnicity');
         } catch (error) {
             console.error('Gender screen error:', error);
-            Alert.alert('Ошибка', 'Не удалось сохранить данные');
+            Alert.alert('Ошибка', `Не удалось сохранить данные: ${error instanceof Error ? error.message : String(error)}`);
         } finally {
             setIsLoading(false);
         }

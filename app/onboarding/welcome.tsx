@@ -183,7 +183,8 @@ const styles = StyleSheet.create({
     width: width,
     flex: 1,
     paddingHorizontal: 30,
-    justifyContent: 'center',
+    justifyContent: 'flex-start',
+    paddingTop: 100,
   },
 
   // Визуальная часть (Иконка)

@@ -121,7 +121,7 @@ async function updateProfile(driver, requestHeaders, data, headers) {
         'love_language': 'utf8',
         'family_memory': 'utf8',
         'stereotype_true': 'utf8',
-        'stereotype_true': 'utf8',
+
         'stereotype_false': 'utf8',
         'is_visible': 'bool',
         'latitude': 'double',
