@@ -73,6 +73,11 @@ module.exports.handler = async function (event, context) {
             return await getNotificationStats(driver, headers, responseHeaders);
         } else if ((path === '/mark-read' || path === '/mark-read/') && httpMethod === 'POST') {
             return await markAsRead(driver, headers, JSON.parse(body), responseHeaders);
+        } else if ((path === '/mark-read' || path === '/mark-read/') && httpMethod === 'POST') {
+            return await markAsRead(driver, headers, JSON.parse(body), responseHeaders);
+        } else if ((path === '/migrate' || path === '/migrate/') && httpMethod === 'GET') {
+            // Temporary migration endpoint
+            return await runMigration(driver, responseHeaders);
         }
 
         return {
@@ -205,9 +210,11 @@ async function handleMessage(driver, event, connectionId) {
                     DECLARE $isRead AS Bool;
                     DECLARE $type AS Utf8;
                     DECLARE $replyToId AS Utf8;
+                    DECLARE $isEdited AS Bool;
+                    DECLARE $editedAt AS Timestamp;
 
-                    INSERT INTO messages (id, chat_id, sender_id, text, timestamp, is_read, type, reply_to_id)
-                    VALUES ($id, $chatId, $senderId, $text, $timestamp, $isRead, $type, $replyToId);
+                    INSERT INTO messages (id, chat_id, sender_id, text, timestamp, is_read, type, reply_to_id, is_edited, edited_at)
+                    VALUES ($id, $chatId, $senderId, $text, $timestamp, $isRead, $type, $replyToId, $isEdited, $editedAt);
 
                     UPDATE chats SET last_message = $text, last_message_time = $timestamp
                     WHERE id = $chatId;
@@ -220,7 +227,9 @@ async function handleMessage(driver, event, connectionId) {
                     '$timestamp': TypedValues.timestamp(timestamp),
                     '$isRead': TypedValues.bool(false),
                     '$type': TypedValues.utf8('text'),
-                    '$replyToId': TypedValues.utf8(replyToId || '')
+                    '$replyToId': TypedValues.utf8(replyToId || ''),
+                    '$isEdited': TypedValues.bool(false),
+                    '$editedAt': TypedValues.timestamp(null)
                 });
             });
             console.log('[WS] Message saved to YDB:', newMessageId);
@@ -239,7 +248,7 @@ async function handleMessage(driver, event, connectionId) {
                 senderId: userId,
                 timestamp,
                 type: 'text',
-                replyToId: replyToId || null
+                replyToId: null
             }
         };
 
@@ -267,7 +276,11 @@ async function handleMessage(driver, event, connectionId) {
             // }
         }
     } else if (action === 'editMessage') {
+        const { messageId, text, recipientId } = body;
         return await handleEditMessage(driver, connectionId, chatId, messageId, text, recipientId);
+    } else if (action === 'deleteMessage') {
+        const { messageIds, recipientId } = body;
+        return await handleDeleteMessage(driver, connectionId, chatId, messageIds, recipientId);
     }
     return { statusCode: 200 };
 }
@@ -697,30 +710,57 @@ async function getLikesYou(driver, requestHeaders, responseHeaders) {
 
     let profiles = [];
     await driver.tableClient.withSession(async (session) => {
-        // Get users who liked me, but I haven't liked back
-        const query = `
+        // Step 1: Find users who liked me
+        const likedByQuery = `
             DECLARE $userId AS Utf8;
-            
-            SELECT u.id, u.name, u.age, u.photos, u.about, u.gender, u.ethnicity
-            FROM users AS u
-            INNER JOIN likes AS l ON l.from_user_id = u.id
-            LEFT JOIN likes AS l2 ON l2.from_user_id = $userId AND l2.to_user_id = u.id
-            WHERE l.to_user_id = $userId
-            AND l2.from_user_id IS NULL;
+            SELECT from_user_id FROM likes WHERE to_user_id = $userId;
         `;
+        const { resultSets: likedByResults } = await session.executeQuery(likedByQuery, {
+            '$userId': TypedValues.utf8(userId)
+        });
+        const likedByMeIds = likedByResults[0] ? TypedData.createNativeObjects(likedByResults[0]).map(r => r.from_user_id) : [];
 
-        const { resultSets } = await session.executeQuery(query, { '$userId': TypedValues.utf8(userId) });
-        const users = TypedData.createNativeObjects(resultSets[0]);
+        if (likedByMeIds.length === 0) return;
 
-        profiles = users.map(u => ({
-            id: u.id,
-            name: u.name,
-            age: u.age,
-            photos: tryParse(u.photos),
-            bio: u.about,
-            gender: u.gender,
-            ethnicity: u.ethnicity
-        }));
+        // Step 2: Find users I already liked (to exclude them - because those are matches)
+        const myLikesQuery = `
+            DECLARE $userId AS Utf8;
+            SELECT to_user_id FROM likes WHERE from_user_id = $userId;
+        `;
+        const { resultSets: myLikesResults } = await session.executeQuery(myLikesQuery, {
+            '$userId': TypedValues.utf8(userId)
+        });
+        const myLikesIds = myLikesResults[0] ? TypedData.createNativeObjects(myLikesResults[0]).map(r => r.to_user_id) : [];
+
+        // Filter: Users who liked me AND I haven't liked them back
+        const targetIds = likedByMeIds.filter(id => !myLikesIds.includes(id));
+
+        if (targetIds.length === 0) return;
+
+        // Step 3: Fetch user details
+        for (const targetId of targetIds) {
+            const userQuery = `
+                DECLARE $id AS Utf8;
+                SELECT id, name, age, photos, about, gender, ethnicity FROM users WHERE id = $id;
+            `;
+            const { resultSets: userResults } = await session.executeQuery(userQuery, {
+                '$id': TypedValues.utf8(targetId)
+            });
+            const users = userResults[0] ? TypedData.createNativeObjects(userResults[0]) : [];
+
+            if (users.length > 0) {
+                const u = users[0];
+                profiles.push({
+                    id: u.id,
+                    name: u.name,
+                    age: u.age,
+                    photos: tryParse(u.photos),
+                    bio: u.about,
+                    gender: u.gender,
+                    ethnicity: u.ethnicity
+                });
+            }
+        }
     });
 
     return { statusCode: 200, headers: responseHeaders, body: JSON.stringify({ profiles }) };
@@ -738,30 +778,57 @@ async function getYourLikes(driver, requestHeaders, responseHeaders) {
 
     let profiles = [];
     await driver.tableClient.withSession(async (session) => {
-        // Get users I liked, but they haven't liked me back
-        const query = `
+        // Step 1: Find users I liked
+        const myLikesQuery = `
             DECLARE $userId AS Utf8;
-            
-            SELECT u.id, u.name, u.age, u.photos, u.about, u.gender, u.ethnicity
-            FROM users AS u
-            INNER JOIN likes AS l ON l.to_user_id = u.id
-            LEFT JOIN likes AS l2 ON l2.from_user_id = u.id AND l2.to_user_id = $userId
-            WHERE l.from_user_id = $userId
-            AND l2.from_user_id IS NULL;
+            SELECT to_user_id FROM likes WHERE from_user_id = $userId;
         `;
+        const { resultSets: myLikesResults } = await session.executeQuery(myLikesQuery, {
+            '$userId': TypedValues.utf8(userId)
+        });
+        const myLikesIds = myLikesResults[0] ? TypedData.createNativeObjects(myLikesResults[0]).map(r => r.to_user_id) : [];
 
-        const { resultSets } = await session.executeQuery(query, { '$userId': TypedValues.utf8(userId) });
-        const users = TypedData.createNativeObjects(resultSets[0]);
+        if (myLikesIds.length === 0) return;
 
-        profiles = users.map(u => ({
-            id: u.id,
-            name: u.name,
-            age: u.age,
-            photos: tryParse(u.photos),
-            bio: u.about,
-            gender: u.gender,
-            ethnicity: u.ethnicity
-        }));
+        // Step 2: Find users who liked me (to exclude matches)
+        const likedByQuery = `
+            DECLARE $userId AS Utf8;
+            SELECT from_user_id FROM likes WHERE to_user_id = $userId;
+        `;
+        const { resultSets: likedByResults } = await session.executeQuery(likedByQuery, {
+            '$userId': TypedValues.utf8(userId)
+        });
+        const likedByMeIds = likedByResults[0] ? TypedData.createNativeObjects(likedByResults[0]).map(r => r.from_user_id) : [];
+
+        // Filter: Users I liked AND who haven't liked me back
+        const targetIds = myLikesIds.filter(id => !likedByMeIds.includes(id));
+
+        if (targetIds.length === 0) return;
+
+        // Step 3: Fetch user details
+        for (const targetId of targetIds) {
+            const userQuery = `
+                DECLARE $id AS Utf8;
+                SELECT id, name, age, photos, about, gender, ethnicity FROM users WHERE id = $id;
+            `;
+            const { resultSets: userResults } = await session.executeQuery(userQuery, {
+                '$id': TypedValues.utf8(targetId)
+            });
+            const users = userResults[0] ? TypedData.createNativeObjects(userResults[0]) : [];
+
+            if (users.length > 0) {
+                const u = users[0];
+                profiles.push({
+                    id: u.id,
+                    name: u.name,
+                    age: u.age,
+                    photos: tryParse(u.photos),
+                    bio: u.about,
+                    gender: u.gender,
+                    ethnicity: u.ethnicity
+                });
+            }
+        }
     });
 
     return { statusCode: 200, headers: responseHeaders, body: JSON.stringify({ profiles }) };
@@ -877,14 +944,14 @@ async function getHistory(driver, requestHeaders, chatId, responseHeaders) {
     await driver.tableClient.withSession(async (session) => {
         const query = `
             DECLARE $chatId AS Utf8;
-            SELECT id, sender_id, text, timestamp, is_read, type, reply_to_id, media
+            SELECT id, sender_id, text, timestamp, is_read, type, reply_to_id, is_edited, edited_at
             FROM messages
             WHERE chat_id = $chatId
             ORDER BY timestamp ASC;
         `;
 
         const { resultSets } = await session.executeQuery(query, { '$chatId': TypedValues.utf8(chatId) });
-        const rows = TypedData.createNativeObjects(resultSets[0]);
+        const rows = resultSets[0] ? TypedData.createNativeObjects(resultSets[0]) : [];
 
         messages = rows.map(row => ({
             id: row.id,
@@ -893,8 +960,9 @@ async function getHistory(driver, requestHeaders, chatId, responseHeaders) {
             timestamp: new Date(row.timestamp).toISOString(),
             isRead: row.is_read,
             type: row.type || 'text',
-            replyToId: row.reply_to_id || null,
-            media: tryParse(row.media)
+            replyToId: row.reply_to_id || null, // Now exists!
+            isEdited: row.is_edited || false,   // Now exists!
+            editedAt: row.edited_at ? new Date(row.edited_at).toISOString() : null // Now exists!
         }));
     });
 
@@ -1010,4 +1078,116 @@ async function handleLike(driver, requestHeaders, body, responseHeaders) {
         headers: responseHeaders,
         body: JSON.stringify({ success: true, isMatch })
     };
+}
+
+async function handleEditMessage(driver, connectionId, chatId, messageId, text, recipientId) {
+    const userId = await getUserIdByConnection(driver, connectionId);
+    if (!userId) return { statusCode: 403 };
+
+    await driver.tableClient.withSession(async (session) => {
+        const query = `
+            DECLARE $messageId AS Utf8;
+            DECLARE $userId AS Utf8;
+            DECLARE $text AS Utf8;
+            DECLARE $editedAt AS Timestamp;
+
+            UPDATE messages
+            SET text = $text, is_edited = true, edited_at = $editedAt
+            WHERE id = $messageId AND sender_id = $userId;
+        `;
+        await session.executeQuery(query, {
+            '$messageId': TypedValues.utf8(messageId),
+            '$userId': TypedValues.utf8(userId),
+            '$text': TypedValues.utf8(text),
+            '$editedAt': TypedValues.timestamp(new Date())
+        });
+    });
+
+    const editEvent = {
+        type: 'messageEdited',
+        message: {
+            id: messageId,
+            chatId,
+            text,
+            isEdited: true,
+            editedAt: new Date()
+        }
+    };
+
+    const recipientConnectionId = await getConnectionIdByUserId(driver, recipientId);
+    if (recipientConnectionId) {
+        await sendToConnection(recipientConnectionId, editEvent);
+    }
+    await sendToConnection(connectionId, editEvent);
+
+    return { statusCode: 200 };
+}
+
+async function handleDeleteMessage(driver, connectionId, chatId, messageIds, recipientId) {
+    const userId = await getUserIdByConnection(driver, connectionId);
+    if (!userId) return { statusCode: 403 };
+
+    await driver.tableClient.withSession(async (session) => {
+        for (const msgId of messageIds) {
+            const query = `
+                DECLARE $messageId AS Utf8;
+                DECLARE $userId AS Utf8;
+                DELETE FROM messages WHERE id = $messageId AND sender_id = $userId;
+             `;
+            await session.executeQuery(query, {
+                '$messageId': TypedValues.utf8(msgId),
+                '$userId': TypedValues.utf8(userId)
+            });
+        }
+    });
+
+    const deleteEvent = {
+        type: 'messageDeleted',
+        chatId,
+        messageIds
+    };
+
+    const recipientConnectionId = await getConnectionIdByUserId(driver, recipientId);
+    if (recipientConnectionId) {
+        await sendToConnection(recipientConnectionId, deleteEvent);
+    }
+    await sendToConnection(connectionId, deleteEvent);
+
+    return { statusCode: 200 };
+}
+
+async function runMigration(driver, responseHeaders) {
+    try {
+        await driver.tableClient.withSession(async (session) => {
+            // Add missing columns. Note: YDB ALTER TABLE does not support IF NOT EXISTS in all versions.
+
+            try {
+                await session.executeQuery(`ALTER TABLE messages ADD COLUMN reply_to_id Utf8;`);
+                console.log('Added reply_to_id');
+            } catch (e) { console.log('reply_to_id might exist:', e.message); }
+
+            try {
+                await session.executeQuery(`ALTER TABLE messages ADD COLUMN is_edited Bool;`);
+                console.log('Added is_edited');
+            } catch (e) { console.log('is_edited might exist:', e.message); }
+
+            try {
+                await session.executeQuery(`ALTER TABLE messages ADD COLUMN edited_at Timestamp;`);
+                console.log('Added edited_at');
+            } catch (e) { console.log('edited_at might exist:', e.message); }
+        });
+
+        return {
+            statusCode: 200,
+            headers: responseHeaders,
+            body: JSON.stringify({ success: true, message: 'Migration attempted' })
+        };
+    } catch (e) {
+        console.error('Migration failed:', e);
+        return {
+            statusCode: 500,
+            headers: responseHeaders,
+            body: JSON.stringify({ error: e.message })
+        };
+    }
 }

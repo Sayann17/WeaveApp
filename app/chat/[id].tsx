@@ -91,6 +91,7 @@ export default function ChatScreen() {
     const loadHistory = async () => {
       setIsLoading(true);
       try {
+        await yandexChat.markAsRead(chatId); // Mark as read immediately on load
         const history = await yandexChat.getHistory(chatId);
         setMessages(history);
       } catch (err) {

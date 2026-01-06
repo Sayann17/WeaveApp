@@ -123,3 +123,9 @@ paths:
         type: cloud_functions
         function_id: d4e7l76a7mc4mfhjvc6f
       operationId: markAsRead
+  /your-likes:
+    get:
+      x-yc-apigateway-integration:
+        type: cloud_functions
+        function_id: d4e7l76a7mc4mfhjvc6f
+      operationId: getYourLikes
