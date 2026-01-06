@@ -357,32 +357,32 @@ async function telegramLogin(driver, data, headers) {
     const email = `tg_${id}@telegram.user`;
     const name = [first_name, last_name].filter(Boolean).join(' ');
 
-    // Check if user exists
-    let user = null;
+    let token, fullUser;
+
+    // OPTIMIZED: All database operations in ONE session
     await driver.tableClient.withSession(async (session) => {
-        const query = `
+        // Step 1: Check if user exists
+        const checkQuery = `
             DECLARE $email AS Utf8;
             SELECT * FROM users WHERE email = $email LIMIT 1;
         `;
-        const { resultSets } = await session.executeQuery(query, {
+        const { resultSets: checkResults } = await session.executeQuery(checkQuery, {
             '$email': TypedValues.utf8(email)
         });
-        const rows = decodeYdbResults(resultSets[0]);
-        if (rows.length > 0) {
-            user = rows[0];
-        }
-    });
+        const existingUsers = decodeYdbResults(checkResults[0]);
 
-    if (!user) {
-        // Register new user
-        const newId = require('crypto').randomUUID();
-        const createdAt = new Date().toISOString();
-        const passwordHash = 'TELEGRAM_AUTH'; // Placeholder
+        let userId;
 
-        console.log('[telegramLogin] Creating new user with telegram_id:', id);
+        if (existingUsers.length === 0) {
+            // Step 2a: Create new user
+            userId = require('crypto').randomUUID();
+            const createdAt = new Date().toISOString();
+            const passwordHash = 'TELEGRAM_AUTH';
+            const photoJson = photo_url ? JSON.stringify([photo_url]) : "[]";
 
-        await driver.tableClient.withSession(async (session) => {
-            const query = `
+            console.log('[telegramLogin] Creating new user with telegram_id:', id);
+
+            const insertQuery = `
                 DECLARE $id AS Utf8;
                 DECLARE $email AS Utf8;
                 DECLARE $password_hash AS Utf8;
@@ -396,56 +396,46 @@ async function telegramLogin(driver, data, headers) {
                 VALUES ($id, $email, $password_hash, $name, $age, $created_at, $photo, $telegram_id);
             `;
 
-            // Wrap photo in array string as per schema
-            const photoJson = photo_url ? JSON.stringify([photo_url]) : "[]";
-
-            await session.executeQuery(query, {
-                '$id': TypedValues.utf8(newId),
+            await session.executeQuery(insertQuery, {
+                '$id': TypedValues.utf8(userId),
                 '$email': TypedValues.utf8(email),
                 '$password_hash': TypedValues.utf8(passwordHash),
                 '$name': TypedValues.utf8(name || 'Telegram User'),
-                '$age': TypedValues.uint32(18), // Default age
+                '$age': TypedValues.uint32(18),
                 '$created_at': TypedValues.datetime(new Date(createdAt)),
                 '$photo': TypedValues.utf8(photoJson),
                 '$telegram_id': TypedValues.utf8(String(id))
             });
-        });
+        } else {
+            // Step 2b: Update existing user's telegram_id
+            userId = existingUsers[0].id;
+            console.log('[telegramLogin] Updating telegram_id for existing user:', userId);
 
-        user = { uid: newId, email, name, age: 18 };
-    } else {
-        // Update telegram_id for existing user (if not set)
-        console.log('[telegramLogin] Updating telegram_id for existing user:', user.id);
-        await driver.tableClient.withSession(async (session) => {
-            const query = `
+            const updateQuery = `
                 DECLARE $id AS Utf8;
                 DECLARE $telegram_id AS Utf8;
                 UPDATE users SET telegram_id = $telegram_id WHERE id = $id;
             `;
-            await session.executeQuery(query, {
-                '$id': TypedValues.utf8(user.id),
+            await session.executeQuery(updateQuery, {
+                '$id': TypedValues.utf8(userId),
                 '$telegram_id': TypedValues.utf8(String(id))
             });
-        });
-    }
+        }
 
-    // Generate real JWT
-    const token = jwt.sign({ uid: user.id || user.uid, email: user.email }, JWT_SECRET, { expiresIn: '30d' });
-
-    // Fetch full profile for client
-    let fullUser = null;
-    await driver.tableClient.withSession(async (session) => {
-        const query = `
+        // Step 3: Fetch full user profile (in same session)
+        const profileQuery = `
             DECLARE $id AS Utf8;
             SELECT * FROM users WHERE id = $id LIMIT 1;
         `;
-        const { resultSets } = await session.executeQuery(query, {
-            '$id': TypedValues.utf8(user.id || user.uid)
+        const { resultSets: profileResults } = await session.executeQuery(profileQuery, {
+            '$id': TypedValues.utf8(userId)
         });
-        const rows = decodeYdbResults(resultSets[0]);
-        if (rows.length > 0) fullUser = rows[0];
+        const profiles = decodeYdbResults(profileResults[0]);
+        fullUser = profiles[0];
     });
 
-    if (!fullUser) fullUser = user;
+    // Generate JWT
+    token = jwt.sign({ uid: fullUser.id, email: fullUser.email }, JWT_SECRET, { expiresIn: '30d' });
 
     const tryParse = (val) => {
         if (!val) return [];
