@@ -18,11 +18,10 @@ export default function OnboardingGenderScreen() {
     const router = useRouter();
 
     const handleContinue = async () => {
+        // Alert.alert('Debug', `Pressed! Gender: ${gender}`); // Debug
         if (!gender) return;
         setIsLoading(true);
         try {
-            // const currentUser = auth.currentUser;
-            // if (currentUser) {
             //     await updateDoc(doc(firestore, 'users', currentUser.uid), {
             //         gender: gender,
             //         updatedAt: new Date(),
@@ -33,7 +32,8 @@ export default function OnboardingGenderScreen() {
             router.replace('/onboarding/ethnicity');
         } catch (error) {
             console.error('Gender screen error:', error);
-            Alert.alert('Ошибка', `Не удалось сохранить данные: ${error instanceof Error ? error.message : String(error)}`);
+            const msg = error instanceof Error ? error.message : String(error);
+            Alert.alert('Ошибка сохранения', msg);
         } finally {
             setIsLoading(false);
         }
