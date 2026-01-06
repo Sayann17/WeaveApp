@@ -182,18 +182,21 @@ async function handleMessage(driver, event, connectionId) {
     const { action, chatId, text, recipientId, replyToId, messageId } = body;
 
     if (action === 'sendMessage') {
-        console.log(`[WS] Sending message: text="${text && text.substring(0, 20)}...", chatId=${chatId}, recipientId=${recipientId}`);
         const userId = await getUserIdByConnection(driver, connectionId);
         if (!userId) {
             console.error('[WS] Sender userId not found for connectionId:', connectionId);
             return { statusCode: 403 };
         }
-        console.log('[WS] Sender identified:', userId);
+        console.log(`[WS] Sending message from ${userId} to ${recipientId}`);
+
+        // FORCE SAFE CHAT ID: Ensure we always use the canonical ID format
+        const safeChatId = [userId, recipientId].sort().join('_');
+        console.log(`[WS] Computed safeChatId: ${safeChatId} (Input was: ${chatId})`);
 
         const newMessageId = uuidv4();
         const timestamp = new Date();
 
-        // 1. Save to database
+        // 1. Save to database using safeChatId
         try {
             await driver.tableClient.withSession(async (session) => {
                 const query = `
@@ -216,7 +219,7 @@ async function handleMessage(driver, event, connectionId) {
                 `;
                 await session.executeQuery(query, {
                     '$id': TypedValues.utf8(newMessageId),
-                    '$chatId': TypedValues.utf8(chatId),
+                    '$chatId': TypedValues.utf8(safeChatId), // Use safeChatId
                     '$senderId': TypedValues.utf8(userId),
                     '$text': TypedValues.utf8(text),
                     '$timestamp': TypedValues.timestamp(timestamp),
@@ -238,12 +241,13 @@ async function handleMessage(driver, event, connectionId) {
             type: 'newMessage',
             message: {
                 id: newMessageId,
-                chatId,
+                chatId: safeChatId, // Use safeChatId
                 text,
                 senderId: userId,
                 timestamp,
                 type: 'text',
-                replyToId: null
+                replyToId: replyToId || null,
+                editedAt: undefined
             }
         };
 
@@ -253,23 +257,16 @@ async function handleMessage(driver, event, connectionId) {
 
         if (recipientConnectionId) {
             await sendToConnection(recipientConnectionId, messageEvent);
+        } else {
+            // User is OFFLINE: Send Telegram Notification
+            console.log('[WS] Recipient offline, sending Telegram notification');
+            await sendMessageNotification(driver, userId, recipientId, text);
         }
 
-        // Notify sender (echo back)
-        console.log('[WS] Echoing back to sender:', connectionId);
+        // Notify sender (echo)
         await sendToConnection(connectionId, messageEvent);
 
-        // 🔔 Send Telegram notification if recipient is offline
-        if (!recipientConnectionId) {
-            console.log('[WS] Recipient offline, sending Telegram notification...');
-            // Need to require helper if not in scope or just call if imported at top
-            // try {
-            //     const { sendMessageNotification } = require('./telegram-helpers');
-            //     await sendMessageNotification(driver, userId, recipientId, text);
-            // } catch (tnErr) {
-            //     console.error('[WS] Telegram notification error:', tnErr);
-            // }
-        }
+        return { statusCode: 200 };
     } else if (action === 'editMessage') {
         const { messageId, text, recipientId } = body;
         return await handleEditMessage(driver, connectionId, chatId, messageId, text, recipientId);
@@ -680,6 +677,7 @@ async function getMatches(driver, requestHeaders, responseHeaders) {
             const u = users[0];
             matches.push({
                 id: u.id,
+                chatId: [userId, matchId].sort().join('_'),
                 name: u.name,
                 age: u.age,
                 photos: tryParse(u.photos),
@@ -1075,6 +1073,28 @@ async function handleLike(driver, requestHeaders, body, responseHeaders) {
     } catch (e) {
         console.error('[handleLike] Error sending WebSocket notification:', e);
         // Don't fail the request if notification fails
+    }
+
+    // Send Telegram notifications if user is offline or just as a backup? 
+    // Usually we want real-time if online, push if offline.
+    // The previous logic for messages was: if (!recipientConnectionId) sendTelegram.
+    // We should follow the same pattern here.
+
+    if (!recipientConnectionId) {
+        try {
+            console.log('[handleLike] Recipient offline, sending Telegram notification');
+            const { sendLikeNotification, sendMatchNotifications } = require('./telegram-helpers');
+
+            if (isMatch) {
+                // For matches, we notify BOTH if possible, but sendMatchNotifications handles that.
+                await sendMatchNotifications(driver, userId, targetUserId);
+            } else {
+                // Just a like
+                await sendLikeNotification(driver, targetUserId);
+            }
+        } catch (e) {
+            console.error('[handleLike] Error sending Telegram notification:', e);
+        }
     }
 
     return {
