@@ -62,6 +62,11 @@ export default function EditProfileScreen() {
   const [showInterestsModal, setShowInterestsModal] = useState(false);
   const [showZodiacModal, setShowZodiacModal] = useState(false);
 
+  // Social Links State
+  const [socialTelegram, setSocialTelegram] = useState('');
+  const [socialVk, setSocialVk] = useState('');
+  const [socialInstagram, setSocialInstagram] = useState('');
+
   const [culturePride, setCulturePride] = useState('');
   const [loveLanguage, setLoveLanguage] = useState('');
   const [familyMemory, setFamilyMemory] = useState('');
@@ -127,6 +132,10 @@ export default function EditProfileScreen() {
       setLatitude(data.latitude || null);
       setLongitude(data.longitude || null);
 
+      setSocialTelegram(data.socialTelegram || '');
+      setSocialVk(data.socialVk || '');
+      setSocialInstagram(data.socialInstagram || '');
+
       console.log('[EditProfile] State set successfully');
     } catch (error) {
       console.error('[EditProfile] Error loading user data:', error);
@@ -180,7 +189,10 @@ export default function EditProfileScreen() {
         stereotypeFalse: stereotypeFalse.trim(),
         city: city.trim(),
         latitude: latitude !== null ? latitude : undefined,
-        longitude: longitude !== null ? longitude : undefined
+        longitude: longitude !== null ? longitude : undefined,
+        socialTelegram: socialTelegram.trim(),
+        socialVk: socialVk.trim(),
+        socialInstagram: socialInstagram.trim()
       });
 
       if (isFirstEdit) {
@@ -301,6 +313,50 @@ export default function EditProfileScreen() {
               selectedReligions={religions}
               setSelectedReligions={setReligions}
             />
+
+            {/* 4.5 Социальные сети */}
+            <View style={styles.inputContainer}>
+              <Text style={[styles.sectionTitle, { color: theme.text }]}>Соцсети (опционально)</Text>
+
+              <View style={{ gap: 10 }}>
+                <TextInput
+                  style={[styles.input, {
+                    backgroundColor: theme.cardBg,
+                    borderColor: theme.border,
+                    color: theme.text
+                  }]}
+                  placeholder="Telegram (@username)"
+                  placeholderTextColor={theme.subText}
+                  value={socialTelegram}
+                  onChangeText={setSocialTelegram}
+                  autoCapitalize="none"
+                />
+                <TextInput
+                  style={[styles.input, {
+                    backgroundColor: theme.cardBg,
+                    borderColor: theme.border,
+                    color: theme.text
+                  }]}
+                  placeholder="ВКонтакте (ссылка или ID)"
+                  placeholderTextColor={theme.subText}
+                  value={socialVk}
+                  onChangeText={setSocialVk}
+                  autoCapitalize="none"
+                />
+                <TextInput
+                  style={[styles.input, {
+                    backgroundColor: theme.cardBg,
+                    borderColor: theme.border,
+                    color: theme.text
+                  }]}
+                  placeholder="Instagram (@username)"
+                  placeholderTextColor={theme.subText}
+                  value={socialInstagram}
+                  onChangeText={setSocialInstagram}
+                  autoCapitalize="none"
+                />
+              </View>
+            </View>
 
             {/* 5. Знак зодиака */}
             <ZodiacSection

@@ -196,7 +196,10 @@ class YandexAuthService implements IAuthService {
             isVisible: user.isVisible,
             latitude: user.latitude,
             longitude: user.longitude,
-            city: user.city
+            city: user.city,
+            socialTelegram: user.socialTelegram || user.social_telegram,
+            socialVk: user.socialVk || user.social_vk,
+            socialInstagram: user.socialInstagram || user.social_instagram
         };
     }
 }

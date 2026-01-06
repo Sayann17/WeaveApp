@@ -1,11 +1,14 @@
--- Migration 04: Add Geolocation fields to users table
+-- Migration 04: Add Geolocation fields to users table (YQL Syntax)
 
-ALTER TABLE users
-ADD COLUMN IF NOT EXISTS latitude DOUBLE PRECISION,
-ADD COLUMN IF NOT EXISTS longitude DOUBLE PRECISION,
-ADD COLUMN IF NOT EXISTS city TEXT,
-ADD COLUMN IF NOT EXISTS last_location_updated_at TIMESTAMP WITH TIME ZONE;
+-- STEP 1: Add columns
+ALTER TABLE users ADD COLUMN latitude Double;
+ALTER TABLE users ADD COLUMN longitude Double;
+ALTER TABLE users ADD COLUMN city Utf8;
+ALTER TABLE users ADD COLUMN last_location_updated_at Datetime;
 
--- Create index for faster location queries (optional but good for performance)
-CREATE INDEX IF NOT EXISTS idx_users_location ON users (latitude, longitude);
-CREATE INDEX IF NOT EXISTS idx_users_city ON users (city);
+-- STEP 2: Create Indexes
+-- NOTE: YDB does NOT allow Double/Float types in indexes (Primary or Secondary keys).
+-- We CANNOT create an index on latitude/longitude directly if they are Double.
+-- For now, we will skip indexing coordinates. Performance will be fine for small datasets.
+
+ALTER TABLE users ADD INDEX idx_users_city GLOBAL ON (city);

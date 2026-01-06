@@ -126,7 +126,10 @@ async function updateProfile(driver, requestHeaders, data, headers) {
         'is_visible': 'bool',
         'latitude': 'double',
         'longitude': 'double',
-        'city': 'utf8'
+        'city': 'utf8',
+        'social_telegram': 'utf8',
+        'social_vk': 'utf8',
+        'social_instagram': 'utf8'
     };
 
     const updates = [];
@@ -141,12 +144,14 @@ async function updateProfile(driver, requestHeaders, data, headers) {
         'loveLanguage': 'love_language',
         'familyMemory': 'family_memory',
         'stereotypeTrue': 'stereotype_true',
-        'stereotypeTrue': 'stereotype_true',
         'stereotypeFalse': 'stereotype_false',
         'isVisible': 'is_visible',
         'latitude': 'latitude',
         'longitude': 'longitude',
-        'city': 'city'
+        'city': 'city',
+        'socialTelegram': 'social_telegram',
+        'socialVk': 'social_vk',
+        'socialInstagram': 'social_instagram'
     };
 
     // Explicitly handle each field to ensure types
@@ -296,7 +301,10 @@ async function me(driver, requestHeaders, headers) {
             isVisible: user.is_visible !== undefined ? user.is_visible : true,
             latitude: user.latitude,
             longitude: user.longitude,
-            city: user.city
+            city: user.city,
+            socialTelegram: user.social_telegram,
+            socialVk: user.social_vk,
+            socialInstagram: user.social_instagram
         };
 
         console.log('[/me] Returning user:', {

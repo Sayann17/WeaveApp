@@ -30,6 +30,9 @@ export interface User {
     latitude?: number;
     longitude?: number;
     city?: string;
+    socialTelegram?: string;
+    socialVk?: string;
+    socialInstagram?: string;
 }
 
 export interface IAuthService {

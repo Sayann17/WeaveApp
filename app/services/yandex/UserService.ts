@@ -85,6 +85,9 @@ export class YandexUserService implements IUserService {
             latitude: data.latitude,
             longitude: data.longitude,
             city: data.city,
+            socialTelegram: data.socialTelegram || data.social_telegram,
+            socialVk: data.socialVk || data.social_vk,
+            socialInstagram: data.socialInstagram || data.social_instagram,
             likes: [], // To be implemented
             dislikes: [] // To be implemented
         };

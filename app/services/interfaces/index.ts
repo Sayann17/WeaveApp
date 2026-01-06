@@ -20,6 +20,9 @@ export interface UserProfile {
     latitude?: number;
     longitude?: number;
     city?: string;
+    socialTelegram?: string;
+    socialVk?: string;
+    socialInstagram?: string;
     lastActive?: number;
     // Preferences
     preferences?: {
