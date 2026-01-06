@@ -524,7 +524,7 @@ const styles = StyleSheet.create({
     alignItems: 'flex-end',
     borderRadius: 25,
     padding: 5,
-    borderWidth: 1,
+    borderWidth: 0,
   },
   textInput: {
     flex: 1,

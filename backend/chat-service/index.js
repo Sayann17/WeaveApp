@@ -60,6 +60,8 @@ module.exports.handler = async function (event, context) {
             return await getHistory(driver, headers, chatId, responseHeaders);
         } else if (path === '/like' && httpMethod === 'POST') {
             return await handleLike(driver, headers, JSON.parse(body), responseHeaders);
+        } else if (path === '/dislike' && httpMethod === 'POST') {
+            return await handleDislike(driver, headers, JSON.parse(body), responseHeaders);
         } else if (path === '/profile' && httpMethod === 'GET') {
             const profileUserId = event.queryStringParameters?.userId;
             return await getUserProfile(driver, headers, profileUserId, responseHeaders);
@@ -1101,6 +1103,36 @@ async function handleLike(driver, requestHeaders, body, responseHeaders) {
         statusCode: 200,
         headers: responseHeaders,
         body: JSON.stringify({ success: true, isMatch, chatId })
+    };
+}
+
+async function handleDislike(driver, requestHeaders, body, responseHeaders) {
+    const userId = checkAuth(requestHeaders);
+    if (!userId) return { statusCode: 401, headers: responseHeaders, body: JSON.stringify({ error: 'Unauthorized' }) };
+
+    const { targetUserId } = body;
+    if (!targetUserId) return { statusCode: 400, headers: responseHeaders, body: JSON.stringify({ error: 'Missing targetUserId' }) };
+
+    await driver.tableClient.withSession(async (session) => {
+        const deleteQuery = `
+            DECLARE $fromUserId AS Utf8;
+            DECLARE $toUserId AS Utf8;
+            
+            DELETE FROM likes 
+            WHERE from_user_id = $fromUserId 
+            AND to_user_id = $toUserId;
+        `;
+
+        await session.executeQuery(deleteQuery, {
+            '$fromUserId': TypedValues.utf8(userId),
+            '$toUserId': TypedValues.utf8(targetUserId)
+        });
+    });
+
+    return {
+        statusCode: 200,
+        headers: responseHeaders,
+        body: JSON.stringify({ success: true })
     };
 }
 

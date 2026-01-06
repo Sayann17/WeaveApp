@@ -146,7 +146,7 @@ export default function MatchesScreen() {
                         style={[styles.tab, activeTab === 'sent' && { borderBottomColor: theme.text, borderBottomWidth: 2 }]}
                         onPress={() => setActiveTab('sent')}
                     >
-                        <Text style={[styles.tabText, { color: activeTab === 'sent' ? theme.text : theme.subText }]}>Вы лайкнули</Text>
+                        <Text style={[styles.tabText, { color: activeTab === 'sent' ? theme.text : theme.subText }]}>Вы лайкнули ({yourLikes.length})</Text>
                     </Pressable>
                 </View>
 
@@ -237,7 +237,7 @@ export default function MatchesScreen() {
                             ))
                         ) : (
                             <View style={styles.empty}>
-                                <Text style={[styles.emptyText, { color: theme.subText }]}>Пока никто не лайкнул</Text>
+                                <Text style={[styles.emptyText, { color: theme.subText }]}>Вас пока никто не лайкнул</Text>
                             </View>
                         )
                     ) : (
@@ -270,7 +270,7 @@ export default function MatchesScreen() {
                             ))
                         ) : (
                             <View style={styles.empty}>
-                                <Text style={[styles.emptyText, { color: theme.subText }]}>Вы еще никого не лайкнули</Text>
+                                <Text style={[styles.emptyText, { color: theme.subText }]}>Вы пока никого не лайкнули</Text>
                             </View>
                         )
                     )}

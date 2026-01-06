@@ -43,7 +43,7 @@ class YandexMatchService {
 
     async dislikeUser(targetUserId: string): Promise<void> {
         const token = await AsyncStorage.getItem('auth_token');
-        await fetch(`${API_URL}/dislike`, {
+        const response = await fetch(`${API_URL}/dislike`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -51,7 +51,14 @@ class YandexMatchService {
             },
             body: JSON.stringify({ targetUserId })
         });
+
+        if (!response.ok) {
+            const err = await response.json().catch(() => ({ error: 'Dislike failed' }));
+            console.error('[MatchService] Dislike failed:', err);
+            throw new Error(err.error || 'Dislike failed');
+        }
     }
+
 
     async getMatches(): Promise<any[]> {
         const token = await AsyncStorage.getItem('auth_token');

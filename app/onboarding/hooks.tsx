@@ -136,7 +136,7 @@ export default function OnboardingHooksScreen() {
                 >
                     <View style={styles.requiredContainer}>
                         <HookInputItem
-                            label="О себе (Био) *"
+                            label="Об о себе (Био) *"
                             value={bio}
                             onChange={setBio}
                             placeholder="Кто вы? Чем живете? Что ищете?"
@@ -176,18 +176,18 @@ export default function OnboardingHooksScreen() {
                         />
 
                         <HookInputItem
-                            label="Что для тебя значит настоящая близость?"
+                            label="Что для меня значит настоящая близость"
                             value={stereotypeTrue}
                             onChange={setStereotypeTrue}
-                            placeholder="Да, это действительно так..."
+                            placeholder="Доверие, общие цели, поддержка..."
                             icon="checkmark-circle-outline"
                         />
 
                         <HookInputItem
-                            label="Чем ты занимаешься, когда хочешь перезагрузиться?"
+                            label="Чем я занимаюсь, когда хочу перезагрузиться"
                             value={stereotypeFalse}
                             onChange={setStereotypeFalse}
-                            placeholder="Нет, это всего лишь миф..."
+                            placeholder="Читаю, гуляю, смотрю сериалы..."
                             icon="close-circle-outline"
                         />
                     </View>
@@ -231,8 +231,7 @@ const styles = StyleSheet.create({
     inputWrapper: {
         backgroundColor: THEME.inputBg,
         borderRadius: 16,
-        borderWidth: 1,
-        borderColor: THEME.border,
+        borderWidth: 0,
         // 🔥 УБРАЛИ padding отсюда, чтобы кликабельная область инпута была максимальной
         paddingHorizontal: 0,
         shadowColor: "#000", shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.03, shadowRadius: 3, elevation: 1,
