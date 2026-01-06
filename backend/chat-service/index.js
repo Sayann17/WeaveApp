@@ -115,7 +115,7 @@ async function handleConnect(driver, event, connectionId) {
                 DECLARE $userId AS Utf8;
                 DECLARE $connectionId AS Utf8;
                 DECLARE $createdAt AS Timestamp;
-                REPLACE INTO socket_connections (user_id, connection_id, created_at)
+                UPSERT INTO socket_connections (user_id, connection_id, created_at)
                 VALUES ($userId, $connectionId, $createdAt);
             `;
             await session.executeQuery(query, {
