@@ -624,30 +624,62 @@ async function getMatches(driver, requestHeaders, responseHeaders) {
 
     let matches = [];
     await driver.tableClient.withSession(async (session) => {
-        // Find mutual likes (matches)
-        const query = `
+        // Step 1: Find all users who liked current user
+        const likesQuery = `
             DECLARE $userId AS Utf8;
-            
-            SELECT u.id, u.name, u.age, u.photos, u.about, u.gender, u.ethnicity
-            FROM users AS u
-            INNER JOIN likes AS l1 ON l1.to_user_id = u.id
-            INNER JOIN likes AS l2 ON l2.from_user_id = u.id
-            WHERE l1.from_user_id = $userId
-            AND l2.to_user_id = $userId;
+            SELECT from_user_id FROM likes WHERE to_user_id = $userId;
         `;
+        const { resultSets: likesResults } = await session.executeQuery(likesQuery, {
+            '$userId': TypedValues.utf8(userId)
+        });
+        const likedByUsers = likesResults[0] ? TypedData.createNativeObjects(likesResults[0]).map(r => r.from_user_id) : [];
 
-        const { resultSets } = await session.executeQuery(query, { '$userId': TypedValues.utf8(userId) });
-        const users = TypedData.createNativeObjects(resultSets[0]);
+        if (likedByUsers.length === 0) {
+            return; // No one liked the user
+        }
 
-        matches = users.map(u => ({
-            id: u.id,
-            name: u.name,
-            age: u.age,
-            photos: tryParse(u.photos),
-            bio: u.about,
-            gender: u.gender,
-            ethnicity: u.ethnicity
-        }));
+        // Step 2: Find mutual likes (users current user also liked)
+        const mutualQuery = `
+            DECLARE $userId AS Utf8;
+            SELECT to_user_id FROM likes WHERE from_user_id = $userId;
+        `;
+        const { resultSets: mutualResults } = await session.executeQuery(mutualQuery, {
+            '$userId': TypedValues.utf8(userId)
+        });
+        const userLiked = mutualResults[0] ? TypedData.createNativeObjects(mutualResults[0]).map(r => r.to_user_id) : [];
+
+        // Find intersection (mutual likes)
+        const matchIds = likedByUsers.filter(id => userLiked.includes(id));
+
+        if (matchIds.length === 0) {
+            return; // No matches
+        }
+
+        // Step 3: Get user data for each match
+        for (const matchId of matchIds) {
+            const userQuery = `
+                DECLARE $matchId AS Utf8;
+                SELECT id, name, age, photos, about, gender, ethnicity
+                FROM users
+                WHERE id = $matchId;
+            `;
+            const { resultSets: userResults } = await session.executeQuery(userQuery, {
+                '$matchId': TypedValues.utf8(matchId)
+            });
+            const users = userResults[0] ? TypedData.createNativeObjects(userResults[0]) : [];
+            if (users.length === 0) continue;
+
+            const u = users[0];
+            matches.push({
+                id: u.id,
+                name: u.name,
+                age: u.age,
+                photos: tryParse(u.photos),
+                bio: u.about,
+                gender: u.gender,
+                ethnicity: u.ethnicity
+            });
+        }
     });
 
     return { statusCode: 200, headers: responseHeaders, body: JSON.stringify({ matches }) };
@@ -747,46 +779,83 @@ async function getChats(driver, requestHeaders, responseHeaders) {
 
     let chats = [];
     await driver.tableClient.withSession(async (session) => {
-        // Get all matches (mutual likes) with last message info
-        const query = `
+        // Step 1: Find all users who liked current user
+        const likesQuery = `
             DECLARE $userId AS Utf8;
-            
-            SELECT 
-                u.id AS match_id,
-                u.name,
-                u.photos,
-                m.text AS last_message,
-                m.timestamp AS last_message_time,
-                m.sender_id AS last_sender_id
-            FROM users AS u
-            INNER JOIN likes AS l1 ON l1.to_user_id = u.id
-            INNER JOIN likes AS l2 ON l2.from_user_id = u.id
-            LEFT JOIN (
-                SELECT chat_id, text, timestamp, sender_id
-                FROM messages
-                WHERE chat_id LIKE $userId || '_%' OR chat_id LIKE '%_' || $userId
-                ORDER BY timestamp DESC
-                LIMIT 1
-            ) AS m ON (m.chat_id = $userId || '_' || u.id OR m.chat_id = u.id || '_' || $userId)
-            WHERE l1.from_user_id = $userId
-            AND l2.to_user_id = $userId
-            ORDER BY m.timestamp DESC;
+            SELECT from_user_id FROM likes WHERE to_user_id = $userId;
         `;
+        const { resultSets: likesResults } = await session.executeQuery(likesQuery, {
+            '$userId': TypedValues.utf8(userId)
+        });
+        const likedByUsers = likesResults[0] ? TypedData.createNativeObjects(likesResults[0]).map(r => r.from_user_id) : [];
 
-        const { resultSets } = await session.executeQuery(query, { '$userId': TypedValues.utf8(userId) });
-        const rows = TypedData.createNativeObjects(resultSets[0]);
+        if (likedByUsers.length === 0) {
+            return; // No one liked the user
+        }
 
-        chats = rows.map(row => {
-            const chatId = [userId, row.match_id].sort().join('_');
-            return {
-                chatId,
-                matchId: row.match_id,
-                name: row.name,
-                photo: tryParse(row.photos)[0] || null,
-                lastMessage: row.last_message || '',
-                lastMessageTime: row.last_message_time ? new Date(row.last_message_time).toISOString() : null,
-                isOwnMessage: row.last_sender_id === userId
-            };
+        // Step 2: Find mutual likes (users current user also liked)
+        const mutualQuery = `
+            DECLARE $userId AS Utf8;
+            SELECT to_user_id FROM likes WHERE from_user_id = $userId;
+        `;
+        const { resultSets: mutualResults } = await session.executeQuery(mutualQuery, {
+            '$userId': TypedValues.utf8(userId)
+        });
+        const userLiked = mutualResults[0] ? TypedData.createNativeObjects(mutualResults[0]).map(r => r.to_user_id) : [];
+
+        // Find intersection (mutual likes)
+        const matchIds = likedByUsers.filter(id => userLiked.includes(id));
+
+        if (matchIds.length === 0) {
+            return; // No matches
+        }
+
+        // Step 3: Get user data for each match
+        for (const matchId of matchIds) {
+            const userQuery = `
+                DECLARE $matchId AS Utf8;
+                SELECT id, name, photos FROM users WHERE id = $matchId;
+            `;
+            const { resultSets: userResults } = await session.executeQuery(userQuery, {
+                '$matchId': TypedValues.utf8(matchId)
+            });
+            const users = userResults[0] ? TypedData.createNativeObjects(userResults[0]) : [];
+            if (users.length === 0) continue;
+
+            const match = users[0];
+            const chatId = [userId, matchId].sort().join('_');
+
+            // Step 4: Get last message for this chat
+            const msgQuery = `
+                DECLARE $chatId AS Utf8;
+                SELECT text, timestamp, sender_id
+                FROM messages
+                WHERE chat_id = $chatId
+                ORDER BY timestamp DESC
+                LIMIT 1;
+            `;
+            const { resultSets: msgResults } = await session.executeQuery(msgQuery, {
+                '$chatId': TypedValues.utf8(chatId)
+            });
+            const msgRows = msgResults[0] ? TypedData.createNativeObjects(msgResults[0]) : [];
+            const lastMsg = msgRows[0] || null;
+
+            chats.push({
+                id: chatId,
+                matchId: match.id,
+                name: match.name,
+                photo: tryParse(match.photos)[0] || null,
+                lastMessage: lastMsg ? lastMsg.text : '',
+                lastMessageTime: lastMsg ? new Date(lastMsg.timestamp).toISOString() : null,
+                isOwnMessage: lastMsg ? lastMsg.sender_id === userId : false
+            });
+        }
+
+        // Sort by last message time
+        chats.sort((a, b) => {
+            if (!a.lastMessageTime) return 1;
+            if (!b.lastMessageTime) return -1;
+            return new Date(b.lastMessageTime) - new Date(a.lastMessageTime);
         });
     });
 
@@ -849,16 +918,16 @@ async function handleLike(driver, requestHeaders, body, responseHeaders) {
         const insertQuery = `
             DECLARE $fromUserId AS Utf8;
             DECLARE $toUserId AS Utf8;
-            DECLARE $timestamp AS Timestamp;
+            DECLARE $createdAt AS Timestamp;
             
-            UPSERT INTO likes (from_user_id, to_user_id, timestamp)
-            VALUES ($fromUserId, $toUserId, $timestamp);
+            UPSERT INTO likes (from_user_id, to_user_id, created_at)
+            VALUES ($fromUserId, $toUserId, $createdAt);
         `;
 
         await session.executeQuery(insertQuery, {
             '$fromUserId': TypedValues.utf8(userId),
             '$toUserId': TypedValues.utf8(targetUserId),
-            '$timestamp': TypedValues.timestamp(new Date())
+            '$createdAt': TypedValues.timestamp(new Date())
         });
 
         // Step 2: Check if it's a match (mutual like)

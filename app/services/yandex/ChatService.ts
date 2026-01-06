@@ -172,9 +172,9 @@ class YandexChatService {
         return data.chats.map((c: any) => ({
             id: c.id,
             participants: c.id.split('_'),
-            lastMessage: c.last_message,
-            lastMessageTime: c.last_message_time ? new Date(c.last_message_time) : undefined,
-            isMatchChat: !!c.is_match_chat
+            lastMessage: c.lastMessage,
+            lastMessageTime: c.lastMessageTime ? new Date(c.lastMessageTime) : undefined,
+            isMatchChat: true // All chats from /chats are match chats
         }));
     }
 
