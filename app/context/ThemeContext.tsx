@@ -2,6 +2,7 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { yandexAuth } from '../services/yandex/AuthService';
+import { useTelegram } from './TelegramProvider';
 
 // Типы тем
 export type ThemeType = 'light' | 'space' | 'aura';
@@ -71,6 +72,23 @@ export const ThemeProvider = ({ children }: { children: React.ReactNode }) => {
     };
     loadTheme();
   }, []);
+
+  // Sync with Telegram WebApp
+  const { webApp } = useTelegram();
+
+  useEffect(() => {
+    if (webApp) {
+      const bg = THEMES[themeType].background;
+      // Set header color to match background (triggers status bar icon color change)
+      if (webApp.setHeaderColor) {
+        webApp.setHeaderColor(bg);
+      }
+      // Set background color for overscroll areas
+      if (webApp.setBackgroundColor) {
+        webApp.setBackgroundColor(bg);
+      }
+    }
+  }, [themeType, webApp]);
 
   // Listen to auth changes to get user photo
   useEffect(() => {
