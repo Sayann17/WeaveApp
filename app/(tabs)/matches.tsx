@@ -191,7 +191,7 @@ export default function MatchesScreen() {
                                 <Text style={[styles.emptyText, { color: theme.subText }]}>Пока нет совпадений</Text>
                             </View>
                         )
-                    ) : (
+                    ) : activeTab === 'likes' ? (
                         likesYou.length > 0 ? (
                             likesYou.map((profile) => (
                                 <View
@@ -238,6 +238,39 @@ export default function MatchesScreen() {
                         ) : (
                             <View style={styles.empty}>
                                 <Text style={[styles.emptyText, { color: theme.subText }]}>Пока никто не лайкнул</Text>
+                            </View>
+                        )
+                    ) : (
+                        yourLikes.length > 0 ? (
+                            yourLikes.map((profile) => (
+                                <View
+                                    key={profile.id}
+                                    style={[styles.card, { backgroundColor: theme.cardBg }]}
+                                >
+                                    <Pressable
+                                        style={{ flexDirection: 'row', alignItems: 'center', flex: 1 }}
+                                        onPress={() => router.push(`/users/${profile.id}` as any)}
+                                    >
+                                        <Image
+                                            source={{ uri: Array.isArray(profile.photos) ? profile.photos[0] : (profile.photo || profile.photos) }}
+                                            style={styles.avatar}
+                                            contentFit="cover"
+                                            transition={200}
+                                        />
+                                        <View style={styles.info}>
+                                            <Text style={[styles.name, { color: theme.text }]} numberOfLines={1}>
+                                                {(profile.name || 'Пользователь')}{profile.age ? `, ${profile.age}` : ''}
+                                            </Text>
+                                            <Text style={[styles.details, { color: theme.subText }]} numberOfLines={1}>
+                                                {getHeritageString(profile)}
+                                            </Text>
+                                        </View>
+                                    </Pressable>
+                                </View>
+                            ))
+                        ) : (
+                            <View style={styles.empty}>
+                                <Text style={[styles.emptyText, { color: theme.subText }]}>Вы еще никого не лайкнули</Text>
                             </View>
                         )
                     )}

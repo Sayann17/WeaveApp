@@ -63,16 +63,21 @@ export default function TabLayout() {
           borderTopColor: isLight ? theme.border : '#1a1a1a',
           elevation: 0,
           borderTopWidth: 1,
+          height: 70,
+          paddingBottom: 10,
+          paddingTop: 8,
         },
         tabBarActiveTintColor: isLight ? '#2a2a2a' : '#81B29A',
         tabBarInactiveTintColor: isLight ? '#999' : '#666',
+        tabBarIconStyle: { marginTop: 2 },
+        tabBarLabelStyle: { fontSize: 11, marginBottom: 2 },
       }}>
       <Tabs.Screen
         name="index"
         options={{
           title: 'Главная',
-          tabBarIcon: ({ color, size }) => (
-            <TabIconWithBadge name="home" size={size} color={color} />
+          tabBarIcon: ({ color }) => (
+            <TabIconWithBadge name="home" size={28} color={color} />
           ),
           href: null,
         }}
@@ -81,8 +86,8 @@ export default function TabLayout() {
         name="explore"
         options={{
           title: 'Поиск',
-          tabBarIcon: ({ color, size }) => (
-            <TabIconWithBadge name="search" size={size} color={color} />
+          tabBarIcon: ({ color }) => (
+            <TabIconWithBadge name="search" size={28} color={color} />
           ),
         }}
       />
@@ -90,8 +95,8 @@ export default function TabLayout() {
         name="chats"
         options={{
           title: 'Чаты',
-          tabBarIcon: ({ color, size }) => (
-            <TabIconWithBadge name="chatbubble-ellipses" size={size} color={color} badgeCount={unreadMessagesCount} />
+          tabBarIcon: ({ color }) => (
+            <TabIconWithBadge name="chatbubble-ellipses" size={28} color={color} badgeCount={unreadMessagesCount} />
           ),
         }}
       />
@@ -99,8 +104,8 @@ export default function TabLayout() {
         name="matches"
         options={{
           title: 'Мэтчи',
-          tabBarIcon: ({ color, size }) => (
-            <TabIconWithBadge name="heart" size={size} color={color} badgeCount={newLikesCount} />
+          tabBarIcon: ({ color }) => (
+            <TabIconWithBadge name="heart" size={28} color={color} badgeCount={newLikesCount} />
           ),
         }}
       />
@@ -108,8 +113,8 @@ export default function TabLayout() {
         name="profile"
         options={{
           title: 'Профиль',
-          tabBarIcon: ({ color, size }) => (
-            <TabIconWithBadge name="person" size={size} color={color} />
+          tabBarIcon: ({ color }) => (
+            <TabIconWithBadge name="person" size={28} color={color} />
           ),
         }}
       />
@@ -117,8 +122,8 @@ export default function TabLayout() {
         name="menu"
         options={{
           title: 'Меню',
-          tabBarIcon: ({ color, size }) => (
-            <TabIconWithBadge name="menu" size={size} color={color} />
+          tabBarIcon: ({ color }) => (
+            <TabIconWithBadge name="menu" size={28} color={color} />
           ),
         }}
         listeners={{

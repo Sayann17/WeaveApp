@@ -357,7 +357,7 @@ export const ProfileView = ({ userData, isOwnProfile = false }: ProfileViewProps
                     </View>
                 )}
 
-                <View style={{ height: 120 }} />
+                <View style={{ height: 30 }} />
             </ScrollView>
 
             {/* ЛАЙТБОКС */}
