@@ -205,8 +205,15 @@ async function updateProfile(driver, requestHeaders, data, headers) {
             
             UPDATE users SET ${updates.join(', ')} WHERE id = $id;
         `;
-        // Explicitly commit the transaction
-        await session.executeQuery(query, params, { commitTx: true });
+        // Use explicit transaction to ensure data is saved
+        const tx = await session.beginTransaction({ serializableReadWrite: {} });
+        try {
+            await tx.executeQuery(query, params);
+            await tx.commit();
+        } catch (err) {
+            await tx.rollback();
+            throw err;
+        }
     });
 
     return { statusCode: 200, headers, body: JSON.stringify({ success: true }) };
@@ -231,9 +238,16 @@ async function deleteAccount(driver, requestHeaders, headers) {
             DECLARE $id AS Utf8;
             DELETE FROM users WHERE id = $id;
         `;
-        await session.executeQuery(query, {
-            '$id': TypedValues.utf8(id)
-        }, { commitTx: true });
+        const tx = await session.beginTransaction({ serializableReadWrite: {} });
+        try {
+            await tx.executeQuery(query, {
+                '$id': TypedValues.utf8(id)
+            });
+            await tx.commit();
+        } catch (err) {
+            await tx.rollback();
+            throw err;
+        }
     });
 
     return { statusCode: 200, headers, body: JSON.stringify({ success: true }) };
