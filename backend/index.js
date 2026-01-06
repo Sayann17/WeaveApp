@@ -208,9 +208,10 @@ async function updateProfile(driver, requestHeaders, data, headers) {
         // Use explicit transaction to ensure data is saved
         const tx = await session.beginTransaction({ serializableReadWrite: {} });
         try {
-            await tx.executeQuery(query, params);
+            await session.executeQuery(query, params, { txControl: { txId: tx.txId } });
             await tx.commit();
         } catch (err) {
+            console.error('[updateProfile] Transaction failed:', err);
             await tx.rollback();
             throw err;
         }
@@ -240,11 +241,12 @@ async function deleteAccount(driver, requestHeaders, headers) {
         `;
         const tx = await session.beginTransaction({ serializableReadWrite: {} });
         try {
-            await tx.executeQuery(query, {
+            await session.executeQuery(query, {
                 '$id': TypedValues.utf8(id)
-            });
+            }, { txControl: { txId: tx.txId } });
             await tx.commit();
         } catch (err) {
+            console.error('[deleteAccount] Transaction failed:', err);
             await tx.rollback();
             throw err;
         }
