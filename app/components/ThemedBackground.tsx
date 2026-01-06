@@ -1,4 +1,5 @@
 // components/ThemedBackground.tsx
+import { StatusBar } from 'expo-status-bar';
 import React from 'react';
 import { ImageBackground, StyleSheet, View } from 'react-native';
 import { useTheme } from '../context/ThemeContext';
@@ -30,6 +31,7 @@ export const ThemedBackground = ({ children }: { children?: React.ReactNode }) =
   // Для 'light' и 'aura' (если нет фото) просто цвет
   return (
     <View style={{ flex: 1, backgroundColor: theme.background }}>
+      <StatusBar style={themeType === 'light' ? 'dark' : 'light'} />
       {children}
     </View>
   );
