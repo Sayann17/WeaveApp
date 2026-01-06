@@ -502,6 +502,15 @@ async function handleLike(driver, requestHeaders, body, responseHeaders) {
         // 🔔 Send Telegram notification for like (not a match)
         await sendLikeNotification(driver, targetUserId);
 
+        // 🔔 Send WebSocket notification to recipient if online
+        const recipientConn = await getConnectionIdByUserId(driver, targetUserId);
+        if (recipientConn) {
+            await sendToConnection(recipientConn, {
+                type: 'newLike',
+                fromUserId: userId
+            });
+        }
+
         return { type: 'like' };
     });
 

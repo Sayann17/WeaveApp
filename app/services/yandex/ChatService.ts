@@ -1,7 +1,7 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const API_URL = 'https://d5dg37j92h7tg2f7sf87.o2p3jdjj.apigw.yandexcloud.net';
-const WS_URL = 'wss://d5dg37j92h7tg2f7sf87.o2p3jdjj.apigw.yandexcloud.net/ws'; // Definitive path for explicit path-level extensions
+const WS_URL = 'wss://d5dg37j92h7tg2f7sf87.o2p3jdjj.apigw.yandexcloud.net/ws';
 
 export interface Message {
     id: string;
@@ -14,7 +14,6 @@ export interface Message {
     isEdited?: boolean;
     editedAt?: Date;
 }
-// ... existing imports ...
 
 export interface Chat {
     id: string;
@@ -27,6 +26,7 @@ export interface Chat {
 class YandexChatService {
     private socket: WebSocket | null = null;
     private messageListeners: ((message: Message, eventType?: 'newMessage' | 'messageEdited') => void)[] = [];
+    private likeListeners: ((fromUserId: string) => void)[] = [];
 
     async connect(): Promise<void> {
         if (this.socket && this.socket.readyState === WebSocket.OPEN) return;
@@ -76,6 +76,8 @@ class YandexChatService {
                             editedAt: new Date(data.message.editedAt)
                         };
                         this.messageListeners.forEach(listener => listener(message, 'messageEdited'));
+                    } else if (data.type === 'newLike') {
+                        this.likeListeners.forEach(listener => listener(data.fromUserId));
                     }
                 };
 
@@ -89,9 +91,6 @@ class YandexChatService {
                 this.socket.onclose = (event) => {
                     console.log(`[ChatService] WebSocket Closed: Code=${event.code}, Reason=${event.reason}`);
                     this.socket = null;
-                    if (event.code !== 1000) {
-                        // reject(new Error(`WebSocket closed unexpectedly: ${event.reason || event.code}`));
-                    }
                 };
             } catch (err) {
                 console.error('[ChatService] Error creating WebSocket:', err);
@@ -111,6 +110,13 @@ class YandexChatService {
         this.messageListeners.push(callback);
         return () => {
             this.messageListeners = this.messageListeners.filter(l => l !== callback);
+        };
+    }
+
+    onLike(callback: (fromUserId: string) => void) {
+        this.likeListeners.push(callback);
+        return () => {
+            this.likeListeners = this.likeListeners.filter(l => l !== callback);
         };
     }
 
@@ -185,7 +191,7 @@ class YandexChatService {
         const data = await response.json();
         return data.messages.map((m: any) => ({
             id: m.id,
-            chatId: m.chat_id || m.chatId, // Handle both cases just in case
+            chatId: m.chat_id || m.chatId,
             text: m.text,
             senderId: m.sender_id || m.senderId,
             timestamp: new Date(m.timestamp),
@@ -195,7 +201,22 @@ class YandexChatService {
             editedAt: m.editedAt ? new Date(m.editedAt) : undefined
         }));
     }
-}
 
+    async getNotificationsStats(): Promise<{ unreadMessages: number, newLikes: number }> {
+        const token = await AsyncStorage.getItem('auth_token');
+        if (!token) return { unreadMessages: 0, newLikes: 0 };
+
+        try {
+            const response = await fetch(`${API_URL}/notifications/stats`, {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            if (!response.ok) return { unreadMessages: 0, newLikes: 0 };
+            return await response.json();
+        } catch (e) {
+            console.error('Failed to fetch notification stats', e);
+            return { unreadMessages: 0, newLikes: 0 };
+        }
+    }
+}
 
 export const yandexChat = new YandexChatService();
