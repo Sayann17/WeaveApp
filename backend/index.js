@@ -13,7 +13,7 @@ module.exports.handler = async function (event, context) {
     console.log('Event method:', event.httpMethod);
 
     const { httpMethod, path, body, headers } = event;
-    console.log('[handler] Function "v2-fixed-transactions" loaded'); // Deployment verification log
+    console.log('[handler] Function "v3-simple-query" loaded'); // Deployment verification log
     let driver;
     // Test database connection
     try {
@@ -207,18 +207,12 @@ async function updateProfile(driver, requestHeaders, data, headers) {
             
             UPDATE users SET ${updates.join(', ')} WHERE id = $id;
         `;
-        // Use explicit transaction to ensure data is saved
-        const tx = await session.beginTransaction({ serializableReadWrite: {} });
+        // Simplified execution matching chat-service (single statement doesn't need complex tx)
         try {
-            await session.executeQuery(query, params, { txControl: { txId: tx.txId } });
-            await tx.commit();
+            await session.executeQuery(query, params);
+            console.log('[updateProfile] Query executed successfully');
         } catch (err) {
-            console.error('[updateProfile] Transaction failed:', err);
-            if (tx && typeof tx.rollback === 'function') {
-                await tx.rollback();
-            } else {
-                console.warn('[updateProfile] Cannot rollback: tx is invalid or rollback is not a function');
-            }
+            console.error('[updateProfile] Execution failed:', err);
             throw err;
         }
     });
@@ -245,19 +239,13 @@ async function deleteAccount(driver, requestHeaders, headers) {
             DECLARE $id AS Utf8;
             DELETE FROM users WHERE id = $id;
         `;
-        const tx = await session.beginTransaction({ serializableReadWrite: {} });
         try {
             await session.executeQuery(query, {
                 '$id': TypedValues.utf8(id)
-            }, { txControl: { txId: tx.txId } });
-            await tx.commit();
+            });
+            console.log('[deleteAccount] Query executed successfully');
         } catch (err) {
-            console.error('[deleteAccount] Transaction failed:', err);
-            if (tx && typeof tx.rollback === 'function') {
-                await tx.rollback();
-            } else {
-                console.warn('[deleteAccount] Cannot rollback: tx is invalid or rollback is not a function');
-            }
+            console.error('[deleteAccount] Execution failed:', err);
             throw err;
         }
     });
