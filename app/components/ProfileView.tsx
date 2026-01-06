@@ -1,5 +1,5 @@
 // app/components/ProfileView.tsx
-import { Ionicons } from '@expo/vector-icons';
+import { FontAwesome, Ionicons } from '@expo/vector-icons';
 import { Image } from 'expo-image';
 import { useRouter } from 'expo-router';
 import React, { useEffect, useState } from 'react';
@@ -14,7 +14,7 @@ import {
     StyleSheet,
     Text,
     TouchableOpacity,
-    View,
+    View
 } from 'react-native';
 import { Colors } from '../constants/colors';
 import { useTelegram } from '../context/TelegramProvider';
@@ -280,7 +280,46 @@ export const ProfileView = ({ userData, isOwnProfile = false }: ProfileViewProps
                                 </Text>
                             </>
                         )}
+                        {/* 4. ГОРОД */}
+                        {userData?.city && (
+                            <>
+                                <View style={[styles.statusDot, { backgroundColor: subTextColor }]} />
+                                <Text style={[styles.statusText, { color: subTextColor }]}>
+                                    {userData.city}
+                                </Text>
+                            </>
+                        )}
                     </View>
+
+                    {/* СОЦСЕТИ */}
+                    {(userData?.socialTelegram || userData?.socialVk || userData?.socialInstagram) && (
+                        <View style={styles.socialStack}>
+                            {userData.socialTelegram ? (
+                                <View style={styles.socialItem}>
+                                    <Ionicons name="paper-plane" size={16} color={isLight ? '#229ED9' : '#2AABEE'} />
+                                    <Text style={[styles.socialText, { color: textColor }]}>
+                                        {userData.socialTelegram}
+                                    </Text>
+                                </View>
+                            ) : null}
+                            {userData.socialVk ? (
+                                <View style={styles.socialItem}>
+                                    <FontAwesome name="vk" size={16} color={isLight ? '#0077FF' : '#4a8eff'} />
+                                    <Text style={[styles.socialText, { color: textColor }]}>
+                                        {userData.socialVk}
+                                    </Text>
+                                </View>
+                            ) : null}
+                            {userData.socialInstagram ? (
+                                <View style={styles.socialItem}>
+                                    <Ionicons name="logo-instagram" size={16} color={isLight ? '#E1306C' : '#E4405F'} />
+                                    <Text style={[styles.socialText, { color: textColor }]}>
+                                        {userData.socialInstagram}
+                                    </Text>
+                                </View>
+                            ) : null}
+                        </View>
+                    )}
                 </View>
 
                 <View style={[styles.divider, { backgroundColor: isLight ? 'rgba(0,0,0,0.1)' : 'rgba(255,255,255,0.1)' }]} />
@@ -412,6 +451,10 @@ const styles = StyleSheet.create({
     statusRow: { flexDirection: 'row', alignItems: 'center', flexWrap: 'wrap' },
     statusText: { fontSize: 15, fontWeight: '400' },
     statusDot: { width: 3, height: 3, borderRadius: 1.5, marginHorizontal: 8 },
+
+    socialStack: { flexDirection: 'column', gap: 6, marginTop: 12 },
+    socialItem: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+    socialText: { fontSize: 14, fontWeight: '500' },
 
     divider: { width: width - 40, height: 1, marginBottom: 25 },
 
