@@ -384,7 +384,7 @@ export default function ChatScreen() {
 
             {/* ПОЛЕ ВВОДА */}
             <View style={[styles.inputWrapper]}>
-              <View style={[styles.inputContainer, { backgroundColor: theme.cardBg, borderColor: theme.border }]}>
+              <View style={[styles.inputContainer, { backgroundColor: theme.cardBg }]}>
                 <TextInput
                   style={[styles.textInput, { color: theme.text }]}
                   value={newMessage}
@@ -394,6 +394,7 @@ export default function ChatScreen() {
                   multiline
                   maxLength={500}
                   editable={!isSending}
+                  underlineColorAndroid="transparent"
                 />
                 <Pressable
                   style={[
@@ -532,6 +533,8 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
     fontSize: 16,
     maxHeight: 100,
+    // @ts-ignore - web-specific style
+    outlineWidth: 0,
   },
   sendButton: {
     width: 40,
