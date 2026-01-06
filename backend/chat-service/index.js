@@ -67,6 +67,8 @@ module.exports.handler = async function (event, context) {
             return await getDiscovery(driver, headers, event.queryStringParameters, responseHeaders);
         } else if ((path === '/likes-you' || path === '/likes-you/') && httpMethod === 'GET') {
             return await getLikesYou(driver, headers, responseHeaders);
+        } else if ((path === '/your-likes' || path === '/your-likes/') && httpMethod === 'GET') {
+            return await getYourLikes(driver, headers, responseHeaders);
         }
 
         return {
@@ -295,6 +297,7 @@ async function getMatches(driver, requestHeaders, responseHeaders) {
                 u.age as age, 
                 u.photos as photos, 
                 u.ethnicity as ethnicity,
+                u.macro_groups as macro_groups,
                 m.created_at as created_at
             FROM matches m
             JOIN users u ON m.user2_id = u.id
@@ -309,6 +312,7 @@ async function getMatches(driver, requestHeaders, responseHeaders) {
                 u.age as age, 
                 u.photos as photos, 
                 u.ethnicity as ethnicity,
+                u.macro_groups as macro_groups,
                 m.created_at as created_at
             FROM matches m
             JOIN users u ON m.user1_id = u.id
@@ -327,7 +331,9 @@ async function getMatches(driver, requestHeaders, responseHeaders) {
                 id: mId,
                 name: getVal(m, 'name'),
                 age: getVal(m, 'age'),
+                age: getVal(m, 'age'),
                 ethnicity: getVal(m, 'ethnicity'),
+                macroGroups: typeof getVal(m, 'macro_groups') === 'string' ? JSON.parse(getVal(m, 'macro_groups')) : getVal(m, 'macro_groups'),
                 photos: typeof mPhotos === 'string' ? (mPhotos.startsWith('[') ? JSON.parse(mPhotos) : [mPhotos]) : mPhotos,
                 chatId: [userId, mId].sort().join('_'),
                 created_at: getVal(m, 'created_at')
@@ -354,6 +360,8 @@ async function getLikesYou(driver, requestHeaders, responseHeaders) {
                 u.age as age, 
                 u.photos as photos, 
                 u.ethnicity as ethnicity,
+                u.macro_groups as macro_groups,
+                l.created_at as created_at
                 l.created_at as created_at
             FROM likes l
             JOIN users u ON l.from_user_id = u.id
@@ -375,6 +383,56 @@ async function getLikesYou(driver, requestHeaders, responseHeaders) {
                     name: getVal(l, 'name'),
                     age: getVal(l, 'age'),
                     ethnicity: getVal(l, 'ethnicity'),
+                    macroGroups: typeof getVal(l, 'macro_groups') === 'string' ? JSON.parse(getVal(l, 'macro_groups')) : getVal(l, 'macro_groups'),
+                    photos: typeof lPhotos === 'string' ? (lPhotos.startsWith('[') ? JSON.parse(lPhotos) : [lPhotos]) : lPhotos,
+                    created_at: getVal(l, 'created_at')
+                };
+            });
+        }
+    });
+    return { statusCode: 200, headers: responseHeaders, body: JSON.stringify({ profiles: likes }) };
+}
+
+async function getYourLikes(driver, requestHeaders, responseHeaders) {
+    const userId = checkAuth(requestHeaders);
+    if (!userId) return { statusCode: 401, headers: responseHeaders, body: JSON.stringify({ error: 'Unauthorized' }) };
+
+    let likes = [];
+    await driver.tableClient.withSession(async (session) => {
+        // Get users I liked, but who haven't liked me back (otherwise match)
+        const query = `
+            DECLARE $userId AS Utf8;
+            $liked_me = (SELECT from_user_id FROM likes WHERE to_user_id = $userId);
+            
+            SELECT 
+                u.id as id, 
+                u.name as name, 
+                u.age as age, 
+                u.photos as photos, 
+                u.ethnicity as ethnicity,
+                u.macro_groups as macro_groups,
+                l.created_at as created_at
+            FROM likes l
+            JOIN users u ON l.to_user_id = u.id
+            LEFT JOIN $liked_me m ON m.from_user_id = l.to_user_id
+            WHERE l.from_user_id = $userId
+            AND m.from_user_id IS NULL;
+        `;
+        const { resultSets } = await session.executeQuery(query, {
+            '$userId': TypedValues.utf8(userId)
+        });
+
+        const getVal = (obj, key) => obj[key.toLowerCase()] || obj[key.charAt(0).toUpperCase() + key.slice(1)] || obj[key];
+
+        if (resultSets && resultSets.length > 0) {
+            likes = TypedData.createNativeObjects(resultSets[0]).map(l => {
+                const lPhotos = getVal(l, 'photos');
+                return {
+                    id: getVal(l, 'id'),
+                    name: getVal(l, 'name'),
+                    age: getVal(l, 'age'),
+                    ethnicity: getVal(l, 'ethnicity'),
+                    macroGroups: typeof getVal(l, 'macro_groups') === 'string' ? JSON.parse(getVal(l, 'macro_groups')) : getVal(l, 'macro_groups'),
                     photos: typeof lPhotos === 'string' ? (lPhotos.startsWith('[') ? JSON.parse(lPhotos) : [lPhotos]) : lPhotos,
                     created_at: getVal(l, 'created_at')
                 };

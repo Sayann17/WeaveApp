@@ -25,7 +25,8 @@ export default function MatchesScreen() {
     const { theme, themeType } = useTheme();
     const [matches, setMatches] = useState<any[]>([]);
     const [likesYou, setLikesYou] = useState<any[]>([]);
-    const [activeTab, setActiveTab] = useState<'matches' | 'likes'>('matches');
+    const [yourLikes, setYourLikes] = useState<any[]>([]);
+    const [activeTab, setActiveTab] = useState<'matches' | 'likes' | 'sent'>('matches');
     const [loading, setLoading] = useState(true);
     const insets = useSafeAreaInsets();
     const { isMobile } = useTelegram();
@@ -45,12 +46,14 @@ export default function MatchesScreen() {
                 setLoading(false);
                 return;
             }
-            const [matchesData, likesData] = await Promise.all([
+            const [matchesData, likesData, sentLikesData] = await Promise.all([
                 yandexMatch.getMatches(),
-                yandexMatch.getLikesYou()
+                yandexMatch.getLikesYou(),
+                yandexMatch.getYourLikes()
             ]);
             setMatches(matchesData || []);
             setLikesYou(likesData || []);
+            setYourLikes(sentLikesData || []);
         } catch (e) {
             console.error(e);
         } finally {
@@ -101,6 +104,26 @@ export default function MatchesScreen() {
         }
     };
 
+    // Helper to format roots
+    const getHeritageString = (profile: any) => {
+        const ETHNICITY_MAP: Record<string, string> = {
+            slavic: 'Славянские', asian: 'Азиатские', caucasian: 'Кавказские',
+            finno_ugric: 'Финно-угорские', european: 'Европейские', african: 'Африканские',
+            latin: 'Латиноамериканские', arab: 'Арабские', jewish: 'Еврейские',
+            indian: 'Индийские', native_american: 'Коренные', pacific: 'Тихоокеанские',
+            middle_eastern: 'Ближневосточные', turkic: 'Тюркские'
+        };
+        const parts = [];
+        if (profile.macroGroups && Array.isArray(profile.macroGroups) && profile.macroGroups.length > 0) {
+            const roots = profile.macroGroups.map((g: string) => ETHNICITY_MAP[g] || g).join(', ');
+            parts.push(`${roots} корни`);
+        }
+        if (profile.ethnicity) {
+            parts.push(profile.ethnicity.charAt(0).toUpperCase() + profile.ethnicity.slice(1).toLowerCase());
+        }
+        return parts.join(' • ');
+    };
+
     return (
         <ThemedBackground>
             <StatusBar barStyle={isLight ? "dark-content" : "light-content"} />
@@ -118,6 +141,12 @@ export default function MatchesScreen() {
                         onPress={() => setActiveTab('likes')}
                     >
                         <Text style={[styles.tabText, { color: activeTab === 'likes' ? theme.text : theme.subText }]}>Лайкнули ({likesYou.length})</Text>
+                    </Pressable>
+                    <Pressable
+                        style={[styles.tab, activeTab === 'sent' && { borderBottomColor: theme.text, borderBottomWidth: 2 }]}
+                        onPress={() => setActiveTab('sent')}
+                    >
+                        <Text style={[styles.tabText, { color: activeTab === 'sent' ? theme.text : theme.subText }]}>Вы лайкнули</Text>
                     </Pressable>
                 </View>
 
@@ -144,7 +173,7 @@ export default function MatchesScreen() {
                                                 {(match.name || 'Пользователь')}{match.age ? `, ${match.age}` : ''}
                                             </Text>
                                             <Text style={[styles.details, { color: theme.subText }]} numberOfLines={1}>
-                                                {match.ethnicity || ''}
+                                                {getHeritageString(match)}
                                             </Text>
                                         </View>
                                     </Pressable>
@@ -184,7 +213,7 @@ export default function MatchesScreen() {
                                                 {(profile.name || 'Пользователь')}{profile.age ? `, ${profile.age}` : ''}
                                             </Text>
                                             <Text style={[styles.details, { color: theme.subText }]} numberOfLines={1}>
-                                                {profile.ethnicity || ''}
+                                                {getHeritageString(profile)}
                                             </Text>
                                         </View>
                                     </Pressable>

@@ -71,6 +71,17 @@ class YandexMatchService {
         const data = await response.json();
         return data.profiles || [];
     }
+    async getYourLikes(): Promise<any[]> {
+        const token = await AsyncStorage.getItem('auth_token');
+        const response = await fetch(`${API_URL}/your-likes`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+        if (!response.ok) {
+            throw new Error(`Failed to fetch sent likes: ${response.status}`);
+        }
+        const data = await response.json();
+        return data.profiles || [];
+    }
 }
 
 export const yandexMatch = new YandexMatchService();
