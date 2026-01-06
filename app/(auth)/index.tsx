@@ -36,7 +36,8 @@ export default function AuthScreen() {
           router.replace('/(tabs)');
         } catch (e) {
           console.error('Telegram auto-login failed:', e);
-          setError('Ошибка входа через Telegram. Попробуйте перезапустить приложение.');
+          const errorMessage = e instanceof Error ? e.message : JSON.stringify(e);
+          setError(`Ошибка входа через Telegram: ${errorMessage}`);
         }
       }
     };
