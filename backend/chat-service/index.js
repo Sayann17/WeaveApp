@@ -3,8 +3,8 @@ const jwt = require('jsonwebtoken');
 const { TypedValues, TypedData } = require('ydb-sdk');
 const { v4: uuidv4 } = require('uuid');
 // Using native fetch (Node.js 18+)
-const { notifyNewLike, notifyMatch, notifyNewMessage } = require('./telegram');
-const { sendLikeNotification, sendMatchNotifications, sendMessageNotification } = require('./telegram-helpers');
+// const { notifyNewLike, notifyMatch, notifyNewMessage } = require('./telegram');
+// const { sendLikeNotification, sendMatchNotifications, sendMessageNotification } = require('./telegram-helpers');
 
 const JWT_SECRET = process.env.JWT_SECRET || 'dev-secret-key-change-me';
 
@@ -252,12 +252,12 @@ async function handleMessage(driver, event, connectionId) {
         if (!recipientConnectionId) {
             console.log('[WS] Recipient offline, sending Telegram notification...');
             // Need to require helper if not in scope or just call if imported at top
-            try {
-                const { sendMessageNotification } = require('./telegram-helpers');
-                await sendMessageNotification(driver, userId, recipientId, text);
-            } catch (tnErr) {
-                console.error('[WS] Telegram notification error:', tnErr);
-            }
+            // try {
+            //     const { sendMessageNotification } = require('./telegram-helpers');
+            //     await sendMessageNotification(driver, userId, recipientId, text);
+            // } catch (tnErr) {
+            //     console.error('[WS] Telegram notification error:', tnErr);
+            // }
         }
     } else if (action === 'editMessage') {
         return await handleEditMessage(driver, connectionId, chatId, messageId, text, recipientId);
@@ -381,6 +381,8 @@ async function getDiscovery(driver, requestHeaders, filters, responseHeaders) {
         let usersQuery = `SELECT * FROM users WHERE profile_completed = 1`;
         const params = {};
 
+        console.log('[getDiscovery] Filters:', JSON.stringify(filters)); // DEBUG
+
         if (filters) {
             if (filters.gender && filters.gender !== 'all') {
                 usersQuery += ` AND gender = $gender`;
@@ -388,11 +390,13 @@ async function getDiscovery(driver, requestHeaders, filters, responseHeaders) {
             }
             if (filters.minAge) {
                 usersQuery += ` AND age >= $minAge`;
-                params['$minAge'] = TypedValues.uint32(parseInt(filters.minAge));
+                const val = parseInt(filters.minAge);
+                params['$minAge'] = TypedValues.uint32(isNaN(val) ? 18 : val);
             }
             if (filters.maxAge) {
                 usersQuery += ` AND age <= $maxAge`;
-                params['$maxAge'] = TypedValues.uint32(parseInt(filters.maxAge));
+                const val = parseInt(filters.maxAge);
+                params['$maxAge'] = TypedValues.uint32(isNaN(val) ? 100 : val);
             }
             if (filters.ethnicity) {
                 usersQuery += ` AND ethnicity = $ethnicity`;
@@ -404,8 +408,11 @@ async function getDiscovery(driver, requestHeaders, filters, responseHeaders) {
             }
         }
 
+        console.log('[getDiscovery] Query:', usersQuery); // DEBUG
+
         const { resultSets: resUsers } = await session.executeQuery(usersQuery, params);
         const allUsers = TypedData.createNativeObjects(resUsers[0]);
+        console.log(`[getDiscovery] DB returned ${allUsers.length} potential matches`);
 
         // Helper for Haversine Distance (in km)
         const getDistance = (lat1, lon1, lat2, lon2) => {
@@ -455,7 +462,10 @@ async function getDiscovery(driver, requestHeaders, filters, responseHeaders) {
         profiles.sort((a, b) => {
             if (a._isCityMatch && !b._isCityMatch) return -1;
             if (!a._isCityMatch && b._isCityMatch) return 1;
-            return a._distance - b._distance;
+
+            const distA = a._distance === Infinity ? 99999999 : a._distance;
+            const distB = b._distance === Infinity ? 99999999 : b._distance;
+            return distA - distB;
         });
     });
 

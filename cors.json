@@ -5,7 +5,7 @@
       "http://localhost:19006",
       "http://localhost:3000",
       "https://hello-world-app-dusky.vercel.app",
-      "https://hello-world-4l7k6ro2g-sayans-projects-818ed142.vercel.app",
+      "https://hello-world-ahse21m0a-sayans-projects-818ed142.vercel.app",
       "https://weave-app-henna.vercel.app"
     ],
     "method": [
@@ -13,7 +13,8 @@
       "PUT",
       "POST",
       "DELETE",
-      "HEAD"
+      "HEAD",
+      "OPTIONS"
     ],
     "maxAgeSeconds": 3600
   }

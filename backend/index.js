@@ -209,7 +209,7 @@ async function updateProfile(driver, requestHeaders, data, headers) {
         `;
         // Simplified execution matching chat-service (single statement doesn't need complex tx)
         try {
-            await session.executeQuery(query, params);
+            await session.executeQuery(query, params, { commitTx: true, beginTx: { serializableReadWrite: {} } });
             console.log('[updateProfile] Query executed successfully');
         } catch (err) {
             console.error('[updateProfile] Execution failed:', err);
@@ -479,7 +479,14 @@ async function telegramLogin(driver, data, headers) {
                 loveLanguage: fullUser.love_language,
                 familyMemory: fullUser.family_memory,
                 stereotypeTrue: fullUser.stereotype_true,
-                stereotypeFalse: fullUser.stereotype_false
+                stereotypeFalse: fullUser.stereotype_false,
+                isVisible: fullUser.is_visible !== undefined ? fullUser.is_visible : true,
+                latitude: fullUser.latitude,
+                longitude: fullUser.longitude,
+                city: fullUser.city,
+                socialTelegram: fullUser.social_telegram,
+                socialVk: fullUser.social_vk,
+                socialInstagram: fullUser.social_instagram
             }
         })
     };
