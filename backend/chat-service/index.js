@@ -552,3 +552,372 @@ async function markAsRead(driver, requestHeaders, body, responseHeaders) {
 
     return { statusCode: 200, headers: responseHeaders, body: JSON.stringify({ success: true }) };
 }
+
+// ============= MISSING FUNCTIONS =============
+
+function checkAuth(headers) {
+    try {
+        const authHeader = headers.Authorization || headers.authorization;
+        if (!authHeader) return null;
+
+        const token = authHeader.replace('Bearer ', '');
+        const decoded = jwt.verify(token, JWT_SECRET);
+        return decoded.uid;
+    } catch (e) {
+        console.error('[Auth] JWT verification failed:', e.message);
+        return null;
+    }
+}
+
+async function getUserIdByConnection(driver, connectionId) {
+    let userId = null;
+    await driver.tableClient.withSession(async (session) => {
+        const query = `
+            DECLARE $connectionId AS Utf8;
+            SELECT user_id FROM socket_connections WHERE connection_id = $connectionId;
+        `;
+        const { resultSets } = await session.executeQuery(query, {
+            '$connectionId': TypedValues.utf8(connectionId)
+        });
+        const rows = TypedData.createNativeObjects(resultSets[0]);
+        if (rows.length > 0) {
+            userId = rows[0].user_id;
+        }
+    });
+    return userId;
+}
+
+async function getMatches(driver, requestHeaders, responseHeaders) {
+    const userId = checkAuth(requestHeaders);
+    if (!userId) return { statusCode: 401, headers: responseHeaders, body: JSON.stringify({ error: 'Unauthorized' }) };
+
+    const tryParse = (val) => {
+        if (!val) return [];
+        if (Array.isArray(val)) return val;
+        try { return JSON.parse(val); } catch (e) { return []; }
+    };
+
+    let matches = [];
+    await driver.tableClient.withSession(async (session) => {
+        // Find mutual likes (matches)
+        const query = `
+            DECLARE $userId AS Utf8;
+            
+            SELECT u.id, u.name, u.age, u.photos, u.about, u.gender, u.ethnicity
+            FROM users AS u
+            INNER JOIN likes AS l1 ON l1.to_user_id = u.id
+            INNER JOIN likes AS l2 ON l2.from_user_id = u.id
+            WHERE l1.from_user_id = $userId
+            AND l2.to_user_id = $userId;
+        `;
+
+        const { resultSets } = await session.executeQuery(query, { '$userId': TypedValues.utf8(userId) });
+        const users = TypedData.createNativeObjects(resultSets[0]);
+
+        matches = users.map(u => ({
+            id: u.id,
+            name: u.name,
+            age: u.age,
+            photos: tryParse(u.photos),
+            bio: u.about,
+            gender: u.gender,
+            ethnicity: u.ethnicity
+        }));
+    });
+
+    return { statusCode: 200, headers: responseHeaders, body: JSON.stringify({ matches }) };
+}
+
+async function getLikesYou(driver, requestHeaders, responseHeaders) {
+    const userId = checkAuth(requestHeaders);
+    if (!userId) return { statusCode: 401, headers: responseHeaders, body: JSON.stringify({ error: 'Unauthorized' }) };
+
+    const tryParse = (val) => {
+        if (!val) return [];
+        if (Array.isArray(val)) return val;
+        try { return JSON.parse(val); } catch (e) { return []; }
+    };
+
+    let profiles = [];
+    await driver.tableClient.withSession(async (session) => {
+        // Get users who liked me, but I haven't liked back
+        const query = `
+            DECLARE $userId AS Utf8;
+            
+            SELECT u.id, u.name, u.age, u.photos, u.about, u.gender, u.ethnicity
+            FROM users AS u
+            INNER JOIN likes AS l ON l.from_user_id = u.id
+            LEFT JOIN likes AS l2 ON l2.from_user_id = $userId AND l2.to_user_id = u.id
+            WHERE l.to_user_id = $userId
+            AND l2.from_user_id IS NULL;
+        `;
+
+        const { resultSets } = await session.executeQuery(query, { '$userId': TypedValues.utf8(userId) });
+        const users = TypedData.createNativeObjects(resultSets[0]);
+
+        profiles = users.map(u => ({
+            id: u.id,
+            name: u.name,
+            age: u.age,
+            photos: tryParse(u.photos),
+            bio: u.about,
+            gender: u.gender,
+            ethnicity: u.ethnicity
+        }));
+    });
+
+    return { statusCode: 200, headers: responseHeaders, body: JSON.stringify({ profiles }) };
+}
+
+async function getYourLikes(driver, requestHeaders, responseHeaders) {
+    const userId = checkAuth(requestHeaders);
+    if (!userId) return { statusCode: 401, headers: responseHeaders, body: JSON.stringify({ error: 'Unauthorized' }) };
+
+    const tryParse = (val) => {
+        if (!val) return [];
+        if (Array.isArray(val)) return val;
+        try { return JSON.parse(val); } catch (e) { return []; }
+    };
+
+    let profiles = [];
+    await driver.tableClient.withSession(async (session) => {
+        // Get users I liked, but they haven't liked me back
+        const query = `
+            DECLARE $userId AS Utf8;
+            
+            SELECT u.id, u.name, u.age, u.photos, u.about, u.gender, u.ethnicity
+            FROM users AS u
+            INNER JOIN likes AS l ON l.to_user_id = u.id
+            LEFT JOIN likes AS l2 ON l2.from_user_id = u.id AND l2.to_user_id = $userId
+            WHERE l.from_user_id = $userId
+            AND l2.from_user_id IS NULL;
+        `;
+
+        const { resultSets } = await session.executeQuery(query, { '$userId': TypedValues.utf8(userId) });
+        const users = TypedData.createNativeObjects(resultSets[0]);
+
+        profiles = users.map(u => ({
+            id: u.id,
+            name: u.name,
+            age: u.age,
+            photos: tryParse(u.photos),
+            bio: u.about,
+            gender: u.gender,
+            ethnicity: u.ethnicity
+        }));
+    });
+
+    return { statusCode: 200, headers: responseHeaders, body: JSON.stringify({ profiles }) };
+}
+
+async function getChats(driver, requestHeaders, responseHeaders) {
+    const userId = checkAuth(requestHeaders);
+    if (!userId) return { statusCode: 401, headers: responseHeaders, body: JSON.stringify({ error: 'Unauthorized' }) };
+
+    const tryParse = (val) => {
+        if (!val) return [];
+        if (Array.isArray(val)) return val;
+        try { return JSON.parse(val); } catch (e) { return []; }
+    };
+
+    let chats = [];
+    await driver.tableClient.withSession(async (session) => {
+        // Get all matches (mutual likes) with last message info
+        const query = `
+            DECLARE $userId AS Utf8;
+            
+            SELECT 
+                u.id AS match_id,
+                u.name,
+                u.photos,
+                m.text AS last_message,
+                m.timestamp AS last_message_time,
+                m.sender_id AS last_sender_id
+            FROM users AS u
+            INNER JOIN likes AS l1 ON l1.to_user_id = u.id
+            INNER JOIN likes AS l2 ON l2.from_user_id = u.id
+            LEFT JOIN (
+                SELECT chat_id, text, timestamp, sender_id
+                FROM messages
+                WHERE chat_id LIKE $userId || '_%' OR chat_id LIKE '%_' || $userId
+                ORDER BY timestamp DESC
+                LIMIT 1
+            ) AS m ON (m.chat_id = $userId || '_' || u.id OR m.chat_id = u.id || '_' || $userId)
+            WHERE l1.from_user_id = $userId
+            AND l2.to_user_id = $userId
+            ORDER BY m.timestamp DESC;
+        `;
+
+        const { resultSets } = await session.executeQuery(query, { '$userId': TypedValues.utf8(userId) });
+        const rows = TypedData.createNativeObjects(resultSets[0]);
+
+        chats = rows.map(row => {
+            const chatId = [userId, row.match_id].sort().join('_');
+            return {
+                chatId,
+                matchId: row.match_id,
+                name: row.name,
+                photo: tryParse(row.photos)[0] || null,
+                lastMessage: row.last_message || '',
+                lastMessageTime: row.last_message_time ? new Date(row.last_message_time).toISOString() : null,
+                isOwnMessage: row.last_sender_id === userId
+            };
+        });
+    });
+
+    return { statusCode: 200, headers: responseHeaders, body: JSON.stringify({ chats }) };
+}
+
+async function getHistory(driver, requestHeaders, chatId, responseHeaders) {
+    const userId = checkAuth(requestHeaders);
+    if (!userId) return { statusCode: 401, headers: responseHeaders, body: JSON.stringify({ error: 'Unauthorized' }) };
+    if (!chatId) return { statusCode: 400, headers: responseHeaders, body: JSON.stringify({ error: 'Missing chatId' }) };
+
+    const tryParse = (val) => {
+        if (!val) return [];
+        if (Array.isArray(val)) return val;
+        try { return JSON.parse(val); } catch (e) { return []; }
+    };
+
+    let messages = [];
+    await driver.tableClient.withSession(async (session) => {
+        const query = `
+            DECLARE $chatId AS Utf8;
+            SELECT id, sender_id, text, timestamp, is_read, type, reply_to_id, media
+            FROM messages
+            WHERE chat_id = $chatId
+            ORDER BY timestamp ASC;
+        `;
+
+        const { resultSets } = await session.executeQuery(query, { '$chatId': TypedValues.utf8(chatId) });
+        const rows = TypedData.createNativeObjects(resultSets[0]);
+
+        messages = rows.map(row => ({
+            id: row.id,
+            senderId: row.sender_id,
+            text: row.text,
+            timestamp: new Date(row.timestamp).toISOString(),
+            isRead: row.is_read,
+            type: row.type || 'text',
+            replyToId: row.reply_to_id || null,
+            media: tryParse(row.media)
+        }));
+    });
+
+    return { statusCode: 200, headers: responseHeaders, body: JSON.stringify({ messages }) };
+}
+
+async function handleLike(driver, requestHeaders, body, responseHeaders) {
+    const userId = checkAuth(requestHeaders);
+    if (!userId) return { statusCode: 401, headers: responseHeaders, body: JSON.stringify({ error: 'Unauthorized' }) };
+
+    const { targetUserId } = body;
+    if (!targetUserId) return { statusCode: 400, headers: responseHeaders, body: JSON.stringify({ error: 'Missing targetUserId' }) };
+
+    let isMatch = false;
+    await driver.tableClient.withSession(async (session) => {
+        // Insert the like
+        const insertQuery = `
+            DECLARE $fromUserId AS Utf8;
+            DECLARE $toUserId AS Utf8;
+            DECLARE $timestamp AS Timestamp;
+            
+            UPSERT INTO likes (from_user_id, to_user_id, timestamp)
+            VALUES ($fromUserId, $toUserId, $timestamp);
+        `;
+
+        await session.executeQuery(insertQuery, {
+            '$fromUserId': TypedValues.utf8(userId),
+            '$toUserId': TypedValues.utf8(targetUserId),
+            '$timestamp': TypedValues.timestamp(new Date())
+        });
+
+        // Check if it's a match (mutual like)
+        const checkQuery = `
+            DECLARE $userId AS Utf8;
+            DECLARE $targetUserId AS Utf8;
+            
+            SELECT COUNT(*) AS count
+            FROM likes
+            WHERE from_user_id = $targetUserId
+            AND to_user_id = $userId;
+        `;
+
+        const { resultSets } = await session.executeQuery(checkQuery, {
+            '$userId': TypedValues.utf8(userId),
+            '$targetUserId': TypedValues.utf8(targetUserId)
+        });
+
+        if (resultSets[0] && resultSets[0].rows && resultSets[0].rows.length > 0) {
+            const countVal = resultSets[0].rows[0].items[0].uint64Value || resultSets[0].rows[0].items[0].int64Value;
+            isMatch = Number(countVal) > 0;
+        }
+    });
+
+    // Send WebSocket notifications
+    try {
+        // Get the recipient's connection ID
+        let recipientConnectionId = null;
+        await driver.tableClient.withSession(async (session) => {
+            const query = `
+                DECLARE $userId AS Utf8;
+                SELECT connection_id FROM socket_connections WHERE user_id = $userId;
+            `;
+            const { resultSets } = await session.executeQuery(query, {
+                '$userId': TypedValues.utf8(targetUserId)
+            });
+            const rows = TypedData.createNativeObjects(resultSets[0]);
+            if (rows.length > 0) {
+                recipientConnectionId = rows[0].connection_id;
+            }
+        });
+
+        if (recipientConnectionId) {
+            if (isMatch) {
+                // Send match notification to recipient
+                await sendToConnection(recipientConnectionId, {
+                    type: 'newMatch',
+                    fromUserId: userId
+                });
+
+                // Also send match notification to the current user
+                let senderConnectionId = null;
+                await driver.tableClient.withSession(async (session) => {
+                    const query = `
+                        DECLARE $userId AS Utf8;
+                        SELECT connection_id FROM socket_connections WHERE user_id = $userId;
+                    `;
+                    const { resultSets } = await session.executeQuery(query, {
+                        '$userId': TypedValues.utf8(userId)
+                    });
+                    const rows = TypedData.createNativeObjects(resultSets[0]);
+                    if (rows.length > 0) {
+                        senderConnectionId = rows[0].connection_id;
+                    }
+                });
+
+                if (senderConnectionId) {
+                    await sendToConnection(senderConnectionId, {
+                        type: 'newMatch',
+                        fromUserId: targetUserId
+                    });
+                }
+            } else {
+                // Send like notification to recipient
+                await sendToConnection(recipientConnectionId, {
+                    type: 'newLike',
+                    fromUserId: userId
+                });
+            }
+        }
+    } catch (e) {
+        console.error('[handleLike] Error sending WebSocket notification:', e);
+        // Don't fail the request if notification fails
+    }
+
+    return {
+        statusCode: 200,
+        headers: responseHeaders,
+        body: JSON.stringify({ success: true, isMatch })
+    };
+}

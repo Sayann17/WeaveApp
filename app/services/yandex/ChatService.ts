@@ -78,6 +78,9 @@ class YandexChatService {
                         this.messageListeners.forEach(listener => listener(message, 'messageEdited'));
                     } else if (data.type === 'newLike') {
                         this.likeListeners.forEach(listener => listener(data.fromUserId));
+                    } else if (data.type === 'newMatch') {
+                        // Treat matches as likes for badge purposes
+                        this.likeListeners.forEach(listener => listener(data.fromUserId));
                     }
                 };
 

@@ -75,6 +75,8 @@ export const NotificationProvider = ({ children }: { children: React.ReactNode }
 
         const unsubscribeLikes = yandexChat.onLike((fromUserId) => {
             setNewLikesCount(prev => prev + 1);
+            // Check if this is a match by seeing if we also liked them
+            // For now, just show a generic message - the backend will send different events
             showToast('Кому-то понравилась ваша анкета!', 'like');
         });
 
