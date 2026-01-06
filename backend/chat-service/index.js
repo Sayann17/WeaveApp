@@ -133,19 +133,26 @@ async function handleConnect(driver, event, connectionId) {
 
 async function handleDisconnect(driver, connectionId) {
     try {
+        // DON'T DELETE connections on disconnect!
+        // Yandex API Gateway closes WebSocket connections after each message,
+        // but we need to keep the connection_id in the database to send messages.
+        // Connections will be cleaned up by a periodic cleanup job (TODO).
+
+        console.log('[WS] Disconnect event for:', connectionId, '(keeping connection in DB)');
+        return { statusCode: 200 };
+
+        /* DISABLED - This was causing 404 errors when sending messages
         await driver.tableClient.withSession(async (session) => {
             const query = `
                 DECLARE $connectionId AS Utf8;
                 DELETE FROM socket_connections WHERE connection_id = $connectionId;
             `;
-            // Note: This might be slow if we don't have an index on connection_id.
-            // In a real production app, we'd store connection_id as a primary key or index it.
             await session.executeQuery(query, {
                 '$connectionId': TypedValues.utf8(connectionId)
             });
         });
         console.log('[WS] Disconnect successful for:', connectionId);
-        return { statusCode: 200 };
+        */
     } catch (e) {
         console.error('[WS] Disconnect error:', e);
         return { statusCode: 200 }; // Return 200 even on error to not block gateway
