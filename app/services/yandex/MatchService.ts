@@ -35,7 +35,10 @@ class YandexMatchService {
 
         const result = await response.json();
         console.log('[MatchService] Like result:', result);
-        return result;
+        return {
+            type: result.isMatch ? 'match' : 'like',
+            chatId: result.chatId
+        };
     }
 
     async dislikeUser(targetUserId: string): Promise<void> {

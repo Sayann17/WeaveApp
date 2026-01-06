@@ -82,7 +82,7 @@ export default function MatchesScreen() {
                 // Add to Matches (optimistic)
                 const newMatch = {
                     ...profile,
-                    chatId: result.chatId // Assuming backend returns chatId on match
+                    chatId: result.chatId || [yandexAuth.getCurrentUser()?.uid, profile.id].sort().join('_')
                 };
                 setMatches(prev => [newMatch, ...prev]);
             } else {

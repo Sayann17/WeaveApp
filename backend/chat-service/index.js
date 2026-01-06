@@ -73,11 +73,6 @@ module.exports.handler = async function (event, context) {
             return await getNotificationStats(driver, headers, responseHeaders);
         } else if ((path === '/mark-read' || path === '/mark-read/') && httpMethod === 'POST') {
             return await markAsRead(driver, headers, JSON.parse(body), responseHeaders);
-        } else if ((path === '/mark-read' || path === '/mark-read/') && httpMethod === 'POST') {
-            return await markAsRead(driver, headers, JSON.parse(body), responseHeaders);
-        } else if ((path === '/migrate' || path === '/migrate/') && httpMethod === 'GET') {
-            // Temporary migration endpoint
-            return await runMigration(driver, responseHeaders);
         }
 
         return {
@@ -1043,21 +1038,30 @@ async function handleLike(driver, requestHeaders, body, responseHeaders) {
         }
     });
 
+
+
     // Send WebSocket notifications (outside session)
+    let chatId = null;
+    if (isMatch) {
+        chatId = [userId, targetUserId].sort().join('_');
+    }
+
     try {
         if (recipientConnectionId) {
             if (isMatch) {
                 // Send match notification to recipient
                 await sendToConnection(recipientConnectionId, {
                     type: 'newMatch',
-                    fromUserId: userId
+                    fromUserId: userId,
+                    chatId: chatId
                 });
 
                 // Also send match notification to the current user
                 if (senderConnectionId) {
                     await sendToConnection(senderConnectionId, {
                         type: 'newMatch',
-                        fromUserId: targetUserId
+                        fromUserId: targetUserId,
+                        chatId: chatId
                     });
                 }
             } else {
@@ -1076,7 +1080,7 @@ async function handleLike(driver, requestHeaders, body, responseHeaders) {
     return {
         statusCode: 200,
         headers: responseHeaders,
-        body: JSON.stringify({ success: true, isMatch })
+        body: JSON.stringify({ success: true, isMatch, chatId })
     };
 }
 
@@ -1156,38 +1160,4 @@ async function handleDeleteMessage(driver, connectionId, chatId, messageIds, rec
     return { statusCode: 200 };
 }
 
-async function runMigration(driver, responseHeaders) {
-    try {
-        await driver.tableClient.withSession(async (session) => {
-            // Add missing columns. Note: YDB ALTER TABLE does not support IF NOT EXISTS in all versions.
 
-            try {
-                await session.executeQuery(`ALTER TABLE messages ADD COLUMN reply_to_id Utf8;`);
-                console.log('Added reply_to_id');
-            } catch (e) { console.log('reply_to_id might exist:', e.message); }
-
-            try {
-                await session.executeQuery(`ALTER TABLE messages ADD COLUMN is_edited Bool;`);
-                console.log('Added is_edited');
-            } catch (e) { console.log('is_edited might exist:', e.message); }
-
-            try {
-                await session.executeQuery(`ALTER TABLE messages ADD COLUMN edited_at Timestamp;`);
-                console.log('Added edited_at');
-            } catch (e) { console.log('edited_at might exist:', e.message); }
-        });
-
-        return {
-            statusCode: 200,
-            headers: responseHeaders,
-            body: JSON.stringify({ success: true, message: 'Migration attempted' })
-        };
-    } catch (e) {
-        console.error('Migration failed:', e);
-        return {
-            statusCode: 500,
-            headers: responseHeaders,
-            body: JSON.stringify({ error: e.message })
-        };
-    }
-}
