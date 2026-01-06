@@ -178,19 +178,34 @@ export default function ExploreScreen() {
         if (profiles.length === 0) return;
         const profile = profiles[currentProfileIndex];
 
-        if (action === 'pass') {
-            await enhancedMatchService.dislikeUser(profile.id);
-        } else {
-            const res = await enhancedMatchService.likeUser(profile.id);
-            if (res.type === 'match') {
-                Alert.alert('Мэтч!', `Вы понравились ${profile.name}!`);
-            }
-        }
+        try {
+            console.log(`[Explore] Action: ${action} for user:`, profile.id);
 
-        if (currentProfileIndex < profiles.length - 1) {
-            setCurrentProfileIndex(prev => prev + 1);
-        } else {
-            setProfiles([]);
+            if (action === 'pass') {
+                await enhancedMatchService.dislikeUser(profile.id);
+                console.log('[Explore] Dislike successful');
+            } else {
+                console.log('[Explore] Sending like...');
+                const res = await enhancedMatchService.likeUser(profile.id);
+                console.log('[Explore] Like response:', res);
+
+                if (res.type === 'match') {
+                    Alert.alert('Мэтч!', `Вы понравились ${profile.name}!`);
+                } else if (res.type === 'like') {
+                    console.log('[Explore] Like sent successfully (no match yet)');
+                }
+            }
+
+            // Only move to next profile if action was successful
+            if (currentProfileIndex < profiles.length - 1) {
+                setCurrentProfileIndex(prev => prev + 1);
+            } else {
+                setProfiles([]);
+            }
+        } catch (error) {
+            console.error('[Explore] Action failed:', error);
+            Alert.alert('Ошибка', `Не удалось ${action === 'like' ? 'поставить лайк' : 'пропустить'}. Попробуйте ещё раз.`);
+            // Don't move to next profile on error
         }
     };
 

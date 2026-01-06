@@ -9,8 +9,14 @@ export interface MatchResult {
 
 class YandexMatchService {
     async likeUser(targetUserId: string): Promise<MatchResult> {
+        console.log('[MatchService] Sending like to:', targetUserId);
         const token = await AsyncStorage.getItem('auth_token');
-        const response = await fetch(`${API_URL}/like`, {
+        console.log('[MatchService] Token:', token ? 'present' : 'missing');
+
+        const url = `${API_URL}/like`;
+        console.log('[MatchService] POST', url);
+
+        const response = await fetch(url, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -19,12 +25,17 @@ class YandexMatchService {
             body: JSON.stringify({ targetUserId })
         });
 
+        console.log('[MatchService] Response status:', response.status);
+
         if (!response.ok) {
             const err = await response.json();
+            console.error('[MatchService] Like failed:', err);
             throw new Error(err.error || 'Like failed');
         }
 
-        return await response.json();
+        const result = await response.json();
+        console.log('[MatchService] Like result:', result);
+        return result;
     }
 
     async dislikeUser(targetUserId: string): Promise<void> {
