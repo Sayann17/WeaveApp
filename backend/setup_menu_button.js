@@ -2,7 +2,7 @@
 // Run this once to set up the menu button for fullscreen mode
 
 const BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN || 'YOUR_BOT_TOKEN_HERE';
-const MENU_BUTTON_URL = 'https://hello-world-app-dusky.vercel.app/';
+const MENU_BUTTON_URL = 'https://weave-app-henna.vercel.app';
 
 async function setMenuButton() {
     const url = `https://api.telegram.org/bot${BOT_TOKEN}/setChatMenuButton`;
