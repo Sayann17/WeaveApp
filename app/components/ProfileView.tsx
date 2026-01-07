@@ -66,8 +66,12 @@ interface ProfileViewProps {
 
 export const ProfileView = ({ userData, isOwnProfile = false }: ProfileViewProps) => {
     const { themeType } = useTheme();
-    const { showBackButton, hideBackButton, setBackButtonHandler } = useTelegram();
+    const { showBackButton, hideBackButton, setBackButtonHandler, isMobile, isDesktop, isWeb } = useTelegram();
     const [currentCarouselIndex, setCurrentCarouselIndex] = useState(0);
+
+    // ...
+
+
     const [activePhotoIndex, setActivePhotoIndex] = useState(0);
     const [isFullScreenPhoto, setIsFullScreenPhoto] = useState(false);
 
@@ -122,10 +126,12 @@ export const ProfileView = ({ userData, isOwnProfile = false }: ProfileViewProps
     };
 
     const openFullScreen = (index: number) => {
-        // Fullscreen modal only shows on iOS/Android (see Modal visible condition)
-        // But we still need to update the index for all platforms
-        setActivePhotoIndex(index);
-        setIsFullScreenPhoto(true);
+        // Allow fullscreen on mobile devices (Telegram Mobile App or Native App)
+        // Block on Desktop and Web versions of Telegram
+        if (isMobile || Platform.OS === 'ios' || Platform.OS === 'android') {
+            setActivePhotoIndex(index);
+            setIsFullScreenPhoto(true);
+        }
     };
 
     const closeFullScreen = () => {
@@ -365,7 +371,7 @@ export const ProfileView = ({ userData, isOwnProfile = false }: ProfileViewProps
 
             {/* ЛАЙТБОКС */}
             <Modal
-                visible={isFullScreenPhoto && (Platform.OS === 'ios' || Platform.OS === 'android')}
+                visible={isFullScreenPhoto}
                 transparent={true}
                 animationType="fade"
                 onRequestClose={closeFullScreen}
