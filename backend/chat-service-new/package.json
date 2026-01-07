@@ -1,0 +1,13 @@
+{
+    "name": "chat-service",
+    "version": "1.0.0",
+    "description": "Yandex Cloud Function for Chats and WebSocket",
+    "main": "index.js",
+    "dependencies": {
+        "ydb-sdk": "^4.6.0",
+        "@yandex-cloud/nodejs-sdk": "^2.6.0",
+        "jsonwebtoken": "^9.0.0",
+        "uuid": "^9.0.0",
+        "node-fetch": "^2.6.7"
+    }
+}

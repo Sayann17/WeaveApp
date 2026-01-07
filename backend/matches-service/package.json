@@ -1,0 +1,12 @@
+{
+    "name": "matches-service",
+    "version": "1.0.0",
+    "description": "Yandex Cloud Function for Matches, Likes, and Dislikes",
+    "main": "index.js",
+    "dependencies": {
+        "ydb-sdk": "^4.6.0",
+        "jsonwebtoken": "^9.0.0",
+        "uuid": "^9.0.0",
+        "node-fetch": "^2.6.7"
+    }
+}

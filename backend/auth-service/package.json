@@ -1,0 +1,10 @@
+{
+    "name": "auth-service",
+    "version": "1.0.0",
+    "description": "Yandex Cloud Function for Authentication and User Profiles",
+    "main": "index.js",
+    "dependencies": {
+        "ydb-sdk": "^4.6.0",
+        "jsonwebtoken": "^9.0.0"
+    }
+}
