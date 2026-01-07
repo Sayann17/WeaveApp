@@ -395,6 +395,9 @@ export default function ChatScreen() {
                   maxLength={500}
                   editable={!isSending}
                   underlineColorAndroid="transparent"
+                  // @ts-ignore
+                  dataSet={{ outline: 'none' }}
+                  nativeID="chat-input"
                 />
                 <Pressable
                   style={[
@@ -533,8 +536,6 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
     fontSize: 16,
     maxHeight: 100,
-    // @ts-ignore - web-specific style
-    outlineWidth: 0,
   },
   sendButton: {
     width: 40,

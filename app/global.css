@@ -1,37 +1,32 @@
-/* Global styles to prevent pinch-to-zoom */
-* {
-  touch-action: pan-x pan-y;
-  -ms-touch-action: pan-x pan-y;
-  user-select: none;
-  -webkit-user-select: none;
-  -moz-user-select: none;
-  -ms-user-select: none;
+/* Global styles for web platform */
+#chat-input {
+  outline: none !important;
+  border: none !important;
 }
 
-html,
-body {
-  height: 100%;
-  width: 100%;
-  touch-action: pan-x pan-y;
-  -ms-touch-action: pan-x pan-y;
-  -webkit-text-size-adjust: 100%;
-  -ms-text-size-adjust: 100%;
-  overscroll-behavior: none;
-  -webkit-overflow-scrolling: touch;
+#chat-input:focus {
+  outline: none !important;
+  border: none !important;
+  box-shadow: none !important;
 }
 
-/* Prevent double-tap zoom */
-button,
-a,
-input,
-textarea {
-  touch-action: manipulation;
-  -ms-touch-action: manipulation;
+textarea#chat-input {
+  outline: none !important;
+  border: none !important;
 }
 
-/* Prevent zoom on input focus (iOS) */
-input,
-textarea,
-select {
-  font-size: 16px !important;
+textarea#chat-input:focus {
+  outline: none !important;
+  border: none !important;
+  box-shadow: none !important;
+}
+
+/* Remove all input outlines globally for the app */
+input, textarea {
+  outline: none !important;
+}
+
+input:focus, textarea:focus {
+  outline: none !important;
+  box-shadow: none !important;
 }

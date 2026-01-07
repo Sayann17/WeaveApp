@@ -14,7 +14,8 @@ import {
     StyleSheet,
     Text,
     TouchableOpacity,
-    View
+    View,
+    Platform
 } from 'react-native';
 import { Colors } from '../constants/colors';
 import { useTelegram } from '../context/TelegramProvider';
@@ -482,7 +483,11 @@ const styles = StyleSheet.create({
     // --- LIGHTBOX ---
     lightboxContainer: { flex: 1, backgroundColor: 'rgba(0,0,0,0.95)', justifyContent: 'center', alignItems: 'center' },
     lightboxImageContainer: { width: '100%', height: '100%', justifyContent: 'center', alignItems: 'center' },
-    lightboxImage: { width: '100%', height: '100%' },
+    lightboxImage: {
+        width: '100%',
+        height: '100%',
+        ...(Platform.OS === 'web' ? { width: '100%', height: '90%', maxWidth: 500 } : {})
+    },
     navArrowLeft: { position: 'absolute', left: 0, top: '40%', bottom: '40%', width: 60, justifyContent: 'center', alignItems: 'center', zIndex: 50 },
     navArrowRight: { position: 'absolute', right: 0, top: '40%', bottom: '40%', width: 60, justifyContent: 'center', alignItems: 'center', zIndex: 50 },
 });
