@@ -6,13 +6,11 @@ import React, { useEffect, useRef, useState } from 'react';
 import {
   Alert,
   FlatList,
-  Image,
   KeyboardAvoidingView,
   Platform,
   Pressable,
   StatusBar,
   StyleSheet,
-  Text,
   View
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -23,8 +21,8 @@ import { yandexAuth } from '../services/yandex/AuthService';
 import { yandexChat, type Message } from '../services/yandex/ChatService';
 import { YandexUserService } from '../services/yandex/UserService';
 import { getPlatformPadding } from '../utils/platformPadding';
-import { AppRoot, Input } from '@telegram-apps/telegram-ui';
-
+import { AppRoot, Input, Avatar, Text, Button, IconButton } from '@telegram-apps/telegram-ui';
+import { ThemedBackground } from '../components/ThemedBackground';
 
 import { MessageActionModal } from '../components/MessageActionModal';
 
@@ -54,7 +52,6 @@ export default function ChatScreen() {
   const router = useRouter();
   const { setBackButtonHandler, showBackButton, hideBackButton, isMobile } = useTelegram();
 
-  // ... (useEffects remain same) ...
   // Проверка параметров
   useEffect(() => {
     if (!participantId || typeof participantId !== 'string' || !chatId || typeof chatId !== 'string') {
@@ -296,18 +293,25 @@ export default function ChatScreen() {
             isMine ? styles.myMessage : styles.theirMessage
           ]}
         >
+          {/* Avatar for their message */}
+          {!isMine && (
+            <View style={{ marginRight: 8, alignSelf: 'flex-end', marginBottom: 4 }}>
+              {/* Small Avatar if needed, else nothing or just verify design */}
+            </View>
+          )}
+
           <View style={[
             styles.messageBubble,
-            isMine ? { backgroundColor: '#2a2a2a' } : { backgroundColor: theme.cardBg },
+            isMine ? { backgroundColor: themeType === 'dark' ? '#2b5278' : '#e3f3ff' } : { backgroundColor: theme.cardBg }, // Adjusted colors
             isMine ? styles.myBubble : styles.theirBubble,
-            !isMine && { borderWidth: 1, borderColor: theme.border }
+            !isMine && { borderWidth: 0, backgroundColor: themeType === 'dark' ? '#1f1f1f' : '#ffffff' } // Native dark theme default
           ]}>
             {repliedMsg && (
               <View style={[styles.replyPreview, { borderLeftColor: theme.accent }]}>
-                <Text style={[styles.replySender, { color: theme.accent }]}>
+                <Text style={{ fontWeight: '500', fontSize: 13, color: theme.accent, marginBottom: 2 }}>
                   {isMyMessage(repliedMsg) ? 'Вы' : (participant?.name || 'Собеседник')}
                 </Text>
-                <Text style={[styles.replyText, { color: theme.subText }]} numberOfLines={1}>
+                <Text style={{ fontSize: 13, color: theme.subText }} numberOfLines={1}>
                   {repliedMsg.text}
                 </Text>
               </View>
@@ -315,15 +319,15 @@ export default function ChatScreen() {
 
             <Text style={[
               styles.messageText,
-              isMine ? styles.myMessageText : { color: theme.text }
+              { color: isMine ? (themeType === 'dark' ? '#ffffff' : '#000000') : theme.text }
             ]}>
               {item.text}
             </Text>
             <View style={styles.metaContainer}>
-              {item.isEdited && <Text style={[styles.editedLabel, { color: isMine ? 'rgba(255,255,255,0.6)' : theme.subText }]}>изм.</Text>}
+              {item.isEdited && <Text style={[styles.editedLabel, { color: theme.subText }]}>изм.</Text>}
               <Text style={[
                 styles.messageTime,
-                isMine ? styles.myMessageTime : { color: theme.subText }
+                { color: isMine ? (themeType === 'dark' ? '#8faec5' : '#5994c2') : theme.subText } // Native time colors
               ]}>
                 {formatMessageTime(item.timestamp)}
               </Text>
@@ -349,7 +353,7 @@ export default function ChatScreen() {
       appearance={isLight ? 'light' : 'dark'}
       platform={isMobile ? 'ios' : 'base'}
     >
-      <View style={{ flex: 1, backgroundColor: theme.background }}>
+      <ThemedBackground>
         <StatusBar barStyle={isLight ? "dark-content" : "light-content"} />
 
         <KeyboardAvoidingView
@@ -367,26 +371,32 @@ export default function ChatScreen() {
               isMine={selectedMessage ? isMyMessage(selectedMessage) : false}
             />
 
-            {/* ХЕДЕР */}
-            <View style={[styles.header, { borderBottomColor: theme.border }]}>
-              <Pressable
-                style={styles.participantInfo}
-                onPress={() => participantId && router.push(`/users/${participantId}` as any)}
-              >
+            {/* ХЕДЕР (Native Look) */}
+            <View style={[styles.header, { borderBottomColor: theme.border, backgroundColor: theme.background }]}>
+              {/* Back button logic handled by Telegram BackButton, but strictly visual header content here */}
+              <View style={styles.headerContent}>
                 {participant?.photos?.[0] ? (
-                  <Image
-                    source={{ uri: participant.photos[0] }}
-                    style={styles.participantAvatar}
+                  <Avatar
+                    src={participant.photos[0]}
+                    size={40}
+                    style={{ marginRight: 10 }}
                   />
                 ) : (
-                  <View style={[styles.fallbackAvatar, { backgroundColor: theme.cardBg }]}>
-                    <Ionicons name="person" size={20} color={theme.subText} />
-                  </View>
+                  <Avatar
+                    acronym={participant?.name?.[0] || '?'}
+                    size={40}
+                    style={{ marginRight: 10, backgroundColor: theme.accent }}
+                  />
                 )}
-                <Text style={[styles.participantName, { color: theme.text }]} numberOfLines={1}>
-                  {participant?.name || 'Собеседник'}
-                </Text>
-              </Pressable>
+                <View>
+                  <Text weight="2" style={{ color: theme.text }}>
+                    {participant?.name || 'Собеседник'}
+                  </Text>
+                  <Text caption style={{ color: theme.subText }}>
+                    В сети
+                  </Text>
+                </View>
+              </View>
             </View>
 
             {/* СООБЩЕНИЯ (FlatList Inverted) */}
@@ -407,10 +417,10 @@ export default function ChatScreen() {
               {(replyingTo || editingMessage) && (
                 <View style={[styles.actionBanner, { backgroundColor: theme.cardBg, borderColor: theme.border }]}>
                   <View style={styles.actionInfo}>
-                    <Text style={[styles.actionTitle, { color: theme.accent }]}>
+                    <Text weight="2" style={{ color: theme.accent }}>
                       {editingMessage ? 'Редактирование' : `Ответ ${isMyMessage(replyingTo!) ? 'себе' : participant?.name}`}
                     </Text>
-                    <Text style={[styles.actionText, { color: theme.subText }]} numberOfLines={1}>
+                    <Text style={{ color: theme.subText }} numberOfLines={1}>
                       {editingMessage ? editingMessage.text : replyingTo!.text}
                     </Text>
                   </View>
@@ -420,27 +430,37 @@ export default function ChatScreen() {
                 </View>
               )}
 
-              {/* ПОЛЕ ВВОДА из Telegram UI */}
-              <View style={{ padding: 10, borderTopWidth: 1, borderTopColor: theme.border, backgroundColor: theme.cardBg }}>
-                <Input
-                  value={newMessage}
-                  onChange={(e: any) => setNewMessage(e.target.value)}
-                  placeholder="Сообщение..."
-                  after={
-                    <Pressable
-                      onPress={handleSendMessage}
-                      style={{ padding: 5, opacity: newMessage.trim() ? 1 : 0.5 }}
-                      disabled={!newMessage.trim() || isSending}
-                    >
-                      <Ionicons name="send" size={24} color={theme.accent} />
-                    </Pressable>
-                  }
-                />
+              {/* ПОЛЕ ВВОДА (Native Look) */}
+              <View style={[styles.inputContainer, { backgroundColor: theme.cardBg, borderTopColor: theme.border }]}>
+                {/* Attach Button (Mock) */}
+                <Pressable style={styles.attachButton}>
+                  <Ionicons name="attach" size={28} color={theme.subText} />
+                </Pressable>
+
+                <View style={{ flex: 1 }}>
+                  <Input
+                    value={newMessage}
+                    onChange={(e: any) => setNewMessage(e.target.value)}
+                    placeholder="Сообщение"
+                    style={{ backgroundColor: theme.background }}
+                  />
+                </View>
+
+                {/* Send Button */}
+                {newMessage.trim().length > 0 && (
+                  <Pressable
+                    onPress={handleSendMessage}
+                    style={styles.sendButton}
+                    disabled={isSending}
+                  >
+                    <Ionicons name="arrow-up-circle" size={32} color={theme.accent} />
+                  </Pressable>
+                )}
               </View>
             </View>
           </View>
         </KeyboardAvoidingView>
-      </View>
+      </ThemedBackground>
     </AppRoot>
   );
 }
@@ -448,107 +468,93 @@ export default function ChatScreen() {
 const styles = StyleSheet.create({
   // HEADER
   header: {
+    height: 56,
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 15,
-    paddingVertical: 10,
-    borderBottomWidth: 1,
+    paddingHorizontal: 16,
+    borderBottomWidth: 0.5, // Subtle border
+    zIndex: 10,
   },
-  participantInfo: {
+  headerContent: {
     flexDirection: 'row',
     alignItems: 'center',
-    flex: 1,
-    justifyContent: 'center',
-  },
-  participantAvatar: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    marginRight: 10,
-    backgroundColor: '#ddd',
-  },
-  fallbackAvatar: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginRight: 10,
-  },
-  participantName: {
-    fontSize: 16,
-    fontWeight: '600',
   },
 
   // CHAT AREA
   chatContainer: { flex: 1 },
-  messagesContent: { padding: 15, paddingBottom: 20 },
+  messagesContent: { paddingHorizontal: 10, paddingVertical: 10 },
 
   // MESSAGES
-  messageContainer: { marginBottom: 10, flexDirection: 'row' },
+  messageContainer: { marginBottom: 6, flexDirection: 'row', maxWidth: '100%' },
   myMessage: { justifyContent: 'flex-end' },
   theirMessage: { justifyContent: 'flex-start' },
 
   messageBubble: {
-    maxWidth: '75%',
-    padding: 12,
-    borderRadius: 18,
+    maxWidth: '80%',
+    paddingVertical: 6,
+    paddingHorizontal: 10,
+    borderRadius: 16,
+    minWidth: 80,
   },
   myBubble: {
-    borderBottomRightRadius: 4,
+    borderBottomRightRadius: 2,
   },
   theirBubble: {
-    borderBottomLeftRadius: 4,
+    borderBottomLeftRadius: 2,
   },
 
-  messageText: { fontSize: 16, lineHeight: 22 },
-  myMessageText: { color: '#ffffff' },
+  messageText: { fontSize: 16, lineHeight: 21 },
 
-  metaContainer: { flexDirection: 'row', justifyContent: 'flex-end', marginTop: 4, alignItems: 'center' },
-  messageTime: { fontSize: 11, textAlign: 'right' },
-  myMessageTime: { color: 'rgba(255,255,255,0.6)' },
-  editedLabel: { fontSize: 10, marginRight: 4 },
+  metaContainer: { flexDirection: 'row', justifyContent: 'flex-end', marginTop: 2, alignItems: 'center' },
+  messageTime: { fontSize: 11 },
+  editedLabel: { fontSize: 11, marginRight: 4 },
 
   replyPreview: {
     borderLeftWidth: 2,
     paddingLeft: 8,
-    marginBottom: 8,
+    marginBottom: 4,
     opacity: 0.8
   },
-  replySender: { fontWeight: '600', fontSize: 12, marginBottom: 2 },
-  replyText: { fontSize: 12 },
 
-  systemMessageContainer: { alignItems: 'center', marginVertical: 15 },
+  systemMessageContainer: { alignItems: 'center', marginVertical: 12 },
   systemMessageText: {
     fontSize: 12,
-    backgroundColor: 'rgba(0,0,0,0.05)',
-    paddingHorizontal: 12,
-    paddingVertical: 4,
-    borderRadius: 10,
+    backgroundColor: 'rgba(128,128,128,0.2)',
+    paddingHorizontal: 10,
+    paddingVertical: 2,
+    borderRadius: 12,
+    overflow: 'hidden',
   },
 
   // DATE SEPARATOR
-  dateSeparatorContainer: { alignItems: 'center', marginVertical: 20 },
+  dateSeparatorContainer: { alignItems: 'center', marginVertical: 12 },
   dateSeparatorText: {
-    fontSize: 13,
+    fontSize: 12,
     fontWeight: '600',
-    backgroundColor: 'rgba(0,0,0,0.05)',
-    paddingHorizontal: 16,
-    paddingVertical: 6,
+    backgroundColor: 'rgba(128,128,128,0.2)',
+    paddingHorizontal: 10,
+    paddingVertical: 2,
     borderRadius: 12,
+    overflow: 'hidden',
   },
 
   // ACTION BANNER
   actionBanner: {
     flexDirection: 'row',
     alignItems: 'center',
-    padding: 10,
+    padding: 8,
     borderTopWidth: 1,
-    borderBottomWidth: 1,
   },
-  actionInfo: { flex: 1, paddingRight: 10 },
-  actionTitle: { fontWeight: '600', fontSize: 12, marginBottom: 2 },
-  actionText: { fontSize: 12 },
+  actionInfo: { flex: 1, paddingRight: 10, paddingLeft: 4 },
   closeAction: { padding: 5 },
+
+  // INPUT
+  inputContainer: {
+    flexDirection: 'row',
+    alignItems: 'flex-end',
+    padding: 6,
+    borderTopWidth: 0.5
+  },
+  attachButton: { padding: 8, marginBottom: 4 },
+  sendButton: { padding: 4, marginLeft: 4, marginBottom: 2 },
 });
