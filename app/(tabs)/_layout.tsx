@@ -1,7 +1,8 @@
 // app/(tabs)/_layout.tsx
 import { Ionicons } from '@expo/vector-icons';
 import { Tabs } from 'expo-router';
-import { Text, View } from 'react-native';
+import { Text, View, useColorScheme } from 'react-native';
+import { AppRoot } from '@telegram-apps/telegram-ui';
 import { useMenu } from '../context/MenuContext';
 import { useNotifications } from '../context/NotificationContext';
 import { useTheme } from '../context/ThemeContext';
@@ -11,6 +12,10 @@ export default function TabLayout() {
   const { unreadMessagesCount, newLikesCount } = useNotifications();
   const { openMenu } = useMenu();
   const isLight = themeType === 'light';
+
+  // Use 'ios' as safe default if platform detection is complex for now
+  // In a real TMA, we should get this from launch params
+  const platform = 'ios';
 
   // Helper to render icon with optional badge
   const TabIconWithBadge = ({
@@ -55,84 +60,89 @@ export default function TabLayout() {
   );
 
   return (
-    <Tabs
-      screenOptions={{
-        headerShown: false,
-        tabBarStyle: {
-          backgroundColor: theme.background,
-          borderTopColor: isLight ? theme.border : '#1a1a1a',
-          elevation: 0,
-          borderTopWidth: 1,
-          height: 96,
-          paddingBottom: 34,
-          paddingTop: 8,
-        },
-        tabBarActiveTintColor: isLight ? '#2a2a2a' : '#81B29A',
-        tabBarInactiveTintColor: isLight ? '#999' : '#666',
-        tabBarIconStyle: { marginBottom: -2 },
-        tabBarLabelStyle: { fontSize: 11, marginBottom: 5 },
-      }}>
-      <Tabs.Screen
-        name="index"
-        options={{
-          title: 'Главная',
-          tabBarIcon: ({ color }) => (
-            <TabIconWithBadge name="home" size={28} color={color} />
-          ),
-          href: null,
-        }}
-      />
-      <Tabs.Screen
-        name="explore"
-        options={{
-          title: 'Поиск',
-          tabBarIcon: ({ color }) => (
-            <TabIconWithBadge name="search" size={28} color={color} />
-          ),
-        }}
-      />
-      <Tabs.Screen
-        name="chats"
-        options={{
-          title: 'Чаты',
-          tabBarIcon: ({ color }) => (
-            <TabIconWithBadge name="chatbubble-ellipses" size={28} color={color} badgeCount={unreadMessagesCount} />
-          ),
-        }}
-      />
-      <Tabs.Screen
-        name="matches"
-        options={{
-          title: 'Мэтчи',
-          tabBarIcon: ({ color }) => (
-            <TabIconWithBadge name="heart" size={28} color={color} badgeCount={newLikesCount} />
-          ),
-        }}
-      />
-      <Tabs.Screen
-        name="profile"
-        options={{
-          title: 'Профиль',
-          tabBarIcon: ({ color }) => (
-            <TabIconWithBadge name="person" size={28} color={color} />
-          ),
-        }}
-      />
-      <Tabs.Screen
-        name="menu"
-        options={{
-          title: 'Меню',
-          tabBarIcon: ({ color }) => (
-            <TabIconWithBadge name="menu" size={28} color={color} />
-          ),
-        }}
-        listeners={{
-          tabPress: (e) => {
-            e.preventDefault();
-            openMenu();
+    <AppRoot
+      appearance={isLight ? 'light' : 'dark'}
+      platform={platform}
+    >
+      <Tabs
+        screenOptions={{
+          headerShown: false,
+          tabBarStyle: {
+            backgroundColor: theme.background,
+            borderTopColor: isLight ? theme.border : '#1a1a1a',
+            elevation: 0,
+            borderTopWidth: 1,
+            height: 96,
+            paddingBottom: 34,
+            paddingTop: 8,
           },
-        }}
-      />
-    </Tabs>
+          tabBarActiveTintColor: isLight ? '#2a2a2a' : '#81B29A',
+          tabBarInactiveTintColor: isLight ? '#999' : '#666',
+          tabBarIconStyle: { marginBottom: -2 },
+          tabBarLabelStyle: { fontSize: 11, marginBottom: 5 },
+        }}>
+        <Tabs.Screen
+          name="index"
+          options={{
+            title: 'Главная',
+            tabBarIcon: ({ color }) => (
+              <TabIconWithBadge name="home" size={28} color={color} />
+            ),
+            href: null,
+          }}
+        />
+        <Tabs.Screen
+          name="explore"
+          options={{
+            title: 'Поиск',
+            tabBarIcon: ({ color }) => (
+              <TabIconWithBadge name="search" size={28} color={color} />
+            ),
+          }}
+        />
+        <Tabs.Screen
+          name="chats"
+          options={{
+            title: 'Чаты',
+            tabBarIcon: ({ color }) => (
+              <TabIconWithBadge name="chatbubble-ellipses" size={28} color={color} badgeCount={unreadMessagesCount} />
+            ),
+          }}
+        />
+        <Tabs.Screen
+          name="matches"
+          options={{
+            title: 'Мэтчи',
+            tabBarIcon: ({ color }) => (
+              <TabIconWithBadge name="heart" size={28} color={color} badgeCount={newLikesCount} />
+            ),
+          }}
+        />
+        <Tabs.Screen
+          name="profile"
+          options={{
+            title: 'Профиль',
+            tabBarIcon: ({ color }) => (
+              <TabIconWithBadge name="person" size={28} color={color} />
+            ),
+          }}
+        />
+        <Tabs.Screen
+          name="menu"
+          options={{
+            title: 'Меню',
+            tabBarIcon: ({ color }) => (
+              <TabIconWithBadge name="menu" size={28} color={color} />
+            ),
+          }}
+          listeners={{
+            tabPress: (e) => {
+              e.preventDefault();
+              openMenu();
+            },
+          }}
+        />
+      </Tabs>
+    </AppRoot>
   );
 }

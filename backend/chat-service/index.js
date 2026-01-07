@@ -3,10 +3,11 @@ const jwt = require('jsonwebtoken');
 const { TypedValues, TypedData } = require('ydb-sdk');
 const { v4: uuidv4 } = require('uuid');
 // Using native fetch (Node.js 18+)
-// const { notifyNewLike, notifyMatch, notifyNewMessage } = require('./telegram');
-// const { sendLikeNotification, sendMatchNotifications, sendMessageNotification } = require('./telegram-helpers');
+const { notifyNewLike, notifyMatch, notifyNewMessage } = require('./telegram');
+const { sendLikeNotification, sendMatchNotifications, sendMessageNotification } = require('./telegram-helpers');
 
 const JWT_SECRET = process.env.JWT_SECRET || 'dev-secret-key-change-me';
+const YC_API_KEY = process.env.YC_API_KEY; // Required for WebSocket message delivery
 
 module.exports.handler = async function (event, context) {
     const { httpMethod, path, body, headers, requestContext, queryStringParameters } = event;
@@ -171,18 +172,84 @@ async function handleDisconnect(driver, connectionId) {
     }
 }
 
-async function sendMessageNotification(driver, userId, recipientId, text) {
-    // ... imported from helper
+/**
+ * Send message to WebSocket connection via Yandex API Gateway Management API
+ * @param {object} driver - YDB Driver instance
+ * @param {string} connectionId - WebSocket connection ID
+ * @param {object} data - Data to send to the connection
+ */
+async function sendToConnection(driver, connectionId, data, event) {
+    // Try to extract gateway ID from Host header, fallback to env var, then hardcoded
+    let apiGatewayId = process.env.API_GATEWAY_ID;
+
+    if (!apiGatewayId && event && event.headers && event.headers.Host) {
+        const host = event.headers.Host;
+        apiGatewayId = host.split('.')[0];
+        console.log('[sendToConnection] Detected Gateway ID from Host:', apiGatewayId);
+    }
+
+    if (!apiGatewayId) apiGatewayId = 'd5dg37j92h7tg2f7sf87';
+
+    const url = `https://apigateway-connections.api.cloud.yandex.net/apigateways/${apiGatewayId}/connections/${connectionId}`;
+
+    console.log('[sendToConnection] Sending to connectionId:', connectionId);
+    console.log('[sendToConnection] URL:', url);
+
+    if (!YC_API_KEY) {
+        console.error('[sendToConnection] YC_API_KEY not configured!');
+        throw new Error('YC_API_KEY is required for WebSocket message delivery');
+    }
+
     try {
-        const { sendMessageNotification } = require('./telegram-helpers');
-        await sendMessageNotification(driver, userId, recipientId, text);
-    } catch (e) {
-        console.error('[WS] Error sending Telegram notification:', e);
+        const response = await fetch(url, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Api-Key ${YC_API_KEY}`
+            },
+            body: JSON.stringify(data)
+        });
+
+        if (!response.ok) {
+            const errorText = await response.text();
+            console.error('[sendToConnection] Failed:', response.status, response.statusText, errorText);
+
+            // If connection is gone (404 Not Found or 410 Gone), remove it from DB
+            if (response.status === 404 || response.status === 410) {
+                console.log(`[sendToConnection] Connection ${connectionId} is stale (Status ${response.status}). Removing from DB...`);
+                try {
+                    await driver.tableClient.withSession(async (session) => {
+                        const query = `
+                            DECLARE $connectionId AS Utf8;
+                            DELETE FROM socket_connections WHERE connection_id = $connectionId;
+                        `;
+                        await session.executeQuery(query, {
+                            '$connectionId': TypedValues.utf8(connectionId)
+                        });
+                    });
+                    console.log(`[sendToConnection] Successfully removed stale connection ${connectionId}`);
+                } catch (dbError) {
+                    console.error('[sendToConnection] Failed to remove stale connection:', dbError);
+                }
+            }
+
+            throw new Error(`Failed to send to connection: ${response.status} ${errorText}`);
+        }
+
+        console.log('[sendToConnection] Successfully sent to', connectionId);
+    } catch (error) {
+        console.error('[sendToConnection] Error:', error.message);
+        throw error;
     }
 }
 
+// sendMessageNotification is now imported at the top
+// Keeping this wrapper for compatibility if needed, or remove it and use the imported one directly
+// But the imported one needs 'driver' as first arg, which matches.
+// We can just use the imported one directly in handleMessage.
+
 async function handleMessage(driver, event, connectionId) {
-    console.log('[WS] handleMessage called from:', connectionId);
+    console.log('[WS] handleMessage START. ConnectionId:', connectionId);
     let body;
     try {
         body = JSON.parse(event.body);
@@ -194,12 +261,20 @@ async function handleMessage(driver, event, connectionId) {
     const { action, chatId, text, recipientId, replyToId, messageId } = body;
 
     if (action === 'sendMessage') {
+        if (!text) {
+            console.error('[WS] Message text is empty');
+            return { statusCode: 400 };
+        }
+
+        console.log(`[WS] resolving userId for connection: ${connectionId}`);
         const userId = await getUserIdByConnection(driver, connectionId);
         if (!userId) {
             console.error('[WS] Sender userId not found for connectionId:', connectionId);
+            // DEBUG: Check what IS in the DB for this connection
+            await debugConnection(driver, connectionId);
             return { statusCode: 403 };
         }
-        console.log(`[WS] Sending message from ${userId} to ${recipientId}`);
+        console.log(`[WS] Sender verified: ${userId}. Sending to ${recipientId}`);
 
         // FORCE SAFE CHAT ID: Ensure we always use the canonical ID format
         const safeChatId = [userId, recipientId].sort().join('_');
@@ -245,6 +320,7 @@ async function handleMessage(driver, event, connectionId) {
             console.log('[WS] Message saved to YDB:', newMessageId);
         } catch (dbError) {
             console.error('[WS] Database save error:', dbError);
+            console.error('[WS] DB Error Details:', JSON.stringify(dbError, null, 2));
             return { statusCode: 500 };
         }
 
@@ -264,12 +340,13 @@ async function handleMessage(driver, event, connectionId) {
         };
 
         // Notify recipient
+        console.log(`[WS] Looking up connection for recipient ${recipientId}`);
         const recipientConnectionId = await getConnectionIdByUserId(driver, recipientId);
         console.log(`[WS] Recipient ${recipientId} connectionId:`, recipientConnectionId || 'OFFLINE');
 
         if (recipientConnectionId) {
             try {
-                await sendToConnection(recipientConnectionId, messageEvent);
+                await sendToConnection(driver, recipientConnectionId, messageEvent, event);
             } catch (err) {
                 console.error('[WS] Failed to send to recipient:', err);
                 // Continue to send Telegram notification as fallback
@@ -283,7 +360,7 @@ async function handleMessage(driver, event, connectionId) {
 
         // Notify sender (echo) - ALWAYS send this
         try {
-            await sendToConnection(connectionId, messageEvent);
+            await sendToConnection(driver, connectionId, messageEvent, event);
         } catch (err) {
             console.error('[WS] Failed to send echo to sender:', err);
         }
@@ -299,34 +376,7 @@ async function handleMessage(driver, event, connectionId) {
     return { statusCode: 200 };
 }
 
-async function sendToConnection(connectionId, message) {
-    const gatewayUrl = process.env.WS_GATEWAY_URL;
-    if (!gatewayUrl) {
-        console.error('[WS] WS_GATEWAY_URL not set in environment variables!');
-        return;
-    }
 
-    const fullUrl = `${gatewayUrl}${connectionId}`;
-    console.log(`[WS] Sending to ${connectionId} via ${fullUrl}`);
-
-    try {
-        const response = await fetch(fullUrl, {
-            method: 'POST',
-            body: JSON.stringify(message),
-            headers: { 'Content-Type': 'application/json' }
-        });
-
-        if (!response.ok) {
-            console.error(`[WS] Send failed. Status: ${response.status} ${response.statusText}`);
-            const errText = await response.text().catch(() => '');
-            console.error(`[WS] Error body:`, errText);
-        } else {
-            console.log(`[WS] Send success: ${response.status}`);
-        }
-    } catch (e) {
-        console.error('[WS] Broadcast error details:', e);
-    }
-}
 
 async function getUserProfile(driver, requestHeaders, userId, responseHeaders) {
     const requesterId = checkAuth(requestHeaders);
@@ -1239,3 +1289,14 @@ async function handleDeleteMessage(driver, connectionId, chatId, messageIds, rec
 }
 
 
+
+async function debugConnection(driver, connectionId) {
+    try {
+        await driver.tableClient.withSession(async (session) => {
+            const query = `SELECT * FROM socket_connections WHERE connection_id = '${connectionId}';`;
+            const { resultSets } = await session.executeQuery(query);
+            const rows = TypedData.createNativeObjects(resultSets[0]);
+            console.log('[DEBUG] Connection DB Record:', rows);
+        });
+    } catch (e) { console.error('[DEBUG] Failed to debug connection', e); }
+}
