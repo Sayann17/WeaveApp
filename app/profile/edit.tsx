@@ -152,6 +152,12 @@ export default function EditProfileScreen() {
       return;
     }
 
+    // Проверка наличия фото
+    if (photos.length === 0) {
+      Alert.alert('Ошибка', 'Пожалуйста, добавьте хотя бы одно фото');
+      return;
+    }
+
     // Проверка этноса
     if (ethnicities.length === 0 && macroGroups.length === 0) {
       Alert.alert('Внимание', 'Пожалуйста, укажите ваши корни (этническую принадлежность)');
@@ -236,6 +242,7 @@ export default function EditProfileScreen() {
     name.trim().length > 0 &&
     age.trim().length > 0 &&
     gender !== null &&
+    photos.length > 0 &&
     (macroGroups.length > 0 || ethnicities.length > 0);
 
   if (isLoading) {

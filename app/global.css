@@ -1,11 +1,12 @@
 /* Global styles for web platform */
 
-/* Prevent zoom on all elements */
+/* Prevent zoom on all elements - AGGRESSIVE MODE */
 * {
   touch-action: manipulation !important;
   user-select: none;
   -webkit-user-select: none;
   -webkit-touch-callout: none;
+  -ms-touch-action: manipulation !important;
 }
 
 /* Allow text selection in inputs and text areas */
@@ -15,11 +16,30 @@ textarea {
   -webkit-user-select: text !important;
 }
 
-html,
+html {
+  touch-action: manipulation !important;
+  -ms-touch-action: manipulation !important;
+  overscroll-behavior: none;
+  -webkit-text-size-adjust: 100% !important;
+  -ms-text-size-adjust: 100% !important;
+}
+
 body {
   touch-action: manipulation !important;
   -ms-touch-action: manipulation !important;
   overscroll-behavior: none;
+  -webkit-text-size-adjust: 100% !important;
+  -ms-text-size-adjust: 100% !important;
+  position: fixed;
+  overflow: hidden;
+  width: 100%;
+  height: 100%;
+}
+
+/* Prevent double-tap zoom on buttons and links */
+button,
+a {
+  touch-action: manipulation !important;
 }
 
 #chat-input {
