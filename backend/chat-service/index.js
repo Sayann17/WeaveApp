@@ -686,7 +686,7 @@ async function getMatches(driver, requestHeaders, responseHeaders) {
         for (const matchId of matchIds) {
             const userQuery = `
                 DECLARE $matchId AS Utf8;
-                SELECT id, name, age, photos, about, gender, ethnicity
+                SELECT id, name, age, photos, about, gender, ethnicity, macro_groups
                 FROM users
                 WHERE id = $matchId;
             `;
@@ -705,7 +705,8 @@ async function getMatches(driver, requestHeaders, responseHeaders) {
                 photos: tryParse(u.photos),
                 bio: u.about,
                 gender: u.gender,
-                ethnicity: u.ethnicity
+                ethnicity: u.ethnicity,
+                macroGroups: tryParse(u.macro_groups)
             });
         }
     });
@@ -756,7 +757,7 @@ async function getLikesYou(driver, requestHeaders, responseHeaders) {
         for (const targetId of targetIds) {
             const userQuery = `
                 DECLARE $id AS Utf8;
-                SELECT id, name, age, photos, about, gender, ethnicity FROM users WHERE id = $id;
+                SELECT id, name, age, photos, about, gender, ethnicity, macro_groups FROM users WHERE id = $id;
             `;
             const { resultSets: userResults } = await session.executeQuery(userQuery, {
                 '$id': TypedValues.utf8(targetId)
@@ -772,7 +773,8 @@ async function getLikesYou(driver, requestHeaders, responseHeaders) {
                     photos: tryParse(u.photos),
                     bio: u.about,
                     gender: u.gender,
-                    ethnicity: u.ethnicity
+                    ethnicity: u.ethnicity,
+                    macroGroups: tryParse(u.macro_groups)
                 });
             }
         }
@@ -824,7 +826,7 @@ async function getYourLikes(driver, requestHeaders, responseHeaders) {
         for (const targetId of targetIds) {
             const userQuery = `
                 DECLARE $id AS Utf8;
-                SELECT id, name, age, photos, about, gender, ethnicity FROM users WHERE id = $id;
+                SELECT id, name, age, photos, about, gender, ethnicity, macro_groups FROM users WHERE id = $id;
             `;
             const { resultSets: userResults } = await session.executeQuery(userQuery, {
                 '$id': TypedValues.utf8(targetId)
@@ -840,7 +842,8 @@ async function getYourLikes(driver, requestHeaders, responseHeaders) {
                     photos: tryParse(u.photos),
                     bio: u.about,
                     gender: u.gender,
-                    ethnicity: u.ethnicity
+                    ethnicity: u.ethnicity,
+                    macroGroups: tryParse(u.macro_groups)
                 });
             }
         }
@@ -896,7 +899,7 @@ async function getChats(driver, requestHeaders, responseHeaders) {
         for (const matchId of matchIds) {
             const userQuery = `
                 DECLARE $matchId AS Utf8;
-                SELECT id, name, photos FROM users WHERE id = $matchId;
+                SELECT id, name, age, photos, ethnicity, macro_groups FROM users WHERE id = $matchId;
             `;
             const { resultSets: userResults } = await session.executeQuery(userQuery, {
                 '$matchId': TypedValues.utf8(matchId)
@@ -926,6 +929,9 @@ async function getChats(driver, requestHeaders, responseHeaders) {
                 id: chatId,
                 matchId: match.id,
                 name: match.name,
+                age: match.age,
+                ethnicity: match.ethnicity,
+                macroGroups: tryParse(match.macro_groups),
                 photo: tryParse(match.photos)[0] || null,
                 lastMessage: lastMsg ? lastMsg.text : '',
                 lastMessageTime: lastMsg ? new Date(lastMsg.timestamp).toISOString() : null,

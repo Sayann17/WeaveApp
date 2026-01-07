@@ -25,6 +25,9 @@ interface ChatWithUserData extends Chat {
   participantName: string;
   participantPhoto: string;
   participantId: string;
+  participantAge?: number;
+  participantEthnicity?: string;
+  participantMacroGroups?: string[];
 }
 
 export default function ChatsScreen() {
@@ -61,7 +64,10 @@ export default function ChatsScreen() {
                   ...chat,
                   participantName: userData.name || 'Пользователь',
                   participantPhoto: userData.photos?.[0] || '',
-                  participantId: otherParticipantId
+                  participantId: otherParticipantId,
+                  participantAge: userData.age,
+                  participantEthnicity: userData.ethnicity,
+                  participantMacroGroups: userData.macroGroups
                 });
               }
             }
@@ -131,6 +137,26 @@ export default function ChatsScreen() {
     return 0;
   };
 
+  // Helper to format heritage string
+  const getHeritageString = (chat: ChatWithUserData) => {
+    const ETHNICITY_MAP: Record<string, string> = {
+      slavic: 'Славянские', asian: 'Азиатские', caucasian: 'Кавказские',
+      finno_ugric: 'Финно-угорские', european: 'Европейские', african: 'Африканские',
+      latin: 'Латиноамериканские', arab: 'Арабские', jewish: 'Еврейские',
+      indian: 'Индийские', native_american: 'Коренные', pacific: 'Тихоокеанские',
+      middle_eastern: 'Ближневосточные', turkic: 'Тюркские'
+    };
+    const parts = [];
+    if (chat.participantMacroGroups && Array.isArray(chat.participantMacroGroups) && chat.participantMacroGroups.length > 0) {
+      const roots = chat.participantMacroGroups.map((g: string) => ETHNICITY_MAP[g] || g).join(', ');
+      parts.push(`${roots} корни`);
+    }
+    if (chat.participantEthnicity) {
+      parts.push(chat.participantEthnicity.charAt(0).toUpperCase() + chat.participantEthnicity.slice(1).toLowerCase());
+    }
+    return parts.join(' • ');
+  };
+
   const renderChatItem = (chat: ChatWithUserData) => {
     const unreadCount = getUnreadCount(chat);
 
@@ -169,12 +195,18 @@ export default function ChatsScreen() {
         <View style={styles.chatInfo}>
           <View style={styles.chatHeader}>
             <Text style={[styles.participantName, { color: theme.text }]} numberOfLines={1}>
-              {chat.participantName}
+              {chat.participantName}{chat.participantAge ? `, ${chat.participantAge}` : ''}
             </Text>
             <Text style={[styles.messageTime, { color: theme.subText }]}>
               {formatLastMessageTime(chat.lastMessageTime)}
             </Text>
           </View>
+
+          {getHeritageString(chat) ? (
+            <Text style={[styles.heritageText, { color: '#4ade80' }]} numberOfLines={1}>
+              {getHeritageString(chat)}
+            </Text>
+          ) : null}
 
           <Text
             style={[
@@ -262,6 +294,7 @@ const styles = StyleSheet.create({
   chatHeader: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 4 },
   participantName: { fontSize: 16, fontWeight: '600', flex: 1, marginRight: 10 },
   messageTime: { fontSize: 12 },
+  heritageText: { fontSize: 13, marginBottom: 2 },
   lastMessage: { fontSize: 14 },
   emptyContainer: { alignItems: 'center', justifyContent: 'center', marginTop: 100 },
   emptyIconBg: { width: 80, height: 80, borderRadius: 40, justifyContent: 'center', alignItems: 'center', marginBottom: 20 },

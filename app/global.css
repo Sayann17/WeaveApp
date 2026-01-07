@@ -1,4 +1,27 @@
 /* Global styles for web platform */
+
+/* Prevent zoom on all elements */
+* {
+  touch-action: manipulation !important;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
+}
+
+/* Allow text selection in inputs and text areas */
+input,
+textarea {
+  user-select: text !important;
+  -webkit-user-select: text !important;
+}
+
+html,
+body {
+  touch-action: manipulation !important;
+  -ms-touch-action: manipulation !important;
+  overscroll-behavior: none;
+}
+
 #chat-input {
   outline: none !important;
   border: none !important;
@@ -22,11 +45,13 @@ textarea#chat-input:focus {
 }
 
 /* Remove all input outlines globally for the app */
-input, textarea {
+input,
+textarea {
   outline: none !important;
 }
 
-input:focus, textarea:focus {
+input:focus,
+textarea:focus {
   outline: none !important;
   box-shadow: none !important;
 }

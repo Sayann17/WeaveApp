@@ -6,6 +6,7 @@ export interface UserProfile {
     bio?: string;
     gender: 'male' | 'female';
     macroGroups: string[];
+    ethnicity?: string;
     customEthnicity?: string;
     zodiac?: string;
     religions?: string[];
