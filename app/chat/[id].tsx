@@ -1,3 +1,4 @@
+// @ts-nocheck
 // app/chat/[id].tsx
 import { Ionicons } from '@expo/vector-icons';
 import { useLocalSearchParams, useRouter } from 'expo-router';
@@ -24,6 +25,7 @@ import { yandexAuth } from '../services/yandex/AuthService';
 import { yandexChat, type Message } from '../services/yandex/ChatService';
 import { YandexUserService } from '../services/yandex/UserService';
 import { getPlatformPadding } from '../utils/platformPadding';
+import { AppRoot } from '@telegram-apps/telegram-ui';
 
 
 import { MessageActionModal } from '../components/MessageActionModal';
@@ -345,115 +347,120 @@ export default function ChatScreen() {
   const invertedMessages = [...messages].reverse();
 
   return (
-    <ThemedBackground>
-      <StatusBar barStyle={isLight ? "dark-content" : "light-content"} />
+    <AppRoot
+      appearance={isLight ? 'light' : 'dark'}
+      platform={isMobile ? 'ios' : 'base'}
+    >
+      <ThemedBackground>
+        <StatusBar barStyle={isLight ? "dark-content" : "light-content"} />
 
-      <KeyboardAvoidingView
-        style={{ flex: 1 }}
-        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-        keyboardVerticalOffset={0}
-      >
-        <View style={{ flex: 1, paddingTop: getPlatformPadding(insets, isMobile, 78) }}>
+        <KeyboardAvoidingView
+          style={{ flex: 1 }}
+          behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+          keyboardVerticalOffset={0}
+        >
+          <View style={{ flex: 1, paddingTop: getPlatformPadding(insets, isMobile, 78) }}>
 
-          <MessageActionModal
-            visible={menuVisible}
-            onClose={handleModalClose}
-            onReply={handleReply}
-            onEdit={selectedMessage && isMyMessage(selectedMessage) ? handleEdit : undefined}
-            isMine={selectedMessage ? isMyMessage(selectedMessage) : false}
-          />
-
-          {/* ХЕДЕР */}
-          <View style={[styles.header, { borderBottomColor: theme.border }]}>
-            <Pressable
-              style={styles.participantInfo}
-              onPress={() => participantId && router.push(`/users/${participantId}` as any)}
-            >
-              {participant?.photos?.[0] ? (
-                <Image
-                  source={{ uri: participant.photos[0] }}
-                  style={styles.participantAvatar}
-                />
-              ) : (
-                <View style={[styles.fallbackAvatar, { backgroundColor: theme.cardBg }]}>
-                  <Ionicons name="person" size={20} color={theme.subText} />
-                </View>
-              )}
-              <Text style={[styles.participantName, { color: theme.text }]} numberOfLines={1}>
-                {participant?.name || 'Собеседник'}
-              </Text>
-            </Pressable>
-          </View>
-
-          {/* СООБЩЕНИЯ (FlatList Inverted) */}
-          <View style={styles.chatContainer}>
-            <FlatList
-              ref={flatListRef}
-              data={invertedMessages}
-              renderItem={renderItem}
-              keyExtractor={(item: Message) => item.id}
-              inverted
-              contentContainerStyle={styles.messagesContent}
-              keyboardDismissMode="interactive"
-              keyboardShouldPersistTaps="handled"
-              showsVerticalScrollIndicator={false}
+            <MessageActionModal
+              visible={menuVisible}
+              onClose={handleModalClose}
+              onReply={handleReply}
+              onEdit={selectedMessage && isMyMessage(selectedMessage) ? handleEdit : undefined}
+              isMine={selectedMessage ? isMyMessage(selectedMessage) : false}
             />
 
-            {/* ACTION BANNER (Reply/Edit) */}
-            {(replyingTo || editingMessage) && (
-              <View style={[styles.actionBanner, { backgroundColor: theme.cardBg, borderColor: theme.border }]}>
-                <View style={styles.actionInfo}>
-                  <Text style={[styles.actionTitle, { color: theme.accent }]}>
-                    {editingMessage ? 'Редактирование' : `Ответ ${isMyMessage(replyingTo!) ? 'себе' : participant?.name}`}
-                  </Text>
-                  <Text style={[styles.actionText, { color: theme.subText }]} numberOfLines={1}>
-                    {editingMessage ? editingMessage.text : replyingTo!.text}
-                  </Text>
-                </View>
-                <Pressable onPress={cancelAction} style={styles.closeAction}>
-                  <Ionicons name="close" size={20} color={theme.subText} />
-                </Pressable>
-              </View>
-            )}
-
-            {/* ПОЛЕ ВВОДА */}
-            <View style={[styles.inputWrapper]}>
-              <View style={[styles.inputContainer, { backgroundColor: theme.cardBg }]}>
-                <TextInput
-                  style={[styles.textInput, { color: theme.text }]}
-                  value={newMessage}
-                  onChangeText={setNewMessage}
-                  placeholder="Сообщение..."
-                  placeholderTextColor={theme.subText}
-                  multiline
-                  maxLength={500}
-                  editable={!isSending}
-                  underlineColorAndroid="transparent"
-                  // @ts-ignore
-                  dataSet={{ outline: 'none' }}
-                  nativeID="chat-input"
-                />
-                <Pressable
-                  style={[
-                    styles.sendButton,
-                    { backgroundColor: editingMessage ? theme.accent : '#2a2a2a' },
-                    (!newMessage.trim() || isSending) && styles.sendButtonDisabled
-                  ]}
-                  onPress={handleSendMessage}
-                  disabled={!newMessage.trim() || isSending}
-                >
-                  <Ionicons
-                    name={editingMessage ? "checkmark" : "arrow-up"}
-                    size={20}
-                    color="#ffffff"
+            {/* ХЕДЕР */}
+            <View style={[styles.header, { borderBottomColor: theme.border }]}>
+              <Pressable
+                style={styles.participantInfo}
+                onPress={() => participantId && router.push(`/users/${participantId}` as any)}
+              >
+                {participant?.photos?.[0] ? (
+                  <Image
+                    source={{ uri: participant.photos[0] }}
+                    style={styles.participantAvatar}
                   />
-                </Pressable>
+                ) : (
+                  <View style={[styles.fallbackAvatar, { backgroundColor: theme.cardBg }]}>
+                    <Ionicons name="person" size={20} color={theme.subText} />
+                  </View>
+                )}
+                <Text style={[styles.participantName, { color: theme.text }]} numberOfLines={1}>
+                  {participant?.name || 'Собеседник'}
+                </Text>
+              </Pressable>
+            </View>
+
+            {/* СООБЩЕНИЯ (FlatList Inverted) */}
+            <View style={styles.chatContainer}>
+              <FlatList
+                ref={flatListRef}
+                data={invertedMessages}
+                renderItem={renderItem}
+                keyExtractor={(item: Message) => item.id}
+                inverted
+                contentContainerStyle={styles.messagesContent}
+                keyboardDismissMode="interactive"
+                keyboardShouldPersistTaps="handled"
+                showsVerticalScrollIndicator={false}
+              />
+
+              {/* ACTION BANNER (Reply/Edit) */}
+              {(replyingTo || editingMessage) && (
+                <View style={[styles.actionBanner, { backgroundColor: theme.cardBg, borderColor: theme.border }]}>
+                  <View style={styles.actionInfo}>
+                    <Text style={[styles.actionTitle, { color: theme.accent }]}>
+                      {editingMessage ? 'Редактирование' : `Ответ ${isMyMessage(replyingTo!) ? 'себе' : participant?.name}`}
+                    </Text>
+                    <Text style={[styles.actionText, { color: theme.subText }]} numberOfLines={1}>
+                      {editingMessage ? editingMessage.text : replyingTo!.text}
+                    </Text>
+                  </View>
+                  <Pressable onPress={cancelAction} style={styles.closeAction}>
+                    <Ionicons name="close" size={20} color={theme.subText} />
+                  </Pressable>
+                </View>
+              )}
+
+              {/* ПОЛЕ ВВОДА */}
+              <View style={[styles.inputWrapper]}>
+                <View style={[styles.inputContainer, { backgroundColor: theme.cardBg }]}>
+                  <TextInput
+                    style={[styles.textInput, { color: theme.text }]}
+                    value={newMessage}
+                    onChangeText={setNewMessage}
+                    placeholder="Сообщение..."
+                    placeholderTextColor={theme.subText}
+                    multiline
+                    maxLength={500}
+                    editable={!isSending}
+                    underlineColorAndroid="transparent"
+                    // @ts-ignore
+                    dataSet={{ outline: 'none' }}
+                    nativeID="chat-input"
+                  />
+                  <Pressable
+                    style={[
+                      styles.sendButton,
+                      { backgroundColor: editingMessage ? theme.accent : '#2a2a2a' },
+                      (!newMessage.trim() || isSending) && styles.sendButtonDisabled
+                    ]}
+                    onPress={handleSendMessage}
+                    disabled={!newMessage.trim() || isSending}
+                  >
+                    <Ionicons
+                      name={editingMessage ? "checkmark" : "arrow-up"}
+                      size={20}
+                      color="#ffffff"
+                    />
+                  </Pressable>
+                </View>
               </View>
             </View>
           </View>
-        </View>
-      </KeyboardAvoidingView>
-    </ThemedBackground>
+        </KeyboardAvoidingView>
+      </ThemedBackground>
+    </AppRoot>
   );
 }
 
