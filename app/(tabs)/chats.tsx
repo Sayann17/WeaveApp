@@ -53,25 +53,18 @@ export default function ChatsScreen() {
 
           // Initial load
           const chatsList = await yandexChat.getChats();
-          const chatsWithUserData: ChatWithUserData[] = [];
-
-          for (const chat of chatsList) {
-            const otherParticipantId = chat.id.split('_').find(id => id !== currentUser.uid);
-            if (otherParticipantId) {
-              const userData = await userService.getUser(otherParticipantId);
-              if (userData) {
-                chatsWithUserData.push({
-                  ...chat,
-                  participantName: userData.name || 'Пользователь',
-                  participantPhoto: userData.photos?.[0] || '',
-                  participantId: otherParticipantId,
-                  participantAge: userData.age,
-                  participantEthnicity: userData.ethnicity,
-                  participantMacroGroups: userData.macroGroups
-                });
-              }
-            }
-          }
+          const chatsWithUserData: ChatWithUserData[] = chatsList.map(chat => {
+            const otherParticipantId = chat.matchId || chat.id.split('_').find(id => id !== currentUser.uid);
+            return {
+              ...chat,
+              participantName: chat.name || 'Пользователь',
+              participantPhoto: chat.photo || '',
+              participantId: otherParticipantId || '',
+              participantAge: chat.age,
+              participantEthnicity: chat.ethnicity,
+              participantMacroGroups: chat.macroGroups
+            };
+          });
 
           chatsWithUserData.sort((a, b) => {
             const timeA = a.lastMessageTime?.getTime() || 0;

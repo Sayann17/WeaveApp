@@ -164,6 +164,16 @@ export default function ExploreScreen() {
                 religion: targetRel
             });
 
+            // DEBUG: Log first profile to see what data we're getting
+            if (matches.length > 0) {
+                console.log('[Explore] First profile data:', {
+                    name: matches[0].name,
+                    hasInterests: !!matches[0].interests,
+                    interestsCount: matches[0].interests?.length || 0,
+                    interests: matches[0].interests
+                });
+            }
+
             // Cultural Sort
             const ranked = enhancedMatchService.sortProfilesByCulturalScore(currentUserData, matches);
             setProfiles(ranked);

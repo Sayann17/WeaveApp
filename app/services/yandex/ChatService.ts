@@ -21,6 +21,13 @@ export interface Chat {
     lastMessage?: string;
     lastMessageTime?: Date;
     isMatchChat?: boolean;
+    matchId?: string;
+    name?: string;
+    age?: number;
+    ethnicity?: string;
+    macroGroups?: string[];
+    photo?: string;
+    isOwnMessage?: boolean;
 }
 
 class YandexChatService {
@@ -194,7 +201,14 @@ class YandexChatService {
             participants: c.id.split('_'),
             lastMessage: c.lastMessage,
             lastMessageTime: c.lastMessageTime ? new Date(c.lastMessageTime) : undefined,
-            isMatchChat: true // All chats from /chats are match chats
+            isMatchChat: true, // All chats from /chats are match chats
+            matchId: c.matchId,
+            name: c.name,
+            age: c.age,
+            ethnicity: c.ethnicity,
+            macroGroups: c.macroGroups,
+            photo: c.photo,
+            isOwnMessage: c.isOwnMessage
         }));
     }
 
