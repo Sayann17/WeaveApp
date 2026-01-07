@@ -189,7 +189,7 @@ const styles = StyleSheet.create({
 
   // Визуальная часть (Иконка)
   visualContainer: {
-    flex: 2, // Занимает верхние 2/3 экрана (почти)
+    height: '50%', // Фиксированная высота половины экрана для стабильности
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -206,9 +206,9 @@ const styles = StyleSheet.create({
 
   // Текстовая часть
   textContainer: {
-    flex: 1.5, // Нижняя часть
+    flex: 1, // Занимает оставшееся место
     justifyContent: 'flex-start', // Текст начинается сразу под картинкой
-    paddingTop: 20,
+    paddingTop: 10, // Чуть меньший отступ
   },
   title: {
     fontSize: 36, // Крупный, журнальный заголовок

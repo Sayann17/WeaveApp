@@ -33,14 +33,16 @@ const HookInputItem = ({
     onChange,
     placeholder,
     multiline = false,
-    icon
+    icon,
+    hasError = false // 🔥 New prop
 }: {
     label: string,
     value: string,
     onChange: (t: string) => void,
     placeholder: string,
     multiline?: boolean,
-    icon?: any
+    icon?: any,
+    hasError?: boolean
 }) => {
     return (
         <View style={styles.inputGroup}>
@@ -51,7 +53,8 @@ const HookInputItem = ({
 
             <View style={[
                 styles.inputWrapper,
-                multiline && { height: 140 }
+                multiline && { height: 140 },
+                hasError && { borderWidth: 1, borderColor: '#ef4444' } // 🔥 Red border on error
             ]}>
                 <TextInput
                     style={[
@@ -80,6 +83,7 @@ const HookInputItem = ({
 export default function OnboardingHooksScreen() {
     const router = useRouter();
     const [isLoading, setIsLoading] = useState(false);
+    const [bioError, setBioError] = useState(false); // 🔥 State for bio validation
 
     const [bio, setBio] = useState('');
     const [loveLanguage, setLoveLanguage] = useState('');
@@ -90,10 +94,11 @@ export default function OnboardingHooksScreen() {
 
     const handleContinue = async () => {
         if (!bio.trim()) {
+            setBioError(true);
             Alert.alert('О себе', 'Напишите хотя бы пару слов о себе.');
             return;
         }
-
+        setBioError(false);
         setIsLoading(true);
         try {
             await yandexAuth.updateProfile({
@@ -138,10 +143,11 @@ export default function OnboardingHooksScreen() {
                         <HookInputItem
                             label="Об о себе (Био) *"
                             value={bio}
-                            onChange={setBio}
+                            onChange={(t) => { setBio(t); if (t) setBioError(false); }}
                             placeholder="Кто вы? Чем живете? Что ищете?"
                             multiline={true}
                             icon="person-outline"
+                            hasError={bioError}
                         />
                     </View>
 

@@ -15,11 +15,16 @@ const THEME = {
 export default function OnboardingGenderScreen() {
     const [gender, setGender] = useState<'male' | 'female' | null>(null);
     const [isLoading, setIsLoading] = useState(false);
+    const [hasError, setHasError] = useState(false); // 🔥 State for validation visual feedback
     const router = useRouter();
 
     const handleContinue = async () => {
-        // Alert.alert('Debug', `Pressed! Gender: ${gender}`); // Debug
-        if (!gender) return;
+        if (!gender) {
+            setHasError(true);
+            Alert.alert('Внимание', 'Пожалуйста, выберите пол, чтобы продолжить.');
+            return;
+        }
+        setHasError(false);
         setIsLoading(true);
         try {
             //     await updateDoc(doc(firestore, 'users', currentUser.uid), {
@@ -46,7 +51,7 @@ export default function OnboardingGenderScreen() {
                 <View style={styles.header}>
                     {/* 🔥 ЧЕРНЫЙ СЧЕТЧИК */}
                     <Text style={styles.step}>ШАГ 1 из 6</Text>
-                    <Text style={styles.title}>Ваш пол</Text>
+                    <Text style={[styles.title, hasError && { color: '#ef4444' }]}>Ваш пол</Text>
                     <Text style={styles.subtitle}>Это поможет нам настроить поиск.</Text>
                 </View>
 
@@ -73,7 +78,7 @@ export default function OnboardingGenderScreen() {
                     <PrimaryButton
                         title="Продолжить"
                         onPress={handleContinue}
-                        disabled={!gender}
+                        disabled={isLoading} // Enabled to show validation
                         isLoading={isLoading}
                         style={{ backgroundColor: '#2a2a2a' }} // Темная кнопка
                     />

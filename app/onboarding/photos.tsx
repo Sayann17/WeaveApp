@@ -22,15 +22,18 @@ const THEME = {
 export default function OnboardingPhotosScreen() {
     const [photos, setPhotos] = useState<string[]>([]);
     const [isLoading, setIsLoading] = useState(false);
+    const [hasError, setHasError] = useState(false); // 🔥 State for visuals
     const router = useRouter();
 
     console.log('[OnboardingPhotos] Mounting...');
 
     const handleFinish = async () => {
         if (photos.length === 0) {
-            Alert.alert('Нужно фото', 'Загрузите хотя бы одно фото.');
+            setHasError(true);
+            Alert.alert('Нужно фото', 'Загрузите хотя бы одно фото, чтобы вас узнали.');
             return;
         }
+        setHasError(false);
 
         setIsLoading(true);
         try {
@@ -56,6 +59,9 @@ export default function OnboardingPhotosScreen() {
                 <Text style={styles.subtitle}>
                     Добавьте пару кадров, чтобы вас узнали.
                 </Text>
+                <Text style={{ fontSize: 14, color: hasError ? '#ef4444' : '#555555', marginTop: 5, fontWeight: '600' }}>
+                    (минимум 1 фото)
+                </Text>
             </View>
 
             <ScrollView contentContainerStyle={styles.scrollContent}>
@@ -70,7 +76,7 @@ export default function OnboardingPhotosScreen() {
                 <PrimaryButton
                     title={isLoading ? "Создаем профиль..." : "Начать поиск"}
                     onPress={handleFinish}
-                    disabled={photos.length === 0 || isLoading}
+                    disabled={isLoading}
                     isLoading={isLoading}
                     style={{ backgroundColor: '#2a2a2a' }}
                 />
