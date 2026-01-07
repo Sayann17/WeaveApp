@@ -1,5 +1,3 @@
-// @ts-nocheck
-// app/(tabs)/matches.tsx
 import { Ionicons } from '@expo/vector-icons';
 import { Image } from 'expo-image';
 import { useFocusEffect, useRouter } from 'expo-router';
@@ -8,6 +6,7 @@ import {
     ActivityIndicator,
     Alert,
     Pressable,
+    ScrollView,
     StatusBar,
     StyleSheet,
     Text,
@@ -20,9 +19,6 @@ import { useTheme } from '../context/ThemeContext';
 import { yandexAuth } from '../services/yandex/AuthService';
 import { yandexMatch } from '../services/yandex/MatchService';
 import { getPlatformPadding } from '../utils/platformPadding';
-
-// Telegram UI Imports
-import { List, Section, Cell } from '@telegram-apps/telegram-ui';
 
 export default function MatchesScreen() {
     const router = useRouter();
@@ -65,18 +61,32 @@ export default function MatchesScreen() {
         }
     };
 
+    if (loading) {
+        return (
+            <View style={{ flex: 1, backgroundColor: theme.background, justifyContent: 'center', alignItems: 'center' }}>
+                <ActivityIndicator color={theme.text} />
+            </View>
+        );
+    }
+
     const handleLikeBack = async (profile: any) => {
         try {
             const result = await yandexMatch.likeUser(profile.id);
             if (result.type === 'match') {
+                // Show Match Alert
                 Alert.alert("It's a Match!", `Вы и ${profile.name} лайкнули друг друга!`);
+
+                // Remove from Likes You
                 setLikesYou(prev => prev.filter(p => p.id !== profile.id));
+
+                // Add to Matches (optimistic)
                 const newMatch = {
                     ...profile,
                     chatId: result.chatId || [yandexAuth.getCurrentUser()?.uid, profile.id].sort().join('_')
                 };
                 setMatches(prev => [newMatch, ...prev]);
             } else {
+                // Should not happen if they liked us, but just in case
                 setLikesYou(prev => prev.filter(p => p.id !== profile.id));
             }
         } catch (e) {
@@ -94,6 +104,7 @@ export default function MatchesScreen() {
         }
     };
 
+    // Helper to format roots
     const getHeritageString = (profile: any) => {
         const ETHNICITY_MAP: Record<string, string> = {
             slavic: 'Славянские', asian: 'Азиатские', caucasian: 'Кавказские',
@@ -113,20 +124,12 @@ export default function MatchesScreen() {
         return parts.join(' • ');
     };
 
-    if (loading) {
-        return (
-            <View style={{ flex: 1, backgroundColor: theme.background, justifyContent: 'center', alignItems: 'center' }}>
-                <ActivityIndicator color={theme.text} />
-            </View>
-        );
-    }
-
     return (
         <ThemedBackground>
             <StatusBar barStyle={isLight ? "dark-content" : "light-content"} />
             <View style={{ flex: 1 }}>
-                {/* Custom Tabs placed over the background */}
-                <View style={[styles.tabContainer, { paddingTop: getPlatformPadding(insets, isMobile, 20) }]}>
+                {/* Таб-бар */}
+                <View style={[styles.tabContainer, { paddingTop: getPlatformPadding(insets, isMobile, 78) }]}>
                     <Pressable
                         style={[styles.tab, activeTab === 'matches' && { borderBottomColor: theme.text, borderBottomWidth: 2 }]}
                         onPress={() => setActiveTab('matches')}
@@ -147,114 +150,162 @@ export default function MatchesScreen() {
                     </Pressable>
                 </View>
 
-                {/* Content List */}
-                <List style={{ flex: 1, backgroundColor: 'transparent' }}>
-                    {activeTab === 'matches' && (
-                        <Section header="Ваши Мэтчи">
-                            {matches.length > 0 ? matches.map((match) => (
-                                <Cell
+                <ScrollView contentContainerStyle={styles.list}>
+                    {activeTab === 'matches' ? (
+                        matches.length > 0 ? (
+                            matches.map((match) => (
+                                <View
                                     key={match.id}
-                                    before={
+                                    style={[styles.card, { backgroundColor: theme.cardBg }]}
+                                >
+                                    <Pressable
+                                        style={{ flexDirection: 'row', alignItems: 'center', flex: 1 }}
+                                        onPress={() => router.push(`/users/${match.id}` as any)}
+                                    >
                                         <Image
                                             source={{ uri: Array.isArray(match.photos) ? match.photos[0] : (match.photo || match.photos) }}
                                             style={styles.avatar}
                                             contentFit="cover"
+                                            transition={200}
                                         />
-                                    }
-                                    after={
-                                        <Pressable
-                                            onPress={(e) => {
-                                                e.stopPropagation();
-                                                router.push({ pathname: '/chat/[id]', params: { id: match.chatId, participantId: match.id } });
-                                            }}
-                                            style={{ padding: 8 }}
-                                        >
-                                            <Ionicons name="chatbubble-outline" size={24} color={theme.text} />
-                                        </Pressable>
-                                    }
-                                    description={getHeritageString(match)}
-                                    onClick={() => router.push(`/users/${match.id}` as any)}
-                                >
-                                    {match.name || 'Пользователь'}, {match.age}
-                                </Cell>
-                            )) : (
-                                <View style={styles.empty}>
-                                    <Text style={[styles.emptyText, { color: theme.subText }]}>Пока нет совпадений</Text>
-                                </View>
-                            )}
-                        </Section>
-                    )}
-
-                    {activeTab === 'likes' && (
-                        <Section header="Вас лайкнули">
-                            {likesYou.length > 0 ? likesYou.map((profile) => (
-                                <Cell
-                                    key={profile.id}
-                                    before={
-                                        <Image
-                                            source={{ uri: Array.isArray(profile.photos) ? profile.photos[0] : (profile.photo || profile.photos) }}
-                                            style={styles.avatar}
-                                            contentFit="cover"
-                                        />
-                                    }
-                                    after={
-                                        <View style={{ flexDirection: 'row', gap: 10 }}>
-                                            <Pressable onPress={() => handleDislike(profile)} style={{ padding: 4 }}>
-                                                <Ionicons name="close-circle" size={30} color="#ff4444" />
-                                            </Pressable>
-                                            <Pressable onPress={() => handleLikeBack(profile)} style={{ padding: 4 }}>
-                                                <Ionicons name="heart-circle" size={30} color="#e1306c" />
-                                            </Pressable>
+                                        <View style={styles.info}>
+                                            <Text style={[styles.name, { color: theme.text }]} numberOfLines={1}>
+                                                {(match.name || 'Пользователь')}{match.age ? `, ${match.age}` : ''}
+                                            </Text>
+                                            <Text style={[styles.details, { color: '#4ade80' }]} numberOfLines={1}>
+                                                {getHeritageString(match)}
+                                            </Text>
                                         </View>
-                                    }
-                                    description={getHeritageString(profile)}
-                                    onClick={() => router.push(`/users/${profile.id}` as any)}
-                                >
-                                    {profile.name || 'Пользователь'}, {profile.age}
-                                </Cell>
-                            )) : (
-                                <View style={styles.empty}>
-                                    <Text style={[styles.emptyText, { color: theme.subText }]}>Вас пока никто не лайкнул</Text>
-                                </View>
-                            )}
-                        </Section>
-                    )}
+                                    </Pressable>
 
-                    {activeTab === 'sent' && (
-                        <Section header="Вы лайкнули">
-                            {yourLikes.length > 0 ? yourLikes.map((profile) => (
-                                <Cell
+                                    <Pressable
+                                        style={[styles.iconBtn, { backgroundColor: isLight ? '#f5f5f5' : 'rgba(255,255,255,0.1)' }]}
+                                        onPress={() => router.push({ pathname: '/chat/[id]', params: { id: match.chatId, participantId: match.id } })}
+                                    >
+                                        <Ionicons name="chatbubble-outline" size={20} color={theme.text} />
+                                    </Pressable>
+                                </View>
+                            ))
+                        ) : (
+                            <View style={styles.empty}>
+                                <Text style={[styles.emptyText, { color: theme.subText }]}>Пока нет совпадений</Text>
+                            </View>
+                        )
+                    ) : activeTab === 'likes' ? (
+                        likesYou.length > 0 ? (
+                            likesYou.map((profile) => (
+                                <View
                                     key={profile.id}
-                                    before={
+                                    style={[styles.card, { backgroundColor: theme.cardBg }]}
+                                >
+                                    <Pressable
+                                        style={{ flexDirection: 'row', alignItems: 'center', flex: 1 }}
+                                        onPress={() => router.push(`/users/${profile.id}` as any)}
+                                    >
                                         <Image
                                             source={{ uri: Array.isArray(profile.photos) ? profile.photos[0] : (profile.photo || profile.photos) }}
                                             style={styles.avatar}
                                             contentFit="cover"
+                                            transition={200}
                                         />
-                                    }
-                                    description={getHeritageString(profile)}
-                                    onClick={() => router.push(`/users/${profile.id}` as any)}
-                                >
-                                    {profile.name || 'Пользователь'}, {profile.age}
-                                </Cell>
-                            )) : (
-                                <View style={styles.empty}>
-                                    <Text style={[styles.emptyText, { color: theme.subText }]}>Вы пока никого не лайкнули</Text>
+                                        <View style={styles.info}>
+                                            <Text style={[styles.name, { color: theme.text }]} numberOfLines={1}>
+                                                {(profile.name || 'Пользователь')}{profile.age ? `, ${profile.age}` : ''}
+                                            </Text>
+                                            <Text style={[styles.details, { color: '#4ade80' }]} numberOfLines={1}>
+                                                {getHeritageString(profile)}
+                                            </Text>
+                                        </View>
+                                    </Pressable>
+
+                                    {/* Action Buttons for Likes */}
+                                    <View style={{ flexDirection: 'row', gap: 10 }}>
+                                        <Pressable
+                                            style={[styles.iconBtn, { backgroundColor: isLight ? '#fff0f0' : 'rgba(255,0,0,0.1)' }]}
+                                            onPress={() => handleDislike(profile)}
+                                        >
+                                            <Ionicons name="close" size={20} color="#ff4444" />
+                                        </Pressable>
+                                        <Pressable
+                                            style={[styles.iconBtn, { backgroundColor: isLight ? '#f0f8ff' : 'rgba(0,100,255,0.1)' }]}
+                                            onPress={() => handleLikeBack(profile)}
+                                        >
+                                            <Ionicons name="heart" size={20} color="#e1306c" />
+                                        </Pressable>
+                                    </View>
                                 </View>
-                            )}
-                        </Section>
+                            ))
+                        ) : (
+                            <View style={styles.empty}>
+                                <Text style={[styles.emptyText, { color: theme.subText }]}>Вас пока никто не лайкнул</Text>
+                            </View>
+                        )
+                    ) : (
+                        yourLikes.length > 0 ? (
+                            yourLikes.map((profile) => (
+                                <View
+                                    key={profile.id}
+                                    style={[styles.card, { backgroundColor: theme.cardBg }]}
+                                >
+                                    <Pressable
+                                        style={{ flexDirection: 'row', alignItems: 'center', flex: 1 }}
+                                        onPress={() => router.push(`/users/${profile.id}` as any)}
+                                    >
+                                        <Image
+                                            source={{ uri: Array.isArray(profile.photos) ? profile.photos[0] : (profile.photo || profile.photos) }}
+                                            style={styles.avatar}
+                                            contentFit="cover"
+                                            transition={200}
+                                        />
+                                        <View style={styles.info}>
+                                            <Text style={[styles.name, { color: theme.text }]} numberOfLines={1}>
+                                                {(profile.name || 'Пользователь')}{profile.age ? `, ${profile.age}` : ''}
+                                            </Text>
+                                            <Text style={[styles.details, { color: '#4ade80' }]} numberOfLines={1}>
+                                                {getHeritageString(profile)}
+                                            </Text>
+                                        </View>
+                                    </Pressable>
+                                </View>
+                            ))
+                        ) : (
+                            <View style={styles.empty}>
+                                <Text style={[styles.emptyText, { color: theme.subText }]}>Вы пока никого не лайкнули</Text>
+                            </View>
+                        )
                     )}
-                </List>
+                </ScrollView>
             </View>
         </ThemedBackground>
     );
 }
 
 const styles = StyleSheet.create({
-    tabContainer: { flexDirection: 'row', paddingHorizontal: 20, marginBottom: 10 },
+    tabContainer: { flexDirection: 'row', paddingHorizontal: 20, marginBottom: 10, marginTop: 10 },
     tab: { paddingVertical: 10, marginRight: 20 },
     tabText: { fontSize: 16, fontWeight: '500' },
-    avatar: { width: 48, height: 48, borderRadius: 24, backgroundColor: '#ccc' },
-    empty: { alignItems: 'center', padding: 20 },
+
+    list: { padding: 20 },
+    card: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        padding: 15,
+        borderRadius: 20,
+        marginBottom: 15,
+        elevation: 2,
+        shadowColor: '#000',
+        shadowOpacity: 0.1,
+        shadowRadius: 10,
+        shadowOffset: { width: 0, height: 5 }
+    },
+    avatar: { width: 60, height: 60, borderRadius: 30, backgroundColor: '#ccc', overflow: 'hidden' },
+    info: { flex: 1, marginLeft: 15 },
+    name: { fontSize: 18, fontWeight: '600' },
+    details: { fontSize: 14, marginTop: 4 },
+    iconBtn: { padding: 10, borderRadius: 20 },
+
+    empty: { alignItems: 'center', marginTop: 50 },
     emptyText: { fontSize: 16 }
 });
+
+
