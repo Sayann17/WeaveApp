@@ -4,17 +4,18 @@ const {
     getDiscovery,
     getNotificationStats
 } = require('./src/users');
+const { telegramLogin } = require('./src/telegramLogin');
 const { error } = require('./utils/response');
 
 module.exports.handler = async function (event, context) {
-    const { httpMethod, path, headers, queryStringParameters } = event;
+    const { httpMethod, path, headers, body, queryStringParameters } = event;
 
     console.log('[auth-service] Request:', { path, method: httpMethod });
 
     const responseHeaders = {
         'Content-Type': 'application/json',
         'Access-Control-Allow-Origin': '*',
-        'Access-Control-Allow-Methods': 'GET, OPTIONS',
+        'Access-Control-Allow-Methods': 'POST, GET, OPTIONS',
         'Access-Control-Allow-Headers': 'Content-Type, Authorization'
     };
 
@@ -36,6 +37,9 @@ module.exports.handler = async function (event, context) {
         }
         else if ((path === '/notifications/stats' || path === '/notifications/stats/') && httpMethod === 'GET') {
             return await getNotificationStats(driver, headers, responseHeaders);
+        }
+        else if (path === '/telegram-login' && httpMethod === 'POST') {
+            return await telegramLogin(driver, JSON.parse(body), responseHeaders);
         }
 
         return error(404, 'Not found', responseHeaders);
