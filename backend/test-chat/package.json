@@ -1,0 +1,11 @@
+{
+    "name": "test-chat",
+    "version": "1.0.0",
+    "description": "Yandex Cloud Function for Chat Only",
+    "main": "index.js",
+    "dependencies": {
+        "ydb-sdk": "^4.6.0",
+        "jsonwebtoken": "^9.0.0",
+        "uuid": "^9.0.0"
+    }
+}
