@@ -62,9 +62,10 @@ const ETHNICITY_MAP: Record<string, string> = {
 interface ProfileViewProps {
     userData: any;
     isOwnProfile?: boolean;
+    isMatch?: boolean; // Is this user a match (mutual like)?
 }
 
-export const ProfileView = ({ userData, isOwnProfile = false }: ProfileViewProps) => {
+export const ProfileView = ({ userData, isOwnProfile = false, isMatch = false }: ProfileViewProps) => {
     const { themeType } = useTheme();
     const { showBackButton, hideBackButton, setBackButtonHandler, isMobile, isDesktop, isWeb } = useTelegram();
     const [currentCarouselIndex, setCurrentCarouselIndex] = useState(0);
@@ -300,8 +301,8 @@ export const ProfileView = ({ userData, isOwnProfile = false }: ProfileViewProps
                         )}
                     </View>
 
-                    {/* СОЦСЕТИ */}
-                    {(userData?.socialTelegram || userData?.socialVk || userData?.socialInstagram) && (
+                    {/* СОЦСЕТИ - только для матчей или своего профиля */}
+                    {(isOwnProfile || isMatch) && (userData?.socialTelegram || userData?.socialVk || userData?.socialInstagram) && (
                         <View style={styles.socialStack}>
                             {userData.socialTelegram ? (
                                 <View style={styles.socialItem}>

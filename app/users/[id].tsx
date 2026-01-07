@@ -12,6 +12,7 @@ import { ProfileView } from '../components/ProfileView';
 import { ThemedBackground } from '../components/ThemedBackground';
 import { useTelegram } from '../context/TelegramProvider';
 import { useTheme } from '../context/ThemeContext';
+import { yandexMatch } from '../services/yandex/MatchService';
 import { YandexUserService } from '../services/yandex/UserService';
 import { getPlatformPadding } from '../utils/platformPadding';
 
@@ -27,6 +28,7 @@ export default function UserProfileScreen() {
     const [userData, setUserData] = useState<any>(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
+    const [isMatch, setIsMatch] = useState(false);
 
     useEffect(() => {
         const loadUser = async () => {
@@ -40,6 +42,15 @@ export default function UserProfileScreen() {
                 const user = await userService.getUser(id);
                 if (user) {
                     setUserData(user);
+
+                    // Check if this user is a match
+                    try {
+                        const matches = await yandexMatch.getMatches();
+                        const isUserMatch = matches.some((match: any) => match.id === id);
+                        setIsMatch(isUserMatch);
+                    } catch (e) {
+                        console.error('Error checking match status:', e);
+                    }
                 } else {
                     setError('User not found');
                 }
@@ -90,7 +101,7 @@ export default function UserProfileScreen() {
     return (
         <ThemedBackground>
             <View style={{ flex: 1, paddingTop: getPlatformPadding(insets, isMobile) }}>
-                <ProfileView userData={userData} isOwnProfile={false} />
+                <ProfileView userData={userData} isOwnProfile={false} isMatch={isMatch} />
             </View>
         </ThemedBackground>
     );

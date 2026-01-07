@@ -117,18 +117,16 @@ export default function ChatsScreen() {
     if (isNaN(date.getTime())) return '';
 
     const now = new Date();
-    const diffTime = Math.abs(now.getTime() - date.getTime());
-    const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const messageDate = new Date(date.getFullYear(), date.getMonth(), date.getDate());
 
-    if (diffDays === 0) {
+    // If message is from today, show time (HH:MM)
+    if (messageDate.getTime() === today.getTime()) {
       return date.toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' });
-    } else if (diffDays === 1) {
-      return 'Вчера';
-    } else if (diffDays < 7) {
-      return `${diffDays} дн. назад`;
-    } else {
-      return date.toLocaleDateString('ru-RU');
     }
+
+    // Otherwise show date (DD.MM)
+    return date.toLocaleDateString('ru-RU', { day: '2-digit', month: '2-digit' });
   };
 
   const getUnreadCount = (chat: any): number => {
@@ -146,14 +144,20 @@ export default function ChatsScreen() {
       indian: 'Индийские', native_american: 'Коренные', pacific: 'Тихоокеанские',
       middle_eastern: 'Ближневосточные', turkic: 'Тюркские'
     };
+
     const parts = [];
+
+    // Show macroGroups (roots) if available
     if (chat.participantMacroGroups && Array.isArray(chat.participantMacroGroups) && chat.participantMacroGroups.length > 0) {
       const roots = chat.participantMacroGroups.map((g: string) => ETHNICITY_MAP[g] || g).join(', ');
       parts.push(`${roots} корни`);
     }
+
+    // Show ethnicity (nationality) if available
     if (chat.participantEthnicity) {
       parts.push(chat.participantEthnicity.charAt(0).toUpperCase() + chat.participantEthnicity.slice(1).toLowerCase());
     }
+
     return parts.join(' • ');
   };
 

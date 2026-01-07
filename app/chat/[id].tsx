@@ -239,9 +239,30 @@ export default function ChatScreen() {
     return date.toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' });
   };
 
+  const formatDateSeparator = (date: Date) => {
+    const now = new Date();
+    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const messageDate = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+
+    if (messageDate.getTime() === today.getTime()) {
+      return 'Сегодня';
+    }
+
+    return date.toLocaleDateString('ru-RU', { day: 'numeric', month: 'long' });
+  };
+
+  const shouldShowDateSeparator = (currentMsg: Message, prevMsg: Message | null) => {
+    if (!prevMsg) return true;
+
+    const currentDate = new Date(currentMsg.timestamp.getFullYear(), currentMsg.timestamp.getMonth(), currentMsg.timestamp.getDate());
+    const prevDate = new Date(prevMsg.timestamp.getFullYear(), prevMsg.timestamp.getMonth(), prevMsg.timestamp.getDate());
+
+    return currentDate.getTime() !== prevDate.getTime();
+  };
+
   const isMyMessage = (message: Message) => message.senderId === yandexAuth.getCurrentUser()?.uid;
 
-  const renderItem = ({ item }: { item: Message }) => {
+  const renderItem = ({ item, index }: { item: Message; index: number }) => {
     if (item.type === 'system') {
       return (
         <View key={item.id} style={styles.systemMessageContainer}>
@@ -253,50 +274,63 @@ export default function ChatScreen() {
     const isMine = isMyMessage(item);
     const repliedMsg = item.replyToId ? messages.find(m => m.id === item.replyToId) : null;
 
-    return (
-      <Pressable
-        onLongPress={() => onMessageLongPress(item)}
-        delayLongPress={200}
-        key={item.id}
-        style={[
-          styles.messageContainer,
-          isMine ? styles.myMessage : styles.theirMessage
-        ]}
-      >
-        <View style={[
-          styles.messageBubble,
-          isMine ? { backgroundColor: '#2a2a2a' } : { backgroundColor: theme.cardBg },
-          isMine ? styles.myBubble : styles.theirBubble,
-          !isMine && { borderWidth: 1, borderColor: theme.border }
-        ]}>
-          {repliedMsg && (
-            <View style={[styles.replyPreview, { borderLeftColor: theme.accent }]}>
-              <Text style={[styles.replySender, { color: theme.accent }]}>
-                {isMyMessage(repliedMsg) ? 'Вы' : (participant?.name || 'Собеседник')}
-              </Text>
-              <Text style={[styles.replyText, { color: theme.subText }]} numberOfLines={1}>
-                {repliedMsg.text}
-              </Text>
-            </View>
-          )}
+    // Check if we need to show date separator (inverted list, so check next message)
+    const nextMsg = index < invertedMessages.length - 1 ? invertedMessages[index + 1] : null;
+    const showDateSep = shouldShowDateSeparator(item, nextMsg);
 
-          <Text style={[
-            styles.messageText,
-            isMine ? styles.myMessageText : { color: theme.text }
-          ]}>
-            {item.text}
-          </Text>
-          <View style={styles.metaContainer}>
-            {item.isEdited && <Text style={[styles.editedLabel, { color: isMine ? 'rgba(255,255,255,0.6)' : theme.subText }]}>изм.</Text>}
-            <Text style={[
-              styles.messageTime,
-              isMine ? styles.myMessageTime : { color: theme.subText }
-            ]}>
-              {formatMessageTime(item.timestamp)}
+    return (
+      <>
+        {showDateSep && (
+          <View style={styles.dateSeparatorContainer}>
+            <Text style={[styles.dateSeparatorText, { color: theme.subText }]}>
+              {formatDateSeparator(item.timestamp)}
             </Text>
           </View>
-        </View>
-      </Pressable>
+        )}
+        <Pressable
+          onLongPress={() => onMessageLongPress(item)}
+          delayLongPress={200}
+          key={item.id}
+          style={[
+            styles.messageContainer,
+            isMine ? styles.myMessage : styles.theirMessage
+          ]}
+        >
+          <View style={[
+            styles.messageBubble,
+            isMine ? { backgroundColor: '#2a2a2a' } : { backgroundColor: theme.cardBg },
+            isMine ? styles.myBubble : styles.theirBubble,
+            !isMine && { borderWidth: 1, borderColor: theme.border }
+          ]}>
+            {repliedMsg && (
+              <View style={[styles.replyPreview, { borderLeftColor: theme.accent }]}>
+                <Text style={[styles.replySender, { color: theme.accent }]}>
+                  {isMyMessage(repliedMsg) ? 'Вы' : (participant?.name || 'Собеседник')}
+                </Text>
+                <Text style={[styles.replyText, { color: theme.subText }]} numberOfLines={1}>
+                  {repliedMsg.text}
+                </Text>
+              </View>
+            )}
+
+            <Text style={[
+              styles.messageText,
+              isMine ? styles.myMessageText : { color: theme.text }
+            ]}>
+              {item.text}
+            </Text>
+            <View style={styles.metaContainer}>
+              {item.isEdited && <Text style={[styles.editedLabel, { color: isMine ? 'rgba(255,255,255,0.6)' : theme.subText }]}>изм.</Text>}
+              <Text style={[
+                styles.messageTime,
+                isMine ? styles.myMessageTime : { color: theme.subText }
+              ]}>
+                {formatMessageTime(item.timestamp)}
+              </Text>
+            </View>
+          </View>
+        </Pressable>
+      </>
     );
   };
 
@@ -504,6 +538,17 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     paddingVertical: 4,
     borderRadius: 10,
+  },
+
+  // DATE SEPARATOR
+  dateSeparatorContainer: { alignItems: 'center', marginVertical: 20 },
+  dateSeparatorText: {
+    fontSize: 13,
+    fontWeight: '600',
+    backgroundColor: 'rgba(0,0,0,0.05)',
+    paddingHorizontal: 16,
+    paddingVertical: 6,
+    borderRadius: 12,
   },
 
   // ACTION BANNER
