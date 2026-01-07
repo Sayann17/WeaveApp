@@ -122,8 +122,11 @@ export const ProfileView = ({ userData, isOwnProfile = false }: ProfileViewProps
     };
 
     const openFullScreen = (index: number) => {
-        setActivePhotoIndex(index);
-        setIsFullScreenPhoto(true);
+        // Only open fullscreen on mobile platforms
+        if (Platform.OS !== 'web') {
+            setActivePhotoIndex(index);
+            setIsFullScreenPhoto(true);
+        }
     };
 
     const closeFullScreen = () => {
