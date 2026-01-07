@@ -179,13 +179,24 @@ async function handleDisconnect(driver, connectionId) {
  * @param {object} data - Data to send to the connection
  */
 async function sendToConnection(driver, connectionId, data, event) {
-    // Try to extract gateway ID from Host header, fallback to env var, then hardcoded
+    // Try to extract gateway ID from Headers (Preferred: X-Serverless-Gateway-Id)
     let apiGatewayId = process.env.API_GATEWAY_ID;
 
-    if (!apiGatewayId && event && event.headers && event.headers.Host) {
-        const host = event.headers.Host;
-        apiGatewayId = host.split('.')[0];
-        console.log('[sendToConnection] Detected Gateway ID from Host:', apiGatewayId);
+    if (!apiGatewayId && event && event.headers) {
+        // Look for the header case-insensitively
+        const gatewayHeader = Object.keys(event.headers).find(key =>
+            key.toLowerCase() === 'x-serverless-gateway-id'
+        );
+
+        if (gatewayHeader) {
+            apiGatewayId = event.headers[gatewayHeader];
+            console.log('[sendToConnection] Detected Gateway ID from Header:', apiGatewayId);
+        } else if (event.headers.Host) {
+            // Fallback to Host parsing (less reliable)
+            const host = event.headers.Host;
+            apiGatewayId = host.split('.')[0];
+            console.log('[sendToConnection] Detected Gateway ID from Host:', apiGatewayId);
+        }
     }
 
     if (!apiGatewayId) apiGatewayId = 'd5dg37j92h7tg2f7sf87';
@@ -258,7 +269,16 @@ async function handleMessage(driver, event, connectionId) {
         return { statusCode: 400 };
     }
 
-    const { action, chatId, text, recipientId, replyToId, messageId } = body;
+    let { action, chatId, text, recipientId, replyToId, messageId } = body;
+
+    // Auto-recover recipientId if missing
+    if (!recipientId && chatId && chatId.includes('_')) {
+        // Assume chatId format: userId1_userId2
+        // We need to know who sent it to find the other one.
+        // BUT we don't have sender userId resolved yet! 
+        // We will resolve it below and then fix recipientId.
+        console.log('[WS] RecipientId missing, will attempt to recover from chatId:', chatId);
+    }
 
     if (action === 'sendMessage') {
         if (!text) {
@@ -274,7 +294,22 @@ async function handleMessage(driver, event, connectionId) {
             await debugConnection(driver, connectionId);
             return { statusCode: 403 };
         }
-        console.log(`[WS] Sender verified: ${userId}. Sending to ${recipientId}`);
+        console.log(`[WS] Sender verified: ${userId}. Initial Recipient: ${recipientId}`);
+
+        // RECOVERY LOGIC: If recipientId is missing, deduce it from chatId
+        if (!recipientId && chatId && chatId.includes('_')) {
+            const parts = chatId.split('_');
+            // If sender is parts[0], recipient is parts[1], and vice versa
+            if (parts[0] === userId) recipientId = parts[1];
+            else if (parts[1] === userId) recipientId = parts[0];
+
+            console.log(`[WS] Recovered RecipientId from chatId: ${recipientId}`);
+        }
+
+        if (!recipientId) {
+            console.error('[WS] Failed to determine recipientId. Cannot send.');
+            // We can still save to DB if chatId is valid, but cannot notify recipient
+        }
 
         // FORCE SAFE CHAT ID: Ensure we always use the canonical ID format
         const safeChatId = [userId, recipientId].sort().join('_');
