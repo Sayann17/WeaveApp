@@ -13,11 +13,9 @@ import {
   StatusBar,
   StyleSheet,
   Text,
-  TextInput,
   View
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { ThemedBackground } from '../components/ThemedBackground';
 import { useNotifications } from '../context/NotificationContext';
 import { useTelegram } from '../context/TelegramProvider';
 import { useTheme } from '../context/ThemeContext';
@@ -25,7 +23,7 @@ import { yandexAuth } from '../services/yandex/AuthService';
 import { yandexChat, type Message } from '../services/yandex/ChatService';
 import { YandexUserService } from '../services/yandex/UserService';
 import { getPlatformPadding } from '../utils/platformPadding';
-import { AppRoot } from '@telegram-apps/telegram-ui';
+import { AppRoot, Input } from '@telegram-apps/telegram-ui';
 
 
 import { MessageActionModal } from '../components/MessageActionModal';
@@ -351,7 +349,7 @@ export default function ChatScreen() {
       appearance={isLight ? 'light' : 'dark'}
       platform={isMobile ? 'ios' : 'base'}
     >
-      <ThemedBackground>
+      <View style={{ flex: 1, backgroundColor: theme.background }}>
         <StatusBar barStyle={isLight ? "dark-content" : "light-content"} />
 
         <KeyboardAvoidingView
@@ -422,44 +420,27 @@ export default function ChatScreen() {
                 </View>
               )}
 
-              {/* ПОЛЕ ВВОДА */}
-              <View style={[styles.inputWrapper]}>
-                <View style={[styles.inputContainer, { backgroundColor: theme.cardBg }]}>
-                  <TextInput
-                    style={[styles.textInput, { color: theme.text }]}
-                    value={newMessage}
-                    onChangeText={setNewMessage}
-                    placeholder="Сообщение..."
-                    placeholderTextColor={theme.subText}
-                    multiline
-                    maxLength={500}
-                    editable={!isSending}
-                    underlineColorAndroid="transparent"
-                    // @ts-ignore
-                    dataSet={{ outline: 'none' }}
-                    nativeID="chat-input"
-                  />
-                  <Pressable
-                    style={[
-                      styles.sendButton,
-                      { backgroundColor: editingMessage ? theme.accent : '#2a2a2a' },
-                      (!newMessage.trim() || isSending) && styles.sendButtonDisabled
-                    ]}
-                    onPress={handleSendMessage}
-                    disabled={!newMessage.trim() || isSending}
-                  >
-                    <Ionicons
-                      name={editingMessage ? "checkmark" : "arrow-up"}
-                      size={20}
-                      color="#ffffff"
-                    />
-                  </Pressable>
-                </View>
+              {/* ПОЛЕ ВВОДА из Telegram UI */}
+              <View style={{ padding: 10, borderTopWidth: 1, borderTopColor: theme.border, backgroundColor: theme.cardBg }}>
+                <Input
+                  value={newMessage}
+                  onChange={(e: any) => setNewMessage(e.target.value)}
+                  placeholder="Сообщение..."
+                  after={
+                    <Pressable
+                      onPress={handleSendMessage}
+                      style={{ padding: 5, opacity: newMessage.trim() ? 1 : 0.5 }}
+                      disabled={!newMessage.trim() || isSending}
+                    >
+                      <Ionicons name="send" size={24} color={theme.accent} />
+                    </Pressable>
+                  }
+                />
               </View>
             </View>
           </View>
         </KeyboardAvoidingView>
-      </ThemedBackground>
+      </View>
     </AppRoot>
   );
 }
@@ -570,34 +551,4 @@ const styles = StyleSheet.create({
   actionTitle: { fontWeight: '600', fontSize: 12, marginBottom: 2 },
   actionText: { fontSize: 12 },
   closeAction: { padding: 5 },
-
-  // INPUT
-  inputWrapper: {
-    padding: 10,
-  },
-  inputContainer: {
-    flexDirection: 'row',
-    alignItems: 'flex-end',
-    borderRadius: 25,
-    padding: 5,
-    borderWidth: 0,
-  },
-  textInput: {
-    flex: 1,
-    paddingHorizontal: 15,
-    paddingVertical: 10,
-    fontSize: 16,
-    maxHeight: 100,
-  },
-  sendButton: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginBottom: 2,
-  },
-  sendButtonDisabled: {
-    opacity: 0.5,
-  },
 });
