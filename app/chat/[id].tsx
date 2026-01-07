@@ -24,7 +24,6 @@ import { yandexAuth } from '../services/yandex/AuthService';
 import { yandexChat, type Message } from '../services/yandex/ChatService';
 import { YandexUserService } from '../services/yandex/UserService';
 import { getPlatformPadding } from '../utils/platformPadding';
-import { Avatar, Text as TgText } from '@telegram-apps/telegram-ui';
 
 
 import { MessageActionModal } from '../components/MessageActionModal';
@@ -370,15 +369,19 @@ export default function ChatScreen() {
               style={styles.participantInfo}
               onPress={() => participantId && router.push(`/users/${participantId}` as any)}
             >
-              <Avatar
-                {...({ src: participant?.photos?.[0] } as any)}
-                acronym={participant?.name?.[0] || '?'}
-                size={40}
-                style={{ marginRight: 10 }}
-              />
-              <TgText weight="2" style={{ color: theme.text }}>
+              {participant?.photos?.[0] ? (
+                <Image
+                  source={{ uri: participant.photos[0] }}
+                  style={styles.participantAvatar}
+                />
+              ) : (
+                <View style={[styles.fallbackAvatar, { backgroundColor: theme.cardBg }]}>
+                  <Ionicons name="person" size={20} color={theme.subText} />
+                </View>
+              )}
+              <Text style={[styles.participantName, { color: theme.text }]} numberOfLines={1}>
                 {participant?.name || 'Собеседник'}
-              </TgText>
+              </Text>
             </Pressable>
           </View>
 
