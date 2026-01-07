@@ -352,6 +352,11 @@ export default function ChatScreen() {
     <AppRoot
       appearance={isLight ? 'light' : 'dark'}
       platform={isMobile ? 'ios' : 'base'}
+      style={{
+        flex: 1,
+        width: '100%',
+        height: '100%',
+      }}
     >
       <ThemedBackground>
         <StatusBar barStyle={isLight ? "dark-content" : "light-content"} />
