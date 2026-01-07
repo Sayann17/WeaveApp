@@ -122,11 +122,10 @@ export const ProfileView = ({ userData, isOwnProfile = false }: ProfileViewProps
     };
 
     const openFullScreen = (index: number) => {
-        // Only open fullscreen on mobile platforms (iOS/Android)
-        if (Platform.OS === 'ios' || Platform.OS === 'android') {
-            setActivePhotoIndex(index);
-            setIsFullScreenPhoto(true);
-        }
+        // Fullscreen modal only shows on iOS/Android (see Modal visible condition)
+        // But we still need to update the index for all platforms
+        setActivePhotoIndex(index);
+        setIsFullScreenPhoto(true);
     };
 
     const closeFullScreen = () => {
@@ -366,7 +365,7 @@ export const ProfileView = ({ userData, isOwnProfile = false }: ProfileViewProps
 
             {/* ЛАЙТБОКС */}
             <Modal
-                visible={isFullScreenPhoto}
+                visible={isFullScreenPhoto && (Platform.OS === 'ios' || Platform.OS === 'android')}
                 transparent={true}
                 animationType="fade"
                 onRequestClose={closeFullScreen}

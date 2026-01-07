@@ -82,21 +82,18 @@ export const ThemeProvider = ({ children }: { children: React.ReactNode }) => {
       const isLightTheme = themeType === 'light';
       const buttonColor = isLightTheme ? '#000000' : '#FFFFFF';
 
-      // For header color, use Telegram's theme param keys instead of custom hex
-      // This prevents Telegram from overriding it back
+      // Set header color to match background (triggers status bar icon color change)
       if (webApp.setHeaderColor) {
-        // Use 'bg_color' for light theme (makes status bar icons dark)
-        // Use 'secondary_bg_color' for dark themes (makes status bar icons light)
-        webApp.setHeaderColor(isLightTheme ? 'bg_color' : 'secondary_bg_color');
+        webApp.setHeaderColor(bg);
       }
       // Set background color for overscroll areas
       if (webApp.setBackgroundColor) {
-        webApp.setBackgroundColor(isLightTheme ? 'bg_color' : 'secondary_bg_color');
+        webApp.setBackgroundColor(bg);
       }
 
       // Set bottom bar color (for Android navigation bar)
       if (webApp.setBottomBarColor) {
-        webApp.setBottomBarColor(isLightTheme ? 'bg_color' : 'secondary_bg_color');
+        webApp.setBottomBarColor(bg);
       }
 
       // Set BackButton color
