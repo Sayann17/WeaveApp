@@ -122,8 +122,8 @@ export const ProfileView = ({ userData, isOwnProfile = false }: ProfileViewProps
     };
 
     const openFullScreen = (index: number) => {
-        // Only open fullscreen on mobile platforms
-        if (Platform.OS !== 'web') {
+        // Only open fullscreen on mobile platforms (iOS/Android)
+        if (Platform.OS === 'ios' || Platform.OS === 'android') {
             setActivePhotoIndex(index);
             setIsFullScreenPhoto(true);
         }
