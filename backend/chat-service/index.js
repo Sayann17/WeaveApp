@@ -113,6 +113,16 @@ async function handleConnect(driver, event, connectionId) {
         const userId = decoded.uid;
 
         await driver.tableClient.withSession(async (session) => {
+            // First, delete any existing connections for this user
+            const deleteQuery = `
+                DECLARE $userId AS Utf8;
+                DELETE FROM socket_connections WHERE user_id = $userId;
+            `;
+            await session.executeQuery(deleteQuery, {
+                '$userId': TypedValues.utf8(userId)
+            });
+
+            // Then insert the new connection
             const query = `
                 DECLARE $userId AS Utf8;
                 DECLARE $connectionId AS Utf8;
@@ -258,15 +268,25 @@ async function handleMessage(driver, event, connectionId) {
         console.log(`[WS] Recipient ${recipientId} connectionId:`, recipientConnectionId || 'OFFLINE');
 
         if (recipientConnectionId) {
-            await sendToConnection(recipientConnectionId, messageEvent);
+            try {
+                await sendToConnection(recipientConnectionId, messageEvent);
+            } catch (err) {
+                console.error('[WS] Failed to send to recipient:', err);
+                // Continue to send Telegram notification as fallback
+                await sendMessageNotification(driver, userId, recipientId, text);
+            }
         } else {
             // User is OFFLINE: Send Telegram Notification
             console.log('[WS] Recipient offline, sending Telegram notification');
             await sendMessageNotification(driver, userId, recipientId, text);
         }
 
-        // Notify sender (echo)
-        await sendToConnection(connectionId, messageEvent);
+        // Notify sender (echo) - ALWAYS send this
+        try {
+            await sendToConnection(connectionId, messageEvent);
+        } catch (err) {
+            console.error('[WS] Failed to send echo to sender:', err);
+        }
 
         return { statusCode: 200 };
     } else if (action === 'editMessage') {
