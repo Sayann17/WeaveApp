@@ -63,14 +63,14 @@ export default function TabLayout() {
           borderTopColor: isLight ? theme.border : '#1a1a1a',
           elevation: 0,
           borderTopWidth: 1,
-          height: 70,
-          paddingBottom: 10,
-          paddingTop: 8,
+          height: 60,
+          paddingBottom: 5,
+          paddingTop: 5,
         },
         tabBarActiveTintColor: isLight ? '#2a2a2a' : '#81B29A',
         tabBarInactiveTintColor: isLight ? '#999' : '#666',
-        tabBarIconStyle: { marginTop: 2 },
-        tabBarLabelStyle: { fontSize: 11, marginBottom: 2 },
+        tabBarIconStyle: { marginBottom: -2 },
+        tabBarLabelStyle: { fontSize: 11, marginBottom: 5 },
       }}>
       <Tabs.Screen
         name="index"
