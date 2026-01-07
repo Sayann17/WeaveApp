@@ -740,9 +740,9 @@ async function handleLike(driver, requestHeaders, body, responseHeaders) {
 
     // Notify
     if (isMatch) {
-        await sendMatchNotifications(driver, userId, targetUserId); // Using helper
+        await sendMatchNotifications(driver, userId, targetUserId); // Correct: Pass both users
     } else {
-        await sendLikeNotification(driver, userId, targetUserId); // Using helper
+        await sendLikeNotification(driver, targetUserId); // Correct: Pass targetUserId (the one being liked)
     }
 
     return { statusCode: 200, headers: responseHeaders, body: JSON.stringify({ success: true, isMatch }) };
@@ -771,7 +771,7 @@ function checkAuth(headers) {
 
         const token = authHeader.replace('Bearer ', '');
         const decoded = jwt.verify(token, JWT_SECRET);
-        return decoded.uid;
+        return decoded.uid || decoded.id; // Support both format
     } catch (e) {
         console.error('[Auth] JWT verification failed:', e.message);
         return null;
