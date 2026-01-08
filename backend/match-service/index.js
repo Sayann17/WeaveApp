@@ -560,6 +560,37 @@ async function handleLike(driver, requestHeaders, body, responseHeaders) {
         if (matchResults[0] && matchResults[0].rows && matchResults[0].rows.length > 0) {
             const countVal = matchResults[0].rows[0].items[0].uint64Value || matchResults[0].rows[0].items[0].int64Value;
             isMatch = Number(countVal) > 0;
+
+            // Create chat entry when match occurs
+            if (isMatch) {
+                const chatId = [userId, targetUserId].sort().join('_');
+                const [user1, user2] = [userId, targetUserId].sort();
+                const timestamp = new Date();
+
+                const matchQuery = `
+                    DECLARE $chatId AS Utf8;
+                    DECLARE $user1 AS Utf8;
+                    DECLARE $user2 AS Utf8;
+                    DECLARE $createdAt AS Timestamp;
+                    
+                    -- Create chat entry
+                    UPSERT INTO chats (id, user1_id, user2_id, created_at, is_match_chat)
+                    VALUES ($chatId, $user1, $user2, $createdAt, true);
+                    
+                    -- Create match entry
+                    UPSERT INTO matches (user1_id, user2_id, created_at)
+                    VALUES ($user1, $user2, $createdAt);
+                `;
+
+                await session.executeQuery(matchQuery, {
+                    '$chatId': TypedValues.utf8(chatId),
+                    '$user1': TypedValues.utf8(user1),
+                    '$user2': TypedValues.utf8(user2),
+                    '$createdAt': TypedValues.timestamp(timestamp)
+                });
+
+                console.log(`[Match] Created chat ${chatId} and match for users ${userId} and ${targetUserId}`);
+            }
         }
     });
 

@@ -45,6 +45,10 @@ module.exports.handler = async function (event, context) {
         } else if (path === '/history' && httpMethod === 'GET') {
             const chatId = queryStringParameters?.chatId;
             return await getHistory(driver, headers, chatId, responseHeaders);
+        } else if (path === '/messages/new' && httpMethod === 'GET') {
+            const chatId = queryStringParameters?.chatId;
+            const after = queryStringParameters?.after;
+            return await getNewMessages(driver, headers, chatId, after, responseHeaders);
         } else if ((path === '/mark-read' || path === '/mark-read/') && httpMethod === 'POST') {
             return await markAsRead(driver, headers, JSON.parse(body), responseHeaders);
         } else if ((path === '/notifications/messages' || path === '/notifications/messages/') && httpMethod === 'GET') {
@@ -82,16 +86,7 @@ async function handleConnect(driver, event, connectionId) {
         const userId = decoded.uid;
 
         await driver.tableClient.withSession(async (session) => {
-            // Delete existing connections for this user
-            const deleteQuery = `
-                DECLARE $userId AS Utf8;
-                DELETE FROM socket_connections WHERE user_id = $userId;
-            `;
-            await session.executeQuery(deleteQuery, {
-                '$userId': TypedValues.utf8(userId)
-            });
-
-            // Insert new connection
+            // Insert new connection (allow multiple connections per user)
             const query = `
                 DECLARE $userId AS Utf8;
                 DECLARE $connectionId AS Utf8;
@@ -105,6 +100,7 @@ async function handleConnect(driver, event, connectionId) {
                 '$createdAt': TypedValues.timestamp(new Date())
             });
         });
+        console.log('[WS] Connected user:', userId, 'connection:', connectionId);
         return { statusCode: 200 };
     } catch (e) {
         console.error('[WS] Connect error:', e);
@@ -128,6 +124,7 @@ async function handleMessage(driver, event, connectionId) {
     }
 
     const { action, chatId, text, recipientId, replyToId, messageId } = body;
+    console.log('[WS] Message action:', action);
 
     if (action === 'sendMessage') {
         if (!text) return { statusCode: 400 };
@@ -145,6 +142,8 @@ async function handleMessage(driver, event, connectionId) {
         // Save to database
         try {
             await driver.tableClient.withSession(async (session) => {
+                const [user1, user2] = [userId, recipientId].sort();
+
                 const query = `
                     DECLARE $id AS Utf8;
                     DECLARE $chatId AS Utf8;
@@ -156,12 +155,14 @@ async function handleMessage(driver, event, connectionId) {
                     DECLARE $replyToId AS Utf8;
                     DECLARE $isEdited AS Bool;
                     DECLARE $editedAt AS Timestamp;
+                    DECLARE $user1 AS Utf8;
+                    DECLARE $user2 AS Utf8;
 
                     INSERT INTO messages (id, chat_id, sender_id, text, timestamp, is_read, type, reply_to_id, is_edited, edited_at)
                     VALUES ($id, $chatId, $senderId, $text, $timestamp, $isRead, $type, $replyToId, $isEdited, $editedAt);
 
-                    UPDATE chats SET last_message = $text, last_message_time = $timestamp
-                    WHERE id = $chatId;
+                    UPSERT INTO chats (id, user1_id, user2_id, last_message, last_message_time, is_match_chat)
+                    VALUES ($chatId, $user1, $user2, $text, $timestamp, true);
                 `;
                 await session.executeQuery(query, {
                     '$id': TypedValues.utf8(newMessageId),
@@ -173,7 +174,9 @@ async function handleMessage(driver, event, connectionId) {
                     '$type': TypedValues.utf8('text'),
                     '$replyToId': TypedValues.utf8(replyToId || ''),
                     '$isEdited': TypedValues.bool(false),
-                    '$editedAt': TypedValues.timestamp(null)
+                    '$editedAt': TypedValues.timestamp(null),
+                    '$user1': TypedValues.utf8(user1),
+                    '$user2': TypedValues.utf8(user2)
                 });
             });
             console.log('[WS] Message saved:', newMessageId);
@@ -225,14 +228,8 @@ async function handleMessage(driver, event, connectionId) {
 }
 
 async function sendToConnection(driver, connectionId, data, event) {
-    let apiGatewayId = process.env.API_GATEWAY_ID;
-
-    if (!apiGatewayId && event && event.headers && event.headers.Host) {
-        const host = event.headers.Host;
-        apiGatewayId = host.split('.')[0];
-    }
-
-    if (!apiGatewayId) apiGatewayId = 'd5dg37j92h7tg2f7sf87';
+    // Use only the Gateway ID, not the full domain
+    let apiGatewayId = process.env.API_GATEWAY_ID || 'd5dg37j92h7tg2f7sf87';
 
     const url = `https://apigateway-connections.api.cloud.yandex.net/apigateways/${apiGatewayId}/connections/${connectionId}`;
 
@@ -253,32 +250,19 @@ async function sendToConnection(driver, connectionId, data, event) {
 
         if (!response.ok) {
             const errorText = await response.text();
-            console.error('[sendToConnection] Failed:', response.status, errorText);
-
-            if (response.status === 404 || response.status === 410) {
-                console.log(`[sendToConnection] Removing stale connection ${connectionId}`);
-                try {
-                    await driver.tableClient.withSession(async (session) => {
-                        const query = `
-                            DECLARE $connectionId AS Utf8;
-                            DELETE FROM socket_connections WHERE connection_id = $connectionId;
-                        `;
-                        await session.executeQuery(query, {
-                            '$connectionId': TypedValues.utf8(connectionId)
-                        });
-                    });
-                } catch (dbError) {
-                    console.error('[sendToConnection] Failed to remove stale connection:', dbError);
-                }
-            }
-
-            throw new Error(`Failed to send: ${response.status} ${errorText}`);
+            console.log(`[sendToConnection] Failed to send to ${connectionId}:`);
+            console.log(`  Status: ${response.status} ${response.statusText}`);
+            console.log(`  Error: ${errorText}`);
+            console.log(`  URL: ${url}`);
+            // Don't throw - just log and continue
+            // Connection will be cleaned up on next DISCONNECT event
+            return;
         }
 
         console.log('[sendToConnection] Success:', connectionId);
     } catch (error) {
         console.error('[sendToConnection] Error:', error.message);
-        throw error;
+        // Don't throw - just log and continue
     }
 }
 
@@ -392,6 +376,46 @@ async function getHistory(driver, requestHeaders, chatId, responseHeaders) {
         `;
 
         const { resultSets } = await session.executeQuery(query, { '$chatId': TypedValues.utf8(chatId) });
+        const rows = resultSets[0] ? TypedData.createNativeObjects(resultSets[0]) : [];
+
+        messages = rows.map(row => ({
+            id: row.id,
+            senderId: row.sender_id,
+            text: row.text,
+            timestamp: new Date(row.timestamp).toISOString(),
+            isRead: row.is_read,
+            type: row.type || 'text',
+            replyToId: row.reply_to_id || null,
+            isEdited: row.is_edited || false,
+            editedAt: row.edited_at ? new Date(row.edited_at).toISOString() : null
+        }));
+    });
+
+    return { statusCode: 200, headers: responseHeaders, body: JSON.stringify({ messages }) };
+}
+
+async function getNewMessages(driver, requestHeaders, chatId, after, responseHeaders) {
+    const userId = checkAuth(requestHeaders);
+    if (!userId) return { statusCode: 401, headers: responseHeaders, body: JSON.stringify({ error: 'Unauthorized' }) };
+    if (!chatId) return { statusCode: 400, headers: responseHeaders, body: JSON.stringify({ error: 'Missing chatId' }) };
+
+    const afterTimestamp = after ? new Date(parseInt(after)) : new Date(0);
+
+    let messages = [];
+    await driver.tableClient.withSession(async (session) => {
+        const query = `
+            DECLARE $chatId AS Utf8;
+            DECLARE $afterTimestamp AS Timestamp;
+            SELECT id, sender_id, text, timestamp, is_read, type, reply_to_id, is_edited, edited_at
+            FROM messages
+            WHERE chat_id = $chatId AND timestamp > $afterTimestamp
+            ORDER BY timestamp ASC;
+        `;
+
+        const { resultSets } = await session.executeQuery(query, {
+            '$chatId': TypedValues.utf8(chatId),
+            '$afterTimestamp': TypedValues.timestamp(afterTimestamp)
+        });
         const rows = resultSets[0] ? TypedData.createNativeObjects(resultSets[0]) : [];
 
         messages = rows.map(row => ({
@@ -529,8 +553,11 @@ function checkAuth(headers) {
 }
 
 async function getUserIdByConnection(driver, connectionId) {
+    console.log('[getUserIdByConnection] Looking up:', connectionId);
     let userId = null;
+    let allConnections = [];
     await driver.tableClient.withSession(async (session) => {
+        // Get the specific connection
         const query = `
             DECLARE $connectionId AS Utf8;
             SELECT user_id FROM socket_connections WHERE connection_id = $connectionId;
@@ -539,8 +566,18 @@ async function getUserIdByConnection(driver, connectionId) {
             '$connectionId': TypedValues.utf8(connectionId)
         });
         const rows = TypedData.createNativeObjects(resultSets[0]);
+
+        // Also get all connections for debugging
+        const allQuery = `SELECT connection_id, user_id FROM socket_connections;`;
+        const { resultSets: allResults } = await session.executeQuery(allQuery);
+        allConnections = TypedData.createNativeObjects(allResults[0]);
+
         if (rows.length > 0) {
             userId = rows[0].user_id;
+            console.log('[getUserIdByConnection] Found userId:', userId);
+        } else {
+            console.log('[getUserIdByConnection] Connection NOT FOUND');
+            console.log('[getUserIdByConnection] All connections in DB:', allConnections.map(c => c.connection_id));
         }
     });
     return userId;

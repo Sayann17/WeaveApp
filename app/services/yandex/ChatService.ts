@@ -39,6 +39,11 @@ class YandexChatService {
     private reconnectTimer: NodeJS.Timeout | null = null;
     private keepAliveTimer: NodeJS.Timeout | null = null;
 
+    // Polling for new messages
+    private pollingInterval: NodeJS.Timeout | null = null;
+    private lastMessageTimestamps: Map<string, number> = new Map();
+    private currentChatId: string | null = null;
+
     async connect(): Promise<void> {
         if (this.socket && (this.socket.readyState === WebSocket.OPEN || this.socket.readyState === WebSocket.CONNECTING)) return;
 
@@ -130,10 +135,66 @@ class YandexChatService {
     }
 
     disconnect() {
+        this.stopKeepAlive();
+        this.stopPolling();
         if (this.socket) {
             this.socket.close();
             this.socket = null;
         }
+    }
+
+    startPolling(chatId: string) {
+        this.stopPolling();
+        this.currentChatId = chatId;
+
+        this.pollingInterval = setInterval(async () => {
+            if (!this.currentChatId) return;
+
+            const lastTimestamp = this.lastMessageTimestamps.get(this.currentChatId) || Date.now();
+
+            try {
+                const token = await AsyncStorage.getItem('authToken');
+                if (!token) return;
+
+                const response = await fetch(
+                    `${API_URL}/messages/new?chatId=${this.currentChatId}&after=${lastTimestamp}`,
+                    { headers: { 'Authorization': `Bearer ${token}` } }
+                );
+
+                if (response.ok) {
+                    const data = await response.json();
+                    if (data.messages && data.messages.length > 0) {
+                        const latestMessage = data.messages[data.messages.length - 1];
+                        this.lastMessageTimestamps.set(this.currentChatId, new Date(latestMessage.timestamp).getTime());
+
+                        data.messages.forEach((msg: any) => {
+                            const message: Message = {
+                                id: msg.id,
+                                chatId: this.currentChatId!,
+                                senderId: msg.senderId,
+                                text: msg.text,
+                                timestamp: new Date(msg.timestamp),
+                                type: msg.type || 'text',
+                                replyToId: msg.replyToId,
+                                isEdited: msg.isEdited,
+                                editedAt: msg.editedAt ? new Date(msg.editedAt) : undefined
+                            };
+                            this.messageListeners.forEach(listener => listener(message, 'newMessage'));
+                        });
+                    }
+                }
+            } catch (error) {
+                console.error('[Polling] Error:', error);
+            }
+        }, 2500);
+    }
+
+    stopPolling() {
+        if (this.pollingInterval) {
+            clearInterval(this.pollingInterval);
+            this.pollingInterval = null;
+        }
+        this.currentChatId = null;
     }
 
     onMessage(callback: (message: Message, eventType?: 'newMessage' | 'messageEdited') => void) {
