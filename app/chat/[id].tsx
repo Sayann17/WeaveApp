@@ -108,13 +108,7 @@ export default function ChatScreen() {
     loadHistory();
 
     const unsubscribe = yandexChat.onMessage((msg, eventType) => {
-      console.log('[ChatScreen] Received WebSocket message:', msg);
-      console.log('[ChatScreen] Current chatId:', chatId);
-      console.log('[ChatScreen] Message chatId:', msg.chatId);
-      console.log('[ChatScreen] Match:', msg.chatId === chatId);
-
       if (msg.chatId === chatId) {
-        console.log('[ChatScreen] Message matches current chat, updating UI');
         if (eventType !== 'messageEdited') {
           yandexChat.markAsRead(chatId);
           refreshNotifications(); // Updates global badge
@@ -135,8 +129,6 @@ export default function ChatScreen() {
           }
           return [...prev, msg].sort((a, b) => a.timestamp.getTime() - b.timestamp.getTime());
         });
-      } else {
-        console.log('[ChatScreen] Message does NOT match current chat, ignoring');
       }
     });
 
