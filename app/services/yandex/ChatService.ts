@@ -61,8 +61,8 @@ class YandexChatService {
                 this.socket.onmessage = (event) => {
                     console.log('[ChatService] Message received (raw):', event.data);
                     try {
-                        // Decode base64 data from Yandex Cloud WebSocket
-                        const decodedData = atob(event.data);
+                        // Decode base64 data from Yandex Cloud WebSocket (React Native compatible)
+                        const decodedData = Buffer.from(event.data, 'base64').toString('utf-8');
                         console.log('[ChatService] Message decoded:', decodedData);
                         const data = JSON.parse(decodedData);
                         if (data.type === 'newMessage') {
