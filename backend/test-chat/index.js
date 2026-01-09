@@ -185,8 +185,8 @@ async function handleMessage(driver, event, connectionId) {
         }
 
         // Broadcast message
-        // Note: Don't include 'type' at root level - Yandex WebSocket API rejects it
         const messageEvent = {
+            type: 'newMessage',
             message: {
                 id: newMessageId,
                 chatId: safeChatId,
