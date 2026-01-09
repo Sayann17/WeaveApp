@@ -63,7 +63,11 @@ export function TelegramProvider({ children }: { children: React.ReactNode }) {
                 // (initData might be empty during local dev, but WebApp object exists)
                 setIsTelegram(true);
 
+                let handleVisibilityChange: (() => void) | undefined;
+                let handleResize: (() => void) | undefined;
+
                 try {
+                    let detectedIsMobile = false;
                     WebApp.ready();
 
                     // Debug info
@@ -79,7 +83,7 @@ export function TelegramProvider({ children }: { children: React.ReactNode }) {
                     setPlatform(detectedPlatform);
 
                     // Platform-specific settings
-                    const detectedIsMobile = detectedPlatform === 'android' || detectedPlatform === 'ios' || /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+                    detectedIsMobile = detectedPlatform === 'android' || detectedPlatform === 'ios' || /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
                     const detectedIsDesktop = detectedPlatform === 'macos' || detectedPlatform === 'tdesktop' || detectedPlatform === 'windows';
                     const detectedIsWeb = detectedPlatform === 'web' || detectedPlatform === 'weba' || detectedPlatform === 'webk';
 
@@ -104,42 +108,47 @@ export function TelegramProvider({ children }: { children: React.ReactNode }) {
                         }
                     };
 
-                    // 1. Immediate call
-                    expandApp();
-
-                    // 2. Check start_param logic
-                    const initData = WebApp.initData;
-                    const startParam = new URLSearchParams(initData).get('start_param') || WebApp.initDataUnsafe?.start_param;
-                    if (startParam === 'fullscreen') {
+                    // Only auto-expand on Mobile devices
+                    if (detectedIsMobile) {
+                        // 1. Immediate call
                         expandApp();
+
+                        // 2. Check start_param logic
+                        const initData = WebApp.initData;
+                        const startParam = new URLSearchParams(initData).get('start_param') || WebApp.initDataUnsafe?.start_param;
+                        if (startParam === 'fullscreen') {
+                            expandApp();
+                        }
+
+                        // 3. Persistent expansion (Interval)
+                        const expandInterval = setInterval(() => {
+                            expandApp();
+                        }, 100);
+
+                        // Clear interval after 2s
+                        setTimeout(() => {
+                            clearInterval(expandInterval);
+                            // Final attempt
+                            expandApp();
+                        }, 2000);
+
+                        // 4. Event Listeners
+                        // Re-expand on visibility change (e.g. switching back to app)
+                        handleVisibilityChange = () => {
+                            if (document.visibilityState === 'visible') {
+                                expandApp();
+                            }
+                        };
+                        document.addEventListener('visibilitychange', handleVisibilityChange);
+
+                        // Re-expand on viewport change/resize
+                        handleResize = () => {
+                            if (!WebApp.isExpanded) {
+                                expandApp();
+                            }
+                        };
+                        window.addEventListener('resize', handleResize);
                     }
-
-                    // 3. Persistent expansion (Interval)
-                    const expandInterval = setInterval(() => {
-                        expandApp();
-                    }, 100);
-
-                    // Clear interval after 2s
-                    setTimeout(() => {
-                        clearInterval(expandInterval);
-                        // Final attempt
-                        expandApp();
-                    }, 2000);
-
-                    // 4. Event Listeners
-                    // Re-expand on visibility change (e.g. switching back to app)
-                    document.addEventListener('visibilitychange', () => {
-                        if (document.visibilityState === 'visible') {
-                            expandApp();
-                        }
-                    });
-
-                    // Re-expand on viewport change/resize
-                    window.addEventListener('resize', () => {
-                        if (!WebApp.isExpanded) {
-                            expandApp();
-                        }
-                    });
 
                     // Set viewport height to full
                     if (WebApp.setHeaderColor) {
@@ -176,6 +185,12 @@ export function TelegramProvider({ children }: { children: React.ReactNode }) {
 
                 return () => {
                     WebApp.BackButton.offClick(handleBackButton);
+                    // Use a more robust check in cleanup
+                    const isMobilePlatform = WebApp.platform === 'android' || WebApp.platform === 'ios' || /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+                    if (isMobilePlatform) {
+                        if (handleVisibilityChange) document.removeEventListener('visibilitychange', handleVisibilityChange);
+                        if (handleResize) window.removeEventListener('resize', handleResize);
+                    }
                 };
             }
         };
