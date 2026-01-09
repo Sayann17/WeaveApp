@@ -3,6 +3,36 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 const API_URL = 'https://d5dg37j92h7tg2f7sf87.o2p3jdjj.apigw.yandexcloud.net';
 const WS_URL = 'wss://d5dg37j92h7tg2f7sf87.o2p3jdjj.apigw.yandexcloud.net/ws';
 
+// Base64 decode function for React Native
+function base64Decode(str: string): string {
+    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/=';
+    let output = '';
+
+    str = str.replace(/=+$/, '');
+
+    for (let i = 0; i < str.length;) {
+        const enc1 = chars.indexOf(str.charAt(i++));
+        const enc2 = chars.indexOf(str.charAt(i++));
+        const enc3 = chars.indexOf(str.charAt(i++));
+        const enc4 = chars.indexOf(str.charAt(i++));
+
+        const chr1 = (enc1 << 2) | (enc2 >> 4);
+        const chr2 = ((enc2 & 15) << 4) | (enc3 >> 2);
+        const chr3 = ((enc3 & 3) << 6) | enc4;
+
+        output += String.fromCharCode(chr1);
+
+        if (enc3 !== 64) {
+            output += String.fromCharCode(chr2);
+        }
+        if (enc4 !== 64) {
+            output += String.fromCharCode(chr3);
+        }
+    }
+
+    return decodeURIComponent(escape(output));
+}
+
 export interface Message {
     id: string;
     chatId: string;
@@ -61,8 +91,8 @@ class YandexChatService {
                 this.socket.onmessage = (event) => {
                     console.log('[ChatService] Message received (raw):', event.data);
                     try {
-                        // Decode base64 data from Yandex Cloud WebSocket (React Native compatible)
-                        const decodedData = Buffer.from(event.data, 'base64').toString('utf-8');
+                        // Decode base64 data from Yandex Cloud WebSocket
+                        const decodedData = base64Decode(event.data);
                         console.log('[ChatService] Message decoded:', decodedData);
                         const data = JSON.parse(decodedData);
                         if (data.type === 'newMessage') {
