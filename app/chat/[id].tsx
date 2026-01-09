@@ -132,12 +132,8 @@ export default function ChatScreen() {
       }
     });
 
-    // Start polling for new messages
-    yandexChat.startPolling(chatId);
-
     return () => {
       unsubscribe();
-      yandexChat.stopPolling();
     };
   }, [chatId]);
 
