@@ -5,8 +5,8 @@ let driver;
 async function getDriver() {
     if (driver) return driver;
 
-    const endpoint = process.env.YDB_ENDPOINT;
-    const database = process.env.YDB_DATABASE;
+    const endpoint = process.env.YDB_ENDPOINT || 'grpcs://ydb.serverless.yandexcloud.net:2135';
+    const database = process.env.YDB_DATABASE || '/ru-central1/b1g4ra81mm0ebhpfdhu0/etnttshcbsgjmbepadi4';
 
     if (!endpoint || !database) {
         throw new Error('YDB_ENDPOINT and YDB_DATABASE environment variables are required');

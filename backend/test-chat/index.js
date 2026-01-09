@@ -4,7 +4,6 @@ const { TypedValues, TypedData } = require('ydb-sdk');
 const { v4: uuidv4 } = require('uuid');
 
 const JWT_SECRET = process.env.JWT_SECRET || 'dev-secret-key-change-me';
-const YC_API_KEY = process.env.YC_API_KEY;
 
 module.exports.handler = async function (event, context) {
     const { httpMethod, path, body, headers, requestContext, queryStringParameters } = event;
@@ -186,8 +185,8 @@ async function handleMessage(driver, event, connectionId) {
         }
 
         // Broadcast message
+        // Note: Don't include 'type' at root level - Yandex WebSocket API rejects it
         const messageEvent = {
-            type: 'newMessage',
             message: {
                 id: newMessageId,
                 chatId: safeChatId,
@@ -227,25 +226,32 @@ async function handleMessage(driver, event, connectionId) {
     return { statusCode: 200 };
 }
 
+
 async function sendToConnection(driver, connectionId, data, event) {
-    // Use only the Gateway ID, not the full domain
-    let apiGatewayId = process.env.API_GATEWAY_ID || 'd5dg37j92h7tg2f7sf87';
+    // Correct URL from Yandex Support: 
+    //POST https://apigateway-connections.api.cloud.yandex.net/apigateways/websocket/v1/connections/{connectionId}:send
+    const url = `https://apigateway-connections.api.cloud.yandex.net/apigateways/websocket/v1/connections/${connectionId}:send`;
 
-    const url = `https://apigateway-connections.api.cloud.yandex.net/apigateways/${apiGatewayId}/connections/${connectionId}`;
-
-    if (!YC_API_KEY) {
-        console.error('[sendToConnection] YC_API_KEY not configured!');
-        throw new Error('YC_API_KEY is required');
+    const iamToken = process.env.IAM_TOKEN;
+    if (!iamToken) {
+        console.error('[sendToConnection] IAM_TOKEN not configured!');
+        throw new Error('IAM_TOKEN environment variable is required');
     }
 
     try {
+        // Yandex API expects base64-encoded data for TYPE_BYTES
+        const messageString = JSON.stringify(data);
+        const base64Data = Buffer.from(messageString, 'utf-8').toString('base64');
+
         const response = await fetch(url, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
-                'Authorization': `Api-Key ${YC_API_KEY}`
+                'Authorization': `Bearer ${iamToken}`
             },
-            body: JSON.stringify(data)
+            body: JSON.stringify({
+                data: base64Data
+            })
         });
 
         if (!response.ok) {
@@ -253,16 +259,13 @@ async function sendToConnection(driver, connectionId, data, event) {
             console.log(`[sendToConnection] Failed to send to ${connectionId}:`);
             console.log(`  Status: ${response.status} ${response.statusText}`);
             console.log(`  Error: ${errorText}`);
-            console.log(`  URL: ${url}`);
             // Don't throw - just log and continue
-            // Connection will be cleaned up on next DISCONNECT event
             return;
         }
 
         console.log('[sendToConnection] Success:', connectionId);
     } catch (error) {
         console.error('[sendToConnection] Error:', error.message);
-        // Don't throw - just log and continue
     }
 }
 
@@ -280,83 +283,83 @@ async function getChats(driver, requestHeaders, responseHeaders) {
 
     let chats = [];
     await driver.tableClient.withSession(async (session) => {
-        // Find mutual likes
-        const likesQuery = `
+        // Read from chats table where user is participant
+        const chatsQuery = `
             DECLARE $userId AS Utf8;
-            SELECT from_user_id FROM likes WHERE to_user_id = $userId;
+            SELECT id, user1_id, user2_id, last_message, last_message_time, created_at
+            FROM chats
+            WHERE user1_id = $userId OR user2_id = $userId;
         `;
-        const { resultSets: likesResults } = await session.executeQuery(likesQuery, {
+
+        const { resultSets } = await session.executeQuery(chatsQuery, {
             '$userId': TypedValues.utf8(userId)
         });
-        const likedByUsers = likesResults[0] ? TypedData.createNativeObjects(likesResults[0]).map(r => r.from_user_id) : [];
+        const chatRecords = resultSets[0] ? TypedData.createNativeObjects(resultSets[0]) : [];
 
-        if (likedByUsers.length === 0) return;
+        console.log(`[getChats] Found ${chatRecords.length} chats for user ${userId}`);
 
-        const mutualQuery = `
-            DECLARE $userId AS Utf8;
-            SELECT to_user_id FROM likes WHERE from_user_id = $userId;
-        `;
-        const { resultSets: mutualResults } = await session.executeQuery(mutualQuery, {
-            '$userId': TypedValues.utf8(userId)
-        });
-        const userLiked = mutualResults[0] ? TypedData.createNativeObjects(mutualResults[0]).map(r => r.to_user_id) : [];
+        // For each chat, get other participant's data
+        for (const chat of chatRecords) {
+            const otherUserId = chat.user1_id === userId ? chat.user2_id : chat.user1_id;
 
-        const matchIds = likedByUsers.filter(id => userLiked.includes(id));
-
-        if (matchIds.length === 0) return;
-
-        // Get user data for each match
-        for (const matchId of matchIds) {
             const userQuery = `
-                DECLARE $matchId AS Utf8;
-                SELECT id, name, age, photos, ethnicity, macro_groups FROM users WHERE id = $matchId;
+                DECLARE $userId AS Utf8;
+                SELECT id, name, age, photos, ethnicity, macro_groups FROM users WHERE id = $userId;
             `;
             const { resultSets: userResults } = await session.executeQuery(userQuery, {
-                '$matchId': TypedValues.utf8(matchId)
+                '$userId': TypedValues.utf8(otherUserId)
             });
             const users = userResults[0] ? TypedData.createNativeObjects(userResults[0]) : [];
-            if (users.length === 0) continue;
+            if (users.length === 0) {
+                console.log(`[getChats] User ${otherUserId} not found, skipping chat ${chat.id}`);
+                continue;
+            }
 
-            const match = users[0];
-            const chatId = [userId, matchId].sort().join('_');
+            const user = users[0];
 
-            // Get last message
-            const msgQuery = `
-                DECLARE $chatId AS Utf8;
-                SELECT text, timestamp, sender_id
-                FROM messages
-                WHERE chat_id = $chatId
-                ORDER BY timestamp DESC
-                LIMIT 1;
-            `;
-            const { resultSets: msgResults } = await session.executeQuery(msgQuery, {
-                '$chatId': TypedValues.utf8(chatId)
-            });
-            const msgRows = msgResults[0] ? TypedData.createNativeObjects(msgResults[0]) : [];
-            const lastMsg = msgRows[0] || null;
+            // Determine if last message was sent by current user
+            let isOwnMessage = false;
+            if (chat.last_message) {
+                // Get the sender of last message
+                const lastMsgQuery = `
+                    DECLARE $chatId AS Utf8;
+                    SELECT sender_id FROM messages
+                    WHERE chat_id = $chatId
+                    ORDER BY timestamp DESC
+                    LIMIT 1;
+                `;
+                const { resultSets: msgResults } = await session.executeQuery(lastMsgQuery, {
+                    '$chatId': TypedValues.utf8(chat.id)
+                });
+                const msgRows = msgResults[0] ? TypedData.createNativeObjects(msgResults[0]) : [];
+                if (msgRows.length > 0) {
+                    isOwnMessage = msgRows[0].sender_id === userId;
+                }
+            }
 
             chats.push({
-                id: chatId,
-                matchId: match.id,
-                name: match.name,
-                age: match.age,
-                ethnicity: match.ethnicity,
-                macroGroups: tryParse(match.macro_groups),
-                photo: tryParse(match.photos)[0] || null,
-                lastMessage: lastMsg ? lastMsg.text : '',
-                lastMessageTime: lastMsg ? new Date(lastMsg.timestamp).toISOString() : null,
-                isOwnMessage: lastMsg ? lastMsg.sender_id === userId : false
+                id: chat.id,
+                matchId: user.id,
+                name: user.name,
+                age: user.age,
+                ethnicity: user.ethnicity,
+                macroGroups: tryParse(user.macro_groups),
+                photo: tryParse(user.photos)[0] || null,
+                lastMessage: chat.last_message || '',
+                lastMessageTime: chat.last_message_time ? new Date(chat.last_message_time).toISOString() : null,
+                isOwnMessage: isOwnMessage
             });
         }
 
-        // Sort by last message time
+        // Sort by last message time or created_at
         chats.sort((a, b) => {
-            if (!a.lastMessageTime) return 1;
-            if (!b.lastMessageTime) return -1;
-            return new Date(b.lastMessageTime) - new Date(a.lastMessageTime);
+            const timeA = a.lastMessageTime ? new Date(a.lastMessageTime).getTime() : (chatRecords.find(c => c.id === a.id)?.created_at?.getTime() || 0);
+            const timeB = b.lastMessageTime ? new Date(b.lastMessageTime).getTime() : (chatRecords.find(c => c.id === b.id)?.created_at?.getTime() || 0);
+            return timeB - timeA;
         });
     });
 
+    console.log(`[getChats] Returning ${chats.length} chats`);
     return { statusCode: 200, headers: responseHeaders, body: JSON.stringify({ chats }) };
 }
 

@@ -6,6 +6,7 @@
     "dependencies": {
         "ydb-sdk": "^4.6.0",
         "jsonwebtoken": "^9.0.0",
-        "uuid": "^9.0.0"
+        "uuid": "^9.0.0",
+        "@yandex-cloud/nodejs-sdk": "^2.0.0"
     }
 }

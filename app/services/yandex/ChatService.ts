@@ -59,9 +59,12 @@ class YandexChatService {
                 };
 
                 this.socket.onmessage = (event) => {
-                    console.log('[ChatService] Message received:', event.data);
+                    console.log('[ChatService] Message received (raw):', event.data);
                     try {
-                        const data = JSON.parse(event.data);
+                        // Decode base64 data from Yandex Cloud WebSocket
+                        const decodedData = atob(event.data);
+                        console.log('[ChatService] Message decoded:', decodedData);
+                        const data = JSON.parse(decodedData);
                         if (data.type === 'newMessage') {
                             const message: Message = {
                                 ...data.message,

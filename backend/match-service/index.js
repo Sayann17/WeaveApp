@@ -122,8 +122,7 @@ async function getUserProfile(driver, requestHeaders, userId, responseHeaders) {
             love_language: user.love_language,
             family_memory: user.family_memory,
             stereotype_true: user.stereotype_true,
-            stereotype_false: user.stereotype_false,
-            job: user.job
+            stereotype_false: user.stereotype_false
         })
     };
 }
@@ -139,6 +138,8 @@ async function getDiscovery(driver, requestHeaders, filters, responseHeaders) {
     };
 
     let profiles = [];
+    console.log('[getDiscovery] Fetching discovery for userId:', userId);
+
     await driver.tableClient.withSession(async (session) => {
         // Get current user's location & excluded IDs
         const currentUserQuery = `
@@ -222,7 +223,6 @@ async function getDiscovery(driver, requestHeaders, filters, responseHeaders) {
                     zodiac: u.zodiac,
                     religions: tryParse(u.religion),
                     interests: tryParse(u.interests),
-                    job: u.job,
                     culture_pride: u.culture_pride,
                     love_language: u.love_language,
                     family_memory: u.family_memory,
@@ -276,6 +276,7 @@ async function getNewLikes(driver, requestHeaders, responseHeaders) {
             const countVal = likeRes[0].rows[0].items[0].uint64Value || likeRes[0].rows[0].items[0].int64Value;
             newLikes = Number(countVal);
         }
+        console.log('[getNewLikes] Count:', newLikes);
     });
 
     return {
@@ -296,6 +297,8 @@ async function getMatches(driver, requestHeaders, responseHeaders) {
     };
 
     let matches = [];
+    console.log('[getMatches] Starting for userId:', userId);
+
     await driver.tableClient.withSession(async (session) => {
         // Find users who liked current user
         const likesQuery = `
@@ -306,6 +309,7 @@ async function getMatches(driver, requestHeaders, responseHeaders) {
             '$userId': TypedValues.utf8(userId)
         });
         const likedByUsers = likesResults[0] ? TypedData.createNativeObjects(likesResults[0]).map(r => r.from_user_id) : [];
+        console.log('[getMatches] Liked by users:', likedByUsers);
 
         if (likedByUsers.length === 0) return;
 
@@ -318,8 +322,10 @@ async function getMatches(driver, requestHeaders, responseHeaders) {
             '$userId': TypedValues.utf8(userId)
         });
         const userLiked = mutualResults[0] ? TypedData.createNativeObjects(mutualResults[0]).map(r => r.to_user_id) : [];
+        console.log('[getMatches] Users I liked:', userLiked);
 
         const matchIds = likedByUsers.filter(id => userLiked.includes(id));
+        console.log('[getMatches] Match IDs computed:', matchIds);
 
         if (matchIds.length === 0) return;
 
@@ -335,6 +341,8 @@ async function getMatches(driver, requestHeaders, responseHeaders) {
                 '$matchId': TypedValues.utf8(matchId)
             });
             const users = userResults[0] ? TypedData.createNativeObjects(userResults[0]) : [];
+            console.log(`[getMatches] Fetched user data for ${matchId}:`, users.length > 0 ? 'Success' : 'Not found');
+
             if (users.length === 0) continue;
 
             const u = users[0];
@@ -352,8 +360,14 @@ async function getMatches(driver, requestHeaders, responseHeaders) {
         }
     });
 
-    return { statusCode: 200, headers: responseHeaders, body: JSON.stringify({ matches }) };
+    console.log('[getMatches] Returning matches count:', matches.length);
+    return {
+        statusCode: 200,
+        headers: responseHeaders,
+        body: JSON.stringify({ matches })
+    };
 }
+
 
 async function getLikesYou(driver, requestHeaders, responseHeaders) {
     const userId = checkAuth(requestHeaders);
@@ -366,6 +380,8 @@ async function getLikesYou(driver, requestHeaders, responseHeaders) {
     };
 
     let profiles = [];
+    console.log('[getLikesYou] Starting for userId:', userId);
+
     await driver.tableClient.withSession(async (session) => {
         // Find users who liked me
         const likedByQuery = `
@@ -376,6 +392,7 @@ async function getLikesYou(driver, requestHeaders, responseHeaders) {
             '$userId': TypedValues.utf8(userId)
         });
         const likedByMeIds = likedByResults[0] ? TypedData.createNativeObjects(likedByResults[0]).map(r => r.from_user_id) : [];
+        console.log('[getLikesYou] Users who liked me (potential):', likedByMeIds);
 
         if (likedByMeIds.length === 0) return;
 
@@ -388,9 +405,11 @@ async function getLikesYou(driver, requestHeaders, responseHeaders) {
             '$userId': TypedValues.utf8(userId)
         });
         const myLikesIds = myLikesResults[0] ? TypedData.createNativeObjects(myLikesResults[0]).map(r => r.to_user_id) : [];
+        console.log('[getLikesYou] Users I already liked (to exclude):', myLikesIds);
 
         // Filter out mutual likes
         const newLikesIds = likedByMeIds.filter(id => !myLikesIds.includes(id));
+        console.log('[getLikesYou] Final one-sided like IDs:', newLikesIds);
 
         if (newLikesIds.length === 0) return;
 
@@ -398,7 +417,7 @@ async function getLikesYou(driver, requestHeaders, responseHeaders) {
         for (const likeId of newLikesIds) {
             const userQuery = `
                 DECLARE $likeId AS Utf8;
-                SELECT id, name, age, photos, about, gender, ethnicity, religion, macro_groups, zodiac, interests, job, culture_pride, love_language, family_memory, stereotype_true, stereotype_false
+                SELECT id, name, age, photos, about, gender, ethnicity, religion, macro_groups, zodiac, interests, culture_pride, love_language, family_memory, stereotype_true, stereotype_false
                 FROM users
                 WHERE id = $likeId;
             `;
@@ -406,6 +425,8 @@ async function getLikesYou(driver, requestHeaders, responseHeaders) {
                 '$likeId': TypedValues.utf8(likeId)
             });
             const users = userResults[0] ? TypedData.createNativeObjects(userResults[0]) : [];
+            console.log(`[getLikesYou] Fetched user data for ${likeId}:`, users.length > 0 ? 'Success' : 'Not found');
+
             if (users.length === 0) continue;
 
             const u = users[0];
@@ -422,7 +443,6 @@ async function getLikesYou(driver, requestHeaders, responseHeaders) {
                 macroGroups: tryParse(u.macro_groups),
                 zodiac: u.zodiac,
                 interests: tryParse(u.interests),
-                job: u.job,
                 culture_pride: u.culture_pride,
                 love_language: u.love_language,
                 family_memory: u.family_memory,
@@ -432,8 +452,15 @@ async function getLikesYou(driver, requestHeaders, responseHeaders) {
         }
     });
 
-    return { statusCode: 200, headers: responseHeaders, body: JSON.stringify({ profiles }) };
+    console.log('[getLikesYou] Returning profiles count:', profiles.length);
+    return {
+        statusCode: 200,
+        headers: responseHeaders,
+        body: JSON.stringify({ profiles })
+    };
+
 }
+
 
 async function getYourLikes(driver, requestHeaders, responseHeaders) {
     const userId = checkAuth(requestHeaders);
@@ -446,6 +473,8 @@ async function getYourLikes(driver, requestHeaders, responseHeaders) {
     };
 
     let profiles = [];
+    console.log('[getYourLikes] Starting for userId:', userId);
+
     await driver.tableClient.withSession(async (session) => {
         // Find users I liked
         const myLikesQuery = `
@@ -456,6 +485,7 @@ async function getYourLikes(driver, requestHeaders, responseHeaders) {
             '$userId': TypedValues.utf8(userId)
         });
         const myLikesIds = myLikesResults[0] ? TypedData.createNativeObjects(myLikesResults[0]).map(r => r.to_user_id) : [];
+        console.log('[getYourLikes] Users I liked (potential):', myLikesIds);
 
         if (myLikesIds.length === 0) return;
 
@@ -468,9 +498,11 @@ async function getYourLikes(driver, requestHeaders, responseHeaders) {
             '$userId': TypedValues.utf8(userId)
         });
         const likedByMeIds = likedByResults[0] ? TypedData.createNativeObjects(likedByResults[0]).map(r => r.from_user_id) : [];
+        console.log('[getYourLikes] Users who liked me (to exclude):', likedByMeIds);
 
         // Filter out mutual likes
         const oneSidedLikes = myLikesIds.filter(id => !likedByMeIds.includes(id));
+        console.log('[getYourLikes] Final one-sided like IDs:', oneSidedLikes);
 
         if (oneSidedLikes.length === 0) return;
 
@@ -478,7 +510,7 @@ async function getYourLikes(driver, requestHeaders, responseHeaders) {
         for (const likeId of oneSidedLikes) {
             const userQuery = `
                 DECLARE $likeId AS Utf8;
-                SELECT id, name, age, photos, about, gender, ethnicity, religion, macro_groups, zodiac, interests, job, culture_pride, love_language, family_memory, stereotype_true, stereotype_false
+                SELECT id, name, age, photos, about, gender, ethnicity, religion, macro_groups, zodiac, interests, culture_pride, love_language, family_memory, stereotype_true, stereotype_false
                 FROM users
                 WHERE id = $likeId;
             `;
@@ -486,6 +518,8 @@ async function getYourLikes(driver, requestHeaders, responseHeaders) {
                 '$likeId': TypedValues.utf8(likeId)
             });
             const users = userResults[0] ? TypedData.createNativeObjects(userResults[0]) : [];
+            console.log(`[getYourLikes] Fetched user data for ${likeId}:`, users.length > 0 ? 'Success' : 'Not found');
+
             if (users.length === 0) continue;
 
             const u = users[0];
@@ -502,7 +536,6 @@ async function getYourLikes(driver, requestHeaders, responseHeaders) {
                 macroGroups: tryParse(u.macro_groups),
                 zodiac: u.zodiac,
                 interests: tryParse(u.interests),
-                job: u.job,
                 culture_pride: u.culture_pride,
                 love_language: u.love_language,
                 family_memory: u.family_memory,
@@ -512,8 +545,15 @@ async function getYourLikes(driver, requestHeaders, responseHeaders) {
         }
     });
 
-    return { statusCode: 200, headers: responseHeaders, body: JSON.stringify({ profiles }) };
+    console.log('[getYourLikes] Returning profiles count:', profiles.length);
+    return {
+        statusCode: 200,
+        headers: responseHeaders,
+        body: JSON.stringify({ profiles })
+    };
+
 }
+
 
 async function handleLike(driver, requestHeaders, body, responseHeaders) {
     const userId = checkAuth(requestHeaders);
@@ -539,7 +579,9 @@ async function handleLike(driver, requestHeaders, body, responseHeaders) {
             '$fromUserId': TypedValues.utf8(userId),
             '$toUserId': TypedValues.utf8(targetUserId),
             '$createdAt': TypedValues.timestamp(new Date())
-        });
+        }, { commitTx: true, beginTx: { serializableReadWrite: {} } });
+        console.log('[handleLike] Like inserted for:', userId, '->', targetUserId);
+
 
         // Check if it's a match
         const checkQuery = `
@@ -587,7 +629,8 @@ async function handleLike(driver, requestHeaders, body, responseHeaders) {
                     '$user1': TypedValues.utf8(user1),
                     '$user2': TypedValues.utf8(user2),
                     '$createdAt': TypedValues.timestamp(timestamp)
-                });
+                }, { commitTx: true, beginTx: { serializableReadWrite: {} } });
+
 
                 console.log(`[Match] Created chat ${chatId} and match for users ${userId} and ${targetUserId}`);
             }
@@ -615,22 +658,9 @@ async function handleDislike(driver, requestHeaders, body, responseHeaders) {
     const { targetUserId } = body;
     if (!targetUserId) return { statusCode: 400, headers: responseHeaders, body: JSON.stringify({ error: 'Missing targetUserId' }) };
 
-    await driver.tableClient.withSession(async (session) => {
-        const query = `
-            DECLARE $fromUserId AS Utf8;
-            DECLARE $toUserId AS Utf8;
-            DECLARE $createdAt AS Timestamp;
-            
-            UPSERT INTO dislikes (from_user_id, to_user_id, created_at)
-            VALUES ($fromUserId, $toUserId, $createdAt);
-        `;
-
-        await session.executeQuery(query, {
-            '$fromUserId': TypedValues.utf8(userId),
-            '$toUserId': TypedValues.utf8(targetUserId),
-            '$createdAt': TypedValues.timestamp(new Date())
-        });
-    });
+    // If you don't have a 'dislikes' table in your schema, we should just return success
+    // or log it. Currently, the schema provided only has 'likes'.
+    console.log('[handleDislike] Skipping DB insert because dislikes table does not exist. (Intentional pass)');
 
     return {
         statusCode: 200,
