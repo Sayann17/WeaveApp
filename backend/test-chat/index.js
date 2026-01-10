@@ -2,7 +2,6 @@ const { getDriver } = require('./db');
 const jwt = require('jsonwebtoken');
 const { TypedValues, TypedData } = require('ydb-sdk');
 const { v4: uuidv4 } = require('uuid');
-const { notifyNewMessage } = require('./telegram');
 
 const JWT_SECRET = process.env.JWT_SECRET || 'dev-secret-key-change-me';
 
@@ -17,34 +16,28 @@ const SERVICE_ACCOUNT_KEY = {
 let cachedIAMToken = null;
 let tokenExpiry = null;
 
-/**
- * Get IAM token with automatic refresh
- * Uses Service Account key to generate JWT and exchange for IAM token
- */
 async function getIAMToken() {
-    // Return cached token if still valid
     if (cachedIAMToken && tokenExpiry && Date.now() < tokenExpiry) {
         return cachedIAMToken;
     }
 
     try {
         console.log('[IAM] Refreshing token...');
-
-        // Create JWT for service account
         const now = Math.floor(Date.now() / 1000);
+        const privateKey = SERVICE_ACCOUNT_KEY.private_key.replace(/\\n/g, '\n');
+
         const payload = {
             aud: 'https://iam.api.cloud.yandex.net/iam/v1/tokens',
             iss: SERVICE_ACCOUNT_KEY.service_account_id,
             iat: now,
-            exp: now + 3600 // JWT valid for 1 hour
+            exp: now + 3600
         };
 
-        const jwtToken = jwt.sign(payload, SERVICE_ACCOUNT_KEY.private_key, {
+        const jwtToken = jwt.sign(payload, privateKey, {
             algorithm: 'PS256',
             keyid: SERVICE_ACCOUNT_KEY.id
         });
 
-        // Exchange JWT for IAM token
         const response = await fetch('https://iam.api.cloud.yandex.net/iam/v1/tokens', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -58,11 +51,9 @@ async function getIAMToken() {
 
         const data = await response.json();
         cachedIAMToken = data.iamToken;
+        tokenExpiry = Date.now() + (11 * 60 * 60 * 1000); // 11 hours
 
-        // Set expiry to 11 hours (tokens live 12 hours, refresh 1 hour early)
-        tokenExpiry = Date.now() + (11 * 60 * 60 * 1000);
-
-        console.log('[IAM] Token refreshed successfully, expires in 11 hours');
+        console.log('[IAM] Token refreshed successfully');
         return cachedIAMToken;
     } catch (error) {
         console.error('[IAM] Failed to refresh token:', error);
@@ -290,6 +281,7 @@ async function handleMessage(driver, event, connectionId) {
         }
 
         // Broadcast message
+        // Note: Don't include 'type' at root level - Yandex WebSocket API rejects it
         const messageEvent = {
             type: 'newMessage',
             message: {
@@ -304,36 +296,13 @@ async function handleMessage(driver, event, connectionId) {
             }
         };
 
-        // Send to recipient via WebSocket OR Telegram
+        // Send to recipient
         const recipientConnectionId = await getConnectionIdByUserId(driver, recipientId);
         if (recipientConnectionId) {
-            // Recipient is ONLINE - send via WebSocket
             try {
                 await sendToConnection(driver, recipientConnectionId, messageEvent, event);
-                console.log('[WS] Message sent to online recipient via WebSocket');
             } catch (err) {
                 console.error('[WS] Failed to send to recipient:', err);
-            }
-        } else {
-            // Recipient is OFFLINE - send Telegram notification
-            console.log('[WS] Recipient is offline, sending Telegram notification');
-            try {
-                // Get recipient's telegram_id and sender's name
-                const recipientData = await getUserData(driver, recipientId);
-                const senderData = await getUserData(driver, userId);
-
-                if (recipientData?.telegram_id && senderData?.name) {
-                    await notifyNewMessage(
-                        recipientData.telegram_id,
-                        senderData.name,
-                        text
-                    );
-                    console.log('[WS] Telegram notification sent to offline user');
-                } else {
-                    console.log('[WS] Cannot send Telegram notification: missing telegram_id or sender name');
-                }
-            } catch (telegramErr) {
-                console.error('[WS] Failed to send Telegram notification:', telegramErr);
             }
         }
 
@@ -356,14 +325,15 @@ async function handleMessage(driver, event, connectionId) {
 
 
 async function sendToConnection(driver, connectionId, data, event) {
-    // Working URL format from production
+    // Correct URL from Yandex Support: 
+    //POST https://apigateway-connections.api.cloud.yandex.net/apigateways/websocket/v1/connections/{connectionId}:send
     const url = `https://apigateway-connections.api.cloud.yandex.net/apigateways/websocket/v1/connections/${connectionId}:send`;
 
     try {
-        // Get IAM token (automatically refreshes if expired)
+        // Use automated IAM token
         const iamToken = await getIAMToken();
 
-        // Yandex API expects base64-encoded data
+        // Yandex API expects base64-encoded data for TYPE_BYTES
         const messageString = JSON.stringify(data);
         const base64Data = Buffer.from(messageString, 'utf-8').toString('base64');
 
@@ -407,80 +377,85 @@ async function getChats(driver, requestHeaders, responseHeaders) {
 
     let chats = [];
     await driver.tableClient.withSession(async (session) => {
-        // 🔥 OPTIMIZED: Use UNION ALL instead of OR in JOIN (YDB limitation)
+        // Read from chats table where user is participant
         const chatsQuery = `
             DECLARE $userId AS Utf8;
-            
-            SELECT 
-                c.id as chat_id,
-                c.user1_id,
-                c.user2_id,
-                c.last_message,
-                c.last_message_time,
-                c.created_at,
-                u.id as other_user_id,
-                u.name,
-                u.age,
-                u.photos,
-                u.ethnicity,
-                u.macro_groups
-            FROM chats c
-            JOIN users u ON u.id = c.user2_id
-            WHERE c.user1_id = $userId
-            
-            UNION ALL
-            
-            SELECT 
-                c.id as chat_id,
-                c.user1_id,
-                c.user2_id,
-                c.last_message,
-                c.last_message_time,
-                c.created_at,
-                u.id as other_user_id,
-                u.name,
-                u.age,
-                u.photos,
-                u.ethnicity,
-                u.macro_groups
-            FROM chats c
-            JOIN users u ON u.id = c.user1_id
-            WHERE c.user2_id = $userId;
+            SELECT id, user1_id, user2_id, last_message, last_message_time, created_at
+            FROM chats
+            WHERE user1_id = $userId OR user2_id = $userId;
         `;
 
         const { resultSets } = await session.executeQuery(chatsQuery, {
             '$userId': TypedValues.utf8(userId)
         });
-        let chatRecords = resultSets[0] ? TypedData.createNativeObjects(resultSets[0]) : [];
+        const chatRecords = resultSets[0] ? TypedData.createNativeObjects(resultSets[0]) : [];
 
-        // Sort in JavaScript since ORDER BY after UNION ALL is problematic in YDB
-        chatRecords.sort((a, b) => {
-            const timeA = a.last_message_time ? new Date(a.last_message_time).getTime() : 0;
-            const timeB = b.last_message_time ? new Date(b.last_message_time).getTime() : 0;
-            return timeB - timeA; // DESC order
+        console.log(`[getChats] Found ${chatRecords.length} chats for user ${userId}`);
+
+        // For each chat, get other participant's data
+        for (const chat of chatRecords) {
+            const otherUserId = chat.user1_id === userId ? chat.user2_id : chat.user1_id;
+
+            const userQuery = `
+                DECLARE $userId AS Utf8;
+                SELECT id, name, age, photos, ethnicity, macro_groups FROM users WHERE id = $userId;
+            `;
+            const { resultSets: userResults } = await session.executeQuery(userQuery, {
+                '$userId': TypedValues.utf8(otherUserId)
+            });
+            const users = userResults[0] ? TypedData.createNativeObjects(userResults[0]) : [];
+            if (users.length === 0) {
+                console.log(`[getChats] User ${otherUserId} not found, skipping chat ${chat.id}`);
+                continue;
+            }
+
+            const user = users[0];
+
+            // Determine if last message was sent by current user
+            let isOwnMessage = false;
+            if (chat.last_message) {
+                // Get the sender of last message
+                const lastMsgQuery = `
+                    DECLARE $chatId AS Utf8;
+                    SELECT sender_id FROM messages
+                    WHERE chat_id = $chatId
+                    ORDER BY timestamp DESC
+                    LIMIT 1;
+                `;
+                const { resultSets: msgResults } = await session.executeQuery(lastMsgQuery, {
+                    '$chatId': TypedValues.utf8(chat.id)
+                });
+                const msgRows = msgResults[0] ? TypedData.createNativeObjects(msgResults[0]) : [];
+                if (msgRows.length > 0) {
+                    isOwnMessage = msgRows[0].sender_id === userId;
+                }
+            }
+
+            chats.push({
+                id: chat.id,
+                matchId: user.id,
+                name: user.name,
+                age: user.age,
+                ethnicity: user.ethnicity,
+                macroGroups: tryParse(user.macro_groups),
+                photo: tryParse(user.photos)[0] || null,
+                lastMessage: chat.last_message || '',
+                lastMessageTime: chat.last_message_time ? new Date(chat.last_message_time).toISOString() : null,
+                isOwnMessage: isOwnMessage
+            });
+        }
+
+        // Sort by last message time or created_at
+        chats.sort((a, b) => {
+            const timeA = a.lastMessageTime ? new Date(a.lastMessageTime).getTime() : (chatRecords.find(c => c.id === a.id)?.created_at?.getTime() || 0);
+            const timeB = b.lastMessageTime ? new Date(b.lastMessageTime).getTime() : (chatRecords.find(c => c.id === b.id)?.created_at?.getTime() || 0);
+            return timeB - timeA;
         });
-
-        console.log(`[getChats] Found ${chatRecords.length} chats for user ${userId} (optimized query)`);
-
-        // Transform results
-        chats = chatRecords.map(row => ({
-            id: row.chat_id,
-            matchId: row.other_user_id,
-            name: row.name,
-            age: row.age,
-            ethnicity: row.ethnicity,
-            macroGroups: tryParse(row.macro_groups),
-            photo: tryParse(row.photos)[0] || null,
-            lastMessage: row.last_message || '',
-            lastMessageTime: row.last_message_time ? new Date(row.last_message_time).toISOString() : null,
-            isOwnMessage: false // Will be determined by frontend based on sender
-        }));
     });
 
     console.log(`[getChats] Returning ${chats.length} chats`);
     return { statusCode: 200, headers: responseHeaders, body: JSON.stringify({ chats }) };
 }
-
 
 async function getHistory(driver, requestHeaders, chatId, responseHeaders) {
     const userId = checkAuth(requestHeaders);
@@ -721,24 +696,6 @@ async function getConnectionIdByUserId(driver, userId) {
         }
     });
     return connectionId;
-}
-
-async function getUserData(driver, userId) {
-    let userData = null;
-    await driver.tableClient.withSession(async (session) => {
-        const query = `
-            DECLARE $userId AS Utf8;
-            SELECT telegram_id, name FROM users WHERE id = $userId;
-        `;
-        const { resultSets } = await session.executeQuery(query, {
-            '$userId': TypedValues.utf8(userId)
-        });
-        const rows = TypedData.createNativeObjects(resultSets[0]);
-        if (rows.length > 0) {
-            userData = rows[0];
-        }
-    });
-    return userData;
 }
 
 async function getUnreadMessages(driver, requestHeaders, responseHeaders) {
