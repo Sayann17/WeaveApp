@@ -116,7 +116,7 @@ export default function OnboardingEthnicityScreen() {
                             <SelectableCard
                                 key={group.id}
                                 title={group.name}
-                                emoji={group.emoji}
+                                emoji=""
                                 selected={selectedGroups.includes(group.id)}
                                 onPress={() => toggleGroup(group.id)}
                                 index={index}
@@ -140,7 +140,7 @@ export default function OnboardingEthnicityScreen() {
 
 const styles = StyleSheet.create({
     container: { flex: 1, backgroundColor: THEME.background },
-    header: { padding: 20, paddingTop: 40 },
+    header: { padding: 20, paddingTop: 85 },
     // 🔥 ЧЕРНЫЙ СЧЕТЧИК
     stepCount: { fontSize: 12, color: '#000000', marginBottom: 8, fontWeight: 'bold', textTransform: 'uppercase', letterSpacing: 1 },
     title: { fontSize: 32, fontWeight: '300', color: THEME.text, marginBottom: 10 },

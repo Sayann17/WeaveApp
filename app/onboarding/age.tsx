@@ -95,7 +95,7 @@ export default function OnboardingAgeScreen() {
 
 const styles = StyleSheet.create({
     container: { flex: 1, backgroundColor: THEME.background },
-    header: { padding: 24, paddingTop: 40 },
+    header: { padding: 24, paddingTop: 85 },
     step: { color: '#000000', fontSize: 12, fontWeight: 'bold', marginBottom: 10, letterSpacing: 1, textTransform: 'uppercase' },
     title: { fontSize: 32, fontWeight: '300', color: THEME.text, marginBottom: 10 },
     subtitle: { fontSize: 16, color: THEME.subText, lineHeight: 24 },

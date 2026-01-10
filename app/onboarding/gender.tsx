@@ -90,7 +90,7 @@ export default function OnboardingGenderScreen() {
 
 const styles = StyleSheet.create({
     container: { flex: 1, backgroundColor: THEME.background },
-    header: { padding: 24, paddingTop: 40 },
+    header: { padding: 24, paddingTop: 85 },
     // 🔥 Цвет шага #000000
     step: { color: '#000000', fontSize: 12, fontWeight: 'bold', marginBottom: 10, letterSpacing: 1, textTransform: 'uppercase' },
     title: { fontSize: 32, fontWeight: '300', color: THEME.text, marginBottom: 10 },
