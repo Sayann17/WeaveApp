@@ -2,8 +2,53 @@ const { getDriver } = require('./db');
 const jwt = require('jsonwebtoken');
 const { TypedValues, TypedData } = require('ydb-sdk');
 const { v4: uuidv4 } = require('uuid');
+const { Session } = require('@yandex-cloud/nodejs-sdk');
 
 const JWT_SECRET = process.env.JWT_SECRET || 'dev-secret-key-change-me';
+
+// Service Account credentials from environment
+const SERVICE_ACCOUNT_KEY = {
+    id: process.env.SA_ID,
+    service_account_id: process.env.SA_SERVICE_ACCOUNT_ID,
+    created_at: process.env.SA_CREATED_AT,
+    key_algorithm: 'RSA_2048',
+    public_key: process.env.SA_PUBLIC_KEY,
+    private_key: process.env.SA_PRIVATE_KEY
+};
+
+// IAM token cache
+let cachedIAMToken = null;
+let tokenExpiry = null;
+
+/**
+ * Get IAM token with automatic refresh
+ * Uses Service Account key to generate tokens automatically
+ */
+async function getIAMToken() {
+    // Return cached token if still valid
+    if (cachedIAMToken && tokenExpiry && Date.now() < tokenExpiry) {
+        return cachedIAMToken;
+    }
+
+    try {
+        console.log('[IAM] Refreshing token...');
+
+        // Create session with Service Account
+        const session = new Session({ serviceAccountJson: SERVICE_ACCOUNT_KEY });
+
+        // Get new token
+        cachedIAMToken = await session.client.getToken();
+
+        // Set expiry to 11 hours (tokens live 12 hours, refresh 1 hour early)
+        tokenExpiry = Date.now() + (11 * 60 * 60 * 1000);
+
+        console.log('[IAM] Token refreshed successfully, expires in 11 hours');
+        return cachedIAMToken;
+    } catch (error) {
+        console.error('[IAM] Failed to refresh token:', error);
+        throw new Error('Failed to get IAM token');
+    }
+}
 
 module.exports.handler = async function (event, context) {
     const { httpMethod, path, body, headers, requestContext, queryStringParameters } = event;
@@ -232,13 +277,9 @@ async function sendToConnection(driver, connectionId, data, event) {
     //POST https://apigateway-connections.api.cloud.yandex.net/apigateways/websocket/v1/connections/{connectionId}:send
     const url = `https://apigateway-connections.api.cloud.yandex.net/apigateways/websocket/v1/connections/${connectionId}:send`;
 
-    const iamToken = process.env.IAM_TOKEN;
-    if (!iamToken) {
-        console.error('[sendToConnection] IAM_TOKEN not configured!');
-        throw new Error('IAM_TOKEN environment variable is required');
-    }
-
     try {
+        // Get IAM token (automatically refreshes if expired)
+        const iamToken = await getIAMToken();
         // Yandex API expects base64-encoded data for TYPE_BYTES
         const messageString = JSON.stringify(data);
         const base64Data = Buffer.from(messageString, 'utf-8').toString('base64');
