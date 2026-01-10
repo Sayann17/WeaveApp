@@ -2,7 +2,6 @@ const { getDriver } = require('./db');
 const jwt = require('jsonwebtoken');
 const { TypedValues, TypedData } = require('ydb-sdk');
 const { v4: uuidv4 } = require('uuid');
-const { Session } = require('@yandex-cloud/nodejs-sdk');
 const { notifyNewMessage } = require('./telegram');
 
 const JWT_SECRET = process.env.JWT_SECRET || 'dev-secret-key-change-me';
@@ -23,7 +22,7 @@ let tokenExpiry = null;
 
 /**
  * Get IAM token with automatic refresh
- * Uses Service Account key to generate tokens automatically
+ * Uses Service Account key to generate JWT and exchange for IAM token
  */
 async function getIAMToken() {
     // Return cached token if still valid
@@ -34,11 +33,34 @@ async function getIAMToken() {
     try {
         console.log('[IAM] Refreshing token...');
 
-        // Create session with Service Account
-        const session = new Session({ serviceAccountJson: SERVICE_ACCOUNT_KEY });
+        // Create JWT for service account
+        const now = Math.floor(Date.now() / 1000);
+        const payload = {
+            aud: 'https://iam.api.cloud.yandex.net/iam/v1/tokens',
+            iss: SERVICE_ACCOUNT_KEY.service_account_id,
+            iat: now,
+            exp: now + 3600 // JWT valid for 1 hour
+        };
 
-        // Get new token
-        cachedIAMToken = await session.client.getToken();
+        const jwtToken = jwt.sign(payload, SERVICE_ACCOUNT_KEY.private_key, {
+            algorithm: 'PS256',
+            keyid: SERVICE_ACCOUNT_KEY.id
+        });
+
+        // Exchange JWT for IAM token
+        const response = await fetch('https://iam.api.cloud.yandex.net/iam/v1/tokens', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ jwt: jwtToken })
+        });
+
+        if (!response.ok) {
+            const error = await response.text();
+            throw new Error(`IAM API error: ${error}`);
+        }
+
+        const data = await response.json();
+        cachedIAMToken = data.iamToken;
 
         // Set expiry to 11 hours (tokens live 12 hours, refresh 1 hour early)
         tokenExpiry = Date.now() + (11 * 60 * 60 * 1000);
