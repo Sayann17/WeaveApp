@@ -157,39 +157,52 @@ class YandexAuthService implements IAuthService {
         const token = await AsyncStorage.getItem('auth_token');
         if (!token) throw new Error('Not authenticated');
 
-        const response = await fetch(`${API_URL}/profile`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${token}`
-            },
-            body: JSON.stringify(data)
-        });
-
-        console.log('[AuthService] updateProfile response status:', response.status);
-
-        if (!response.ok) {
-            const text = await response.text();
-            console.error('[AuthService] Update profile failed:', response.status, text);
-            throw new Error(`Failed to update profile: ${response.status} ${text}`);
-        }
-
-        // OPTIMISTIC UPDATE: Update local state immediately
-        console.log('[AuthService] Profile updated on server, applying optimistic update...');
+        // OPTIMISTIC UPDATE: Update local state BEFORE server call for instant UI feedback
+        const previousUser = this._currentUser ? { ...this._currentUser } : null;
         if (this._currentUser) {
+            // Merge new data with existing user data to preserve all fields
             this._currentUser = { ...this._currentUser, ...data };
             this._notifyListeners();
+            console.log('[AuthService] Optimistic update applied, UI updated instantly');
         }
 
-        console.log('[AuthService] Optimistic update applied. Refreshing session in background...');
-
-        // Refresh user data from server to ensure consistency, but don't fail the operation if it fails
         try {
-            await this.refreshSession();
-            console.log('[AuthService] Session refreshed successfully');
+            const response = await fetch(`${API_URL}/profile`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify(data)
+            });
+
+            console.log('[AuthService] updateProfile response status:', response.status);
+
+            if (!response.ok) {
+                const text = await response.text();
+                console.error('[AuthService] Update profile failed:', response.status, text);
+
+                // ROLLBACK: Restore previous state on error
+                if (previousUser) {
+                    this._currentUser = previousUser;
+                    this._notifyListeners();
+                    console.log('[AuthService] Rolled back optimistic update due to server error');
+                }
+
+                throw new Error(`Failed to update profile: ${response.status} ${text}`);
+            }
+
+            console.log('[AuthService] Profile successfully saved to server');
+            // No refreshSession here - it causes race conditions when multiple fields are updated quickly
+            // The optimistic update already has the correct data merged
         } catch (e) {
-            console.warn('[AuthService] Background session refresh failed, but profile was saved:', e);
-            // We suppress the error here because the save was successful and we updated the UI optimistically
+            // If it's a network error (not thrown by us above), also rollback
+            if (previousUser && e instanceof Error && !e.message.startsWith('Failed to update profile')) {
+                this._currentUser = previousUser;
+                this._notifyListeners();
+                console.log('[AuthService] Rolled back optimistic update due to network error');
+            }
+            throw e;
         }
     }
 
