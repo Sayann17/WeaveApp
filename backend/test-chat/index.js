@@ -410,7 +410,7 @@ async function getChats(driver, requestHeaders, responseHeaders) {
 
     let chats = [];
     await driver.tableClient.withSession(async (session) => {
-        // 🔥 OPTIMIZED: Single query with JOIN instead of loop
+        // 🔥 OPTIMIZED: Use UNION ALL instead of OR in JOIN (YDB limitation)
         const chatsQuery = `
             DECLARE $userId AS Utf8;
             
@@ -428,12 +428,29 @@ async function getChats(driver, requestHeaders, responseHeaders) {
                 u.ethnicity,
                 u.macro_groups
             FROM chats c
-            JOIN users u ON (
-                (c.user1_id = $userId AND u.id = c.user2_id) OR
-                (c.user2_id = $userId AND u.id = c.user1_id)
-            )
-            WHERE c.user1_id = $userId OR c.user2_id = $userId
-            ORDER BY c.last_message_time DESC;
+            JOIN users u ON u.id = c.user2_id
+            WHERE c.user1_id = $userId
+            
+            UNION ALL
+            
+            SELECT 
+                c.id as chat_id,
+                c.user1_id,
+                c.user2_id,
+                c.last_message,
+                c.last_message_time,
+                c.created_at,
+                u.id as other_user_id,
+                u.name,
+                u.age,
+                u.photos,
+                u.ethnicity,
+                u.macro_groups
+            FROM chats c
+            JOIN users u ON u.id = c.user1_id
+            WHERE c.user2_id = $userId
+            
+            ORDER BY last_message_time DESC;
         `;
 
         const { resultSets } = await session.executeQuery(chatsQuery, {
@@ -443,7 +460,7 @@ async function getChats(driver, requestHeaders, responseHeaders) {
 
         console.log(`[getChats] Found ${chatRecords.length} chats for user ${userId} (optimized query)`);
 
-        // Transform results - determine last sender separately if needed
+        // Transform results
         chats = chatRecords.map(row => ({
             id: row.chat_id,
             matchId: row.other_user_id,
