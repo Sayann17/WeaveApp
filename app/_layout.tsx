@@ -2,6 +2,7 @@
 import { Stack, useRouter, useSegments } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { ActivityIndicator, View } from 'react-native';
+import { DisableZoom } from './components/DisableZoom';
 import { MenuModal } from './components/MenuModal';
 import { MenuProvider, useMenu } from './context/MenuContext';
 import { NotificationProvider } from './context/NotificationContext';
@@ -65,6 +66,7 @@ export default function RootLayout() {
 
   return (
     <TelegramProvider>
+      <DisableZoom />
       <ThemeProvider>
         <NotificationProvider>
           <MenuProvider>
