@@ -3,6 +3,7 @@ const jwt = require('jsonwebtoken');
 const { TypedValues, TypedData } = require('ydb-sdk');
 const { v4: uuidv4 } = require('uuid');
 const { Session } = require('@yandex-cloud/nodejs-sdk');
+const { notifyNewMessage } = require('./telegram');
 
 const JWT_SECRET = process.env.JWT_SECRET || 'dev-secret-key-change-me';
 
@@ -244,13 +245,36 @@ async function handleMessage(driver, event, connectionId) {
             }
         };
 
-        // Send to recipient
+        // Send to recipient via WebSocket OR Telegram
         const recipientConnectionId = await getConnectionIdByUserId(driver, recipientId);
         if (recipientConnectionId) {
+            // Recipient is ONLINE - send via WebSocket
             try {
                 await sendToConnection(driver, recipientConnectionId, messageEvent, event);
+                console.log('[WS] Message sent to online recipient via WebSocket');
             } catch (err) {
                 console.error('[WS] Failed to send to recipient:', err);
+            }
+        } else {
+            // Recipient is OFFLINE - send Telegram notification
+            console.log('[WS] Recipient is offline, sending Telegram notification');
+            try {
+                // Get recipient's telegram_id and sender's name
+                const recipientData = await getUserData(driver, recipientId);
+                const senderData = await getUserData(driver, userId);
+
+                if (recipientData?.telegram_id && senderData?.name) {
+                    await notifyNewMessage(
+                        recipientData.telegram_id,
+                        senderData.name,
+                        text
+                    );
+                    console.log('[WS] Telegram notification sent to offline user');
+                } else {
+                    console.log('[WS] Cannot send Telegram notification: missing telegram_id or sender name');
+                }
+            } catch (telegramErr) {
+                console.error('[WS] Failed to send Telegram notification:', telegramErr);
             }
         }
 
@@ -643,6 +667,24 @@ async function getConnectionIdByUserId(driver, userId) {
         }
     });
     return connectionId;
+}
+
+async function getUserData(driver, userId) {
+    let userData = null;
+    await driver.tableClient.withSession(async (session) => {
+        const query = `
+            DECLARE $userId AS Utf8;
+            SELECT telegram_id, name FROM users WHERE id = $userId;
+        `;
+        const { resultSets } = await session.executeQuery(query, {
+            '$userId': TypedValues.utf8(userId)
+        });
+        const rows = TypedData.createNativeObjects(resultSets[0]);
+        if (rows.length > 0) {
+            userData = rows[0];
+        }
+    });
+    return userData;
 }
 
 async function getUnreadMessages(driver, requestHeaders, responseHeaders) {

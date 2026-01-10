@@ -1,6 +1,6 @@
 // app/context/NotificationContext.tsx
 import React, { createContext, useContext, useEffect, useState } from 'react';
-import { NotificationToast, NotificationType } from '../components/NotificationToast';
+import { AppState, AppStateStatus } from 'react-native';
 import { User } from '../services/interfaces/IAuthService';
 import { yandexAuth } from '../services/yandex/AuthService';
 import { yandexChat } from '../services/yandex/ChatService';
@@ -34,11 +34,6 @@ export const NotificationProvider = ({ children }: { children: React.ReactNode }
     const [unreadChatIds, setUnreadChatIds] = useState<string[]>([]);
     const [user, setUser] = useState<User | null>(null);
 
-    // Toast State
-    const [toastVisible, setToastVisible] = useState(false);
-    const [toastMessage, setToastMessage] = useState('');
-    const [toastType, setToastType] = useState<NotificationType>('message');
-
     // Listen to Yandex Auth state changes
     useEffect(() => {
         const unsubscribe = yandexAuth.onAuthStateChanged((u) => {
@@ -53,8 +48,24 @@ export const NotificationProvider = ({ children }: { children: React.ReactNode }
             const stats = await yandexChat.getNotificationsStats();
             setUnreadMessagesCount(stats.unreadMessages);
             setNewLikesCount(stats.newLikes);
-        } catch (e) { console.error(e); }
+        } catch (e) {
+            console.error('[NotificationContext] Failed to fetch stats:', e);
+        }
     };
+
+    // Refresh notifications when app comes to foreground
+    useEffect(() => {
+        const subscription = AppState.addEventListener('change', (nextAppState: AppStateStatus) => {
+            if (nextAppState === 'active') {
+                console.log('[NotificationContext] App became active, refreshing notifications');
+                fetchStats();
+            }
+        });
+
+        return () => {
+            subscription.remove();
+        };
+    }, [user]);
 
     useEffect(() => {
         if (!user) {
@@ -68,18 +79,19 @@ export const NotificationProvider = ({ children }: { children: React.ReactNode }
 
         yandexChat.connect().catch(console.error);
 
+        // Listen to WebSocket events for real-time badge updates
         const unsubscribeMessages = yandexChat.onMessage((msg, type) => {
             if (type === 'newMessage' && msg.senderId !== user.uid) {
+                // Only increment badge, no toast
                 setUnreadMessagesCount(prev => prev + 1);
-                showToast(msg.text, 'message');
+                console.log('[NotificationContext] New message received, badge updated');
             }
         });
 
         const unsubscribeLikes = yandexChat.onLike((fromUserId) => {
+            // Only increment badge, no toast
             setNewLikesCount(prev => prev + 1);
-            // Check if this is a match by seeing if we also liked them
-            // For now, just show a generic message - the backend will send different events
-            showToast('Кому-то понравилась ваша анкета!', 'like');
+            console.log('[NotificationContext] New like received, badge updated');
         });
 
         return () => {
@@ -87,12 +99,6 @@ export const NotificationProvider = ({ children }: { children: React.ReactNode }
             unsubscribeLikes();
         };
     }, [user]);
-
-    const showToast = (msg: string, type: NotificationType) => {
-        setToastMessage(msg);
-        setToastType(type);
-        setToastVisible(true);
-    };
 
     const resetUnreadMessages = () => setUnreadMessagesCount(0);
     const resetNewLikes = () => setNewLikesCount(0);
@@ -108,12 +114,6 @@ export const NotificationProvider = ({ children }: { children: React.ReactNode }
             refreshNotifications: fetchStats
         }}>
             {children}
-            <NotificationToast
-                visible={toastVisible}
-                message={toastMessage}
-                type={toastType}
-                onClose={() => setToastVisible(false)}
-            />
         </NotificationContext.Provider>
     );
 };
