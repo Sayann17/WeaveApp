@@ -89,6 +89,7 @@ class YandexChatService {
                 };
 
                 this.socket.onmessage = async (event) => {
+                    console.log('[ChatService] Message received (raw):', typeof event.data, event.data);
                     try {
                         let data;
 
@@ -99,7 +100,9 @@ class YandexChatService {
                             messageText = event.data;
                         } else if (event.data instanceof Blob) {
                             // Handle Blob (React Native WebSocket returns Blob)
+                            console.log('[ChatService] Received Blob, reading as text...');
                             messageText = await event.data.text();
+                            console.log('[ChatService] Blob text:', messageText);
                         } else {
                             console.error('[ChatService] Unexpected data type:', typeof event.data);
                             return;
@@ -108,16 +111,20 @@ class YandexChatService {
                         // Try to parse as JSON first (in case it's already a JSON string)
                         try {
                             data = JSON.parse(messageText);
+                            console.log('[ChatService] Message parsed as JSON directly');
                         } catch {
                             // If JSON parse fails, try base64 decode
                             try {
                                 const decodedData = base64Decode(messageText);
+                                console.log('[ChatService] Message decoded from base64:', decodedData);
                                 data = JSON.parse(decodedData);
                             } catch (e2) {
                                 console.error('[ChatService] Failed to decode base64:', e2);
                                 return;
                             }
                         }
+
+                        console.log('[ChatService] Parsed data:', data);
 
                         if (data.type === 'newMessage') {
                             const message: Message = {

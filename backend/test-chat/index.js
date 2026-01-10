@@ -6,13 +6,10 @@ const { notifyNewMessage } = require('./telegram');
 
 const JWT_SECRET = process.env.JWT_SECRET || 'dev-secret-key-change-me';
 
-// Service Account credentials from environment
+// Service Account Key from separate environment variables
 const SERVICE_ACCOUNT_KEY = {
     id: process.env.SA_ID,
     service_account_id: process.env.SA_SERVICE_ACCOUNT_ID,
-    created_at: process.env.SA_CREATED_AT,
-    key_algorithm: 'RSA_2048',
-    public_key: process.env.SA_PUBLIC_KEY,
     private_key: process.env.SA_PRIVATE_KEY
 };
 
@@ -359,14 +356,14 @@ async function handleMessage(driver, event, connectionId) {
 
 
 async function sendToConnection(driver, connectionId, data, event) {
-    // Correct URL from Yandex Support: 
-    //POST https://apigateway-connections.api.cloud.yandex.net/apigateways/websocket/v1/connections/{connectionId}:send
+    // Working URL format from production
     const url = `https://apigateway-connections.api.cloud.yandex.net/apigateways/websocket/v1/connections/${connectionId}:send`;
 
     try {
         // Get IAM token (automatically refreshes if expired)
         const iamToken = await getIAMToken();
-        // Yandex API expects base64-encoded data for TYPE_BYTES
+
+        // Yandex API expects base64-encoded data
         const messageString = JSON.stringify(data);
         const base64Data = Buffer.from(messageString, 'utf-8').toString('base64');
 
@@ -448,15 +445,20 @@ async function getChats(driver, requestHeaders, responseHeaders) {
                 u.macro_groups
             FROM chats c
             JOIN users u ON u.id = c.user1_id
-            WHERE c.user2_id = $userId
-            
-            ORDER BY last_message_time DESC;
+            WHERE c.user2_id = $userId;
         `;
 
         const { resultSets } = await session.executeQuery(chatsQuery, {
             '$userId': TypedValues.utf8(userId)
         });
-        const chatRecords = resultSets[0] ? TypedData.createNativeObjects(resultSets[0]) : [];
+        let chatRecords = resultSets[0] ? TypedData.createNativeObjects(resultSets[0]) : [];
+
+        // Sort in JavaScript since ORDER BY after UNION ALL is problematic in YDB
+        chatRecords.sort((a, b) => {
+            const timeA = a.last_message_time ? new Date(a.last_message_time).getTime() : 0;
+            const timeB = b.last_message_time ? new Date(b.last_message_time).getTime() : 0;
+            return timeB - timeA; // DESC order
+        });
 
         console.log(`[getChats] Found ${chatRecords.length} chats for user ${userId} (optimized query)`);
 
