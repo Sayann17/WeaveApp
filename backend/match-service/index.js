@@ -627,7 +627,11 @@ async function handleLike(driver, requestHeaders, body, responseHeaders) {
     return {
         statusCode: 200,
         headers: responseHeaders,
-        body: JSON.stringify({ success: true, isMatch })
+        body: JSON.stringify({
+            success: true,
+            isMatch,
+            chatId: isMatch ? [userId, targetUserId].sort().join('_') : undefined
+        })
     };
 }
 
