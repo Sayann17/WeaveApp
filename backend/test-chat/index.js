@@ -2,6 +2,7 @@ const { getDriver } = require('./db');
 const jwt = require('jsonwebtoken');
 const { TypedValues, TypedData } = require('ydb-sdk');
 const { v4: uuidv4 } = require('uuid');
+const { notifyNewMessage } = require('./telegram');
 
 const JWT_SECRET = process.env.JWT_SECRET || 'dev-secret-key-change-me';
 
@@ -298,11 +299,25 @@ async function handleMessage(driver, event, connectionId) {
 
         // Send to recipient
         const recipientConnectionId = await getConnectionIdByUserId(driver, recipientId);
+        let wsSent = false;
+
         if (recipientConnectionId) {
             try {
-                await sendToConnection(driver, recipientConnectionId, messageEvent, event);
+                wsSent = await sendToConnection(driver, recipientConnectionId, messageEvent, event);
             } catch (err) {
                 console.error('[WS] Failed to send to recipient:', err);
+            }
+        }
+
+        // Broad fallback: if not sent via WS (offline or failed), send Telegram notification
+        if (!wsSent) {
+            console.log(`[WS] Recipient ${recipientId} offline or failed. Sending Telegram notification.`);
+            try {
+                // Get sender name for the notification
+                const senderName = await getUserName(driver, userId);
+                await notifyNewMessage(driver, recipientId, senderName, text);
+            } catch (notifyErr) {
+                console.error('[WS] Failed to send notification:', notifyErr);
             }
         }
 
@@ -353,13 +368,14 @@ async function sendToConnection(driver, connectionId, data, event) {
             console.log(`[sendToConnection] Failed to send to ${connectionId}:`);
             console.log(`  Status: ${response.status} ${response.statusText}`);
             console.log(`  Error: ${errorText}`);
-            // Don't throw - just log and continue
-            return;
+            return false;
         }
 
         console.log('[sendToConnection] Success:', connectionId);
+        return true;
     } catch (error) {
         console.error('[sendToConnection] Error:', error.message);
+        return false;
     }
 }
 
@@ -696,6 +712,24 @@ async function getConnectionIdByUserId(driver, userId) {
         }
     });
     return connectionId;
+}
+
+async function getUserName(driver, userId) {
+    let name = "Someone";
+    await driver.tableClient.withSession(async (session) => {
+        const query = `
+            DECLARE $userId AS Utf8;
+            SELECT name FROM users WHERE id = $userId;
+        `;
+        const { resultSets } = await session.executeQuery(query, {
+            '$userId': TypedValues.utf8(userId)
+        });
+        const rows = TypedData.createNativeObjects(resultSets[0]);
+        if (rows.length > 0) {
+            name = rows[0].name;
+        }
+    });
+    return name;
 }
 
 async function getUnreadMessages(driver, requestHeaders, responseHeaders) {

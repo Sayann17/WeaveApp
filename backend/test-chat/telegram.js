@@ -1,125 +1,67 @@
-// Telegram Bot API helper module
-// Using native fetch (Node.js 18+)
+const { TypedValues, TypedData } = require('ydb-sdk');
 
 const BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN;
 
-/**
- * Send a notification to a user via Telegram Bot
- * @param {string} telegramId - User's Telegram ID (chat_id)
- * @param {string} text - Message text (supports HTML formatting)
- * @param {object} options - Additional options (reply_markup, etc.)
- * @returns {Promise<object|null>} - Response from Telegram API or null on error
- */
-async function sendTelegramNotification(telegramId, text, options = {}) {
+async function notifyNewMessage(driver, recipientId, senderName, text) {
     if (!BOT_TOKEN) {
-        console.error('TELEGRAM_BOT_TOKEN is not set');
-        return null;
+        console.log('[Telegram] No BOT_TOKEN provided, skipping notification');
+        return;
     }
-
-    if (!telegramId) {
-        console.log('No telegram_id provided, skipping notification');
-        return null;
-    }
-
-    const url = `https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`;
-
-    const payload = {
-        chat_id: telegramId,
-        text: text,
-        parse_mode: 'HTML',
-        ...options
-    };
 
     try {
-        const response = await fetch(url, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(payload)
+        console.log(`[Telegram] Preparing notification for user ${recipientId}`);
+
+        // 1. Get telegram_id from users table
+        let telegramId = null;
+        await driver.tableClient.withSession(async (session) => {
+            const query = `
+                DECLARE $userId AS Utf8;
+                SELECT telegram_id FROM users WHERE id = $userId;
+            `;
+            const { resultSets } = await session.executeQuery(query, {
+                '$userId': TypedValues.utf8(recipientId)
+            });
+            const rows = TypedData.createNativeObjects(resultSets[0]);
+            if (rows.length > 0) {
+                telegramId = rows[0].telegram_id;
+            }
         });
 
-        if (!response.ok) {
-            const error = await response.json();
-
-            // Ignore 403 error (user blocked the bot)
-            if (error.error_code === 403) {
-                console.log(`User ${telegramId} blocked the bot`);
-                return null;
-            }
-
-            throw new Error(`Telegram API error: ${error.description}`);
+        if (!telegramId) {
+            console.log(`[Telegram] No telegram_id found for user ${recipientId}`);
+            return;
         }
 
-        return await response.json();
+        // 2. Send message via Bot API
+        const messageText = `BSNew message from ${senderName}:\n${text.substring(0, 50)}${text.length > 50 ? '...' : ''}`;
+
+        // Use a button to open the Mini App
+        const keyboard = {
+            inline_keyboard: [[
+                { text: "Open Chat", url: "https://t.me/WeaveMe_bot/app" }
+            ]]
+        };
+
+        const response = await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                chat_id: telegramId,
+                text: messageText,
+                reply_markup: keyboard
+            })
+        });
+
+        const data = await response.json();
+        if (!data.ok) {
+            console.error('[Telegram] Failed to send notification:', data.description);
+        } else {
+            console.log('[Telegram] Notification sent successfully');
+        }
+
     } catch (error) {
-        console.error('Telegram notification error:', error);
-        return null;
+        console.error('[Telegram] Error sending notification:', error);
     }
 }
 
-/**
- * Send a new message notification
- */
-async function notifyNewMessage(receiverTelegramId, senderName, messagePreview) {
-    const text = `💬 <b>Новое сообщение от ${senderName}</b>\n\n${messagePreview.substring(0, 100)}${messagePreview.length > 100 ? '...' : ''}`;
-
-    return await sendTelegramNotification(receiverTelegramId, text, {
-        reply_markup: {
-            inline_keyboard: [[
-                { text: '📱 Открыть чат', url: 'https://t.me/WeaveMe_bot/app?startapp=fullscreen' }
-            ]]
-        }
-    });
-}
-
-/**
- * Send a new like notification
- */
-async function notifyNewLike(likedUserTelegramId) {
-    const text = `❤️ <b>Вами заинтересовались!</b>\n\nКто-то поставил вам лайк. Проверьте, кто это!`;
-
-    return await sendTelegramNotification(likedUserTelegramId, text, {
-        reply_markup: {
-            inline_keyboard: [[
-                { text: '👀 Посмотреть', url: 'https://t.me/WeaveMe_bot/app?startapp=fullscreen' }
-            ]]
-        }
-    });
-}
-
-/**
- * Send a match notification
- */
-async function notifyMatch(userTelegramId, matchedUserName) {
-    const text = `🎉 <b>У вас новый мэтч!</b>\n\nВы понравились друг другу с ${matchedUserName}. Начните общение!`;
-
-    return await sendTelegramNotification(userTelegramId, text, {
-        reply_markup: {
-            inline_keyboard: [[
-                { text: '💬 Написать сообщение', url: 'https://t.me/WeaveMe_bot/app?startapp=fullscreen' }
-            ]]
-        }
-    });
-}
-
-/**
- * Send welcome message for /start command
- */
-async function notifyStart(chatId) {
-    const text = `👋 <b>Добро пожаловать в WeaveMe!</b>\n\nЗдесь вы можете найти новых друзей и интересных собеседников.\nНажмите кнопку ниже, чтобы начать!`;
-
-    return await sendTelegramNotification(chatId, text, {
-        reply_markup: {
-            inline_keyboard: [[
-                { text: '🚀 Запустить WeaveMe', url: 'https://t.me/WeaveMe_bot/app?startapp=fullscreen' }
-            ]]
-        }
-    });
-}
-
-module.exports = {
-    sendTelegramNotification,
-    notifyNewMessage,
-    notifyNewLike,
-    notifyMatch,
-    notifyStart
-};
+module.exports = { notifyNewMessage };
