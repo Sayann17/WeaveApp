@@ -82,11 +82,19 @@ export default function MatchesScreen() {
                 // Add to Matches (optimistic)
                 const newMatch = {
                     ...profile,
+                    id: profile.id, // Ensure ID is explicit
+                    name: profile.name || 'Пользователь',
                     chatId: result.chatId || [yandexAuth.getCurrentUser()?.uid, profile.id].sort().join('_')
                 };
+
+                // Validate fields to prevent "User not found"
+                if (!newMatch.id) {
+                    console.error('[Matches] Created match with missing ID! Profile:', profile);
+                }
+
                 setMatches(prev => [newMatch, ...prev]);
             } else {
-                // Should not happen if they liked us, but just in case
+                // If they liked us, remove from "Likes You" list
                 setLikesYou(prev => prev.filter(p => p.id !== profile.id));
             }
         } catch (e) {
