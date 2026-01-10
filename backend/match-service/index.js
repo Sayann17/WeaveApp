@@ -122,7 +122,13 @@ async function getUserProfile(driver, requestHeaders, userId, responseHeaders) {
             love_language: user.love_language,
             family_memory: user.family_memory,
             stereotype_true: user.stereotype_true,
-            stereotype_false: user.stereotype_false
+            stereotype_false: user.stereotype_false,
+            city: user.city,
+            social_telegram: user.social_telegram,
+            social_vk: user.social_vk,
+            social_instagram: user.social_instagram,
+            latitude: user.latitude,
+            longitude: user.longitude
         })
     };
 }

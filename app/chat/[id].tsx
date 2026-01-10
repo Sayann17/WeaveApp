@@ -1,6 +1,6 @@
 import { Ionicons } from '@expo/vector-icons';
-import { useLocalSearchParams, useRouter } from 'expo-router';
-import React, { useEffect, useRef, useState } from 'react';
+import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import {
   Alert,
   FlatList,
@@ -145,16 +145,18 @@ export default function ChatScreen() {
   }, [chatId]);
 
   // Telegram BackButton handler
-  useEffect(() => {
-    showBackButton();
-    setBackButtonHandler(() => {
-      router.back();
-    });
-    return () => {
-      hideBackButton();
-      setBackButtonHandler(null);
-    };
-  }, []);
+  useFocusEffect(
+    useCallback(() => {
+      showBackButton();
+      setBackButtonHandler(() => {
+        router.back();
+      });
+      return () => {
+        hideBackButton();
+        setBackButtonHandler(null);
+      };
+    }, [])
+  );
 
   const handleSendMessage = async () => {
     if (!newMessage.trim() || !participantId || typeof participantId !== 'string') return;
