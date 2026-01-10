@@ -300,64 +300,44 @@ async function getMatches(driver, requestHeaders, responseHeaders) {
     console.log('[getMatches] Starting for userId:', userId);
 
     await driver.tableClient.withSession(async (session) => {
-        // Find users who liked current user
-        const likesQuery = `
+        // 🔥 OPTIMIZED: Single query with JOIN to find mutual likes and user data
+        const matchQuery = `
             DECLARE $userId AS Utf8;
-            SELECT from_user_id FROM likes WHERE to_user_id = $userId;
+            
+            SELECT 
+                u.id,
+                u.name,
+                u.age,
+                u.photos,
+                u.about,
+                u.gender,
+                u.ethnicity,
+                u.macro_groups
+            FROM likes l1
+            JOIN likes l2 ON l1.from_user_id = l2.to_user_id AND l1.to_user_id = l2.from_user_id
+            JOIN users u ON u.id = l1.from_user_id
+            WHERE l1.to_user_id = $userId;
         `;
-        const { resultSets: likesResults } = await session.executeQuery(likesQuery, {
+
+        const { resultSets } = await session.executeQuery(matchQuery, {
             '$userId': TypedValues.utf8(userId)
         });
-        const likedByUsers = likesResults[0] ? TypedData.createNativeObjects(likesResults[0]).map(r => r.from_user_id) : [];
-        console.log('[getMatches] Liked by users:', likedByUsers);
+        const matchRecords = resultSets[0] ? TypedData.createNativeObjects(resultSets[0]) : [];
 
-        if (likedByUsers.length === 0) return;
+        console.log(`[getMatches] Found ${matchRecords.length} matches (optimized query)`);
 
-        // Find mutual likes
-        const mutualQuery = `
-            DECLARE $userId AS Utf8;
-            SELECT to_user_id FROM likes WHERE from_user_id = $userId;
-        `;
-        const { resultSets: mutualResults } = await session.executeQuery(mutualQuery, {
-            '$userId': TypedValues.utf8(userId)
-        });
-        const userLiked = mutualResults[0] ? TypedData.createNativeObjects(mutualResults[0]).map(r => r.to_user_id) : [];
-        console.log('[getMatches] Users I liked:', userLiked);
-
-        const matchIds = likedByUsers.filter(id => userLiked.includes(id));
-        console.log('[getMatches] Match IDs computed:', matchIds);
-
-        if (matchIds.length === 0) return;
-
-        // Get user data for each match
-        for (const matchId of matchIds) {
-            const userQuery = `
-                DECLARE $matchId AS Utf8;
-                SELECT id, name, age, photos, about, gender, ethnicity, macro_groups
-                FROM users
-                WHERE id = $matchId;
-            `;
-            const { resultSets: userResults } = await session.executeQuery(userQuery, {
-                '$matchId': TypedValues.utf8(matchId)
-            });
-            const users = userResults[0] ? TypedData.createNativeObjects(userResults[0]) : [];
-            console.log(`[getMatches] Fetched user data for ${matchId}:`, users.length > 0 ? 'Success' : 'Not found');
-
-            if (users.length === 0) continue;
-
-            const u = users[0];
-            matches.push({
-                id: u.id,
-                chatId: [userId, matchId].sort().join('_'),
-                name: u.name,
-                age: u.age,
-                photos: tryParse(u.photos),
-                bio: u.about,
-                gender: u.gender,
-                ethnicity: u.ethnicity,
-                macroGroups: tryParse(u.macro_groups)
-            });
-        }
+        // Transform results
+        matches = matchRecords.map(u => ({
+            id: u.id,
+            chatId: [userId, u.id].sort().join('_'),
+            name: u.name,
+            age: u.age,
+            photos: tryParse(u.photos),
+            bio: u.about,
+            gender: u.gender,
+            ethnicity: u.ethnicity,
+            macroGroups: tryParse(u.macro_groups)
+        }));
     });
 
     console.log('[getMatches] Returning matches count:', matches.length);

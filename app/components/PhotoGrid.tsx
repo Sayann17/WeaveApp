@@ -1,6 +1,7 @@
 // components/PhotoGrid.tsx
 import { Ionicons } from '@expo/vector-icons';
 import * as ImagePicker from 'expo-image-picker';
+import * as ImageManipulator from 'expo-image-manipulator';
 import React, { useState } from 'react';
 import {
   ActivityIndicator,
@@ -43,16 +44,23 @@ export const PhotoGrid = ({ photos, setPhotos, maxPhotos = 6 }: PhotoGridProps) 
         mediaTypes: ImagePicker.MediaTypeOptions.Images,
         allowsEditing: true,
         // aspect: [3, 4], // Removed to allow freeform cropping
-        quality: 0.5,
+        quality: 1.0, // Keep high quality, we'll compress manually
       });
 
       if (!result.canceled && result.assets[0].uri) {
         const localUri = result.assets[0].uri;
 
-        // 🔥 YANDEX UPLOAD START
-        // console.log("Uploading to Yandex...", localUri);
-        const remoteUrl = await yandexStorage.uploadImage(localUri, 'avatars');
-        // console.log("Uploaded:", remoteUrl);
+        // 🔥 COMPRESSION: Resize to max 1080px width, compress to 80% quality
+        console.log('[PhotoGrid] Compressing image...');
+        const manipResult = await ImageManipulator.manipulateAsync(
+          localUri,
+          [{ resize: { width: 1080 } }], // Maintains aspect ratio
+          { compress: 0.8, format: ImageManipulator.SaveFormat.JPEG }
+        );
+        console.log('[PhotoGrid] Compressed:', manipResult.uri);
+
+        // 🔥 YANDEX UPLOAD with compressed image
+        const remoteUrl = await yandexStorage.uploadImage(manipResult.uri, 'avatars');
 
         setPhotos([...photos, remoteUrl]);
       }

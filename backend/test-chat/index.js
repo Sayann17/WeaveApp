@@ -154,8 +154,48 @@ async function handleConnect(driver, event, connectionId) {
 }
 
 async function handleDisconnect(driver, connectionId) {
-    console.log('[WS] Disconnect:', connectionId, '(keeping in DB)');
+    console.log('[WS] Disconnect:', connectionId);
+
+    try {
+        // Delete this specific connection
+        await driver.tableClient.withSession(async (session) => {
+            const query = `
+                DECLARE $connectionId AS Utf8;
+                DELETE FROM socket_connections WHERE connection_id = $connectionId;
+            `;
+            await session.executeQuery(query, {
+                '$connectionId': TypedValues.utf8(connectionId)
+            });
+        });
+        console.log('[WS] Connection removed from database');
+
+        // Also cleanup stale connections (older than 1 hour)
+        await cleanupStaleConnections(driver);
+    } catch (error) {
+        console.error('[WS] Error during disconnect cleanup:', error);
+    }
+
     return { statusCode: 200 };
+}
+
+async function cleanupStaleConnections(driver) {
+    try {
+        const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000);
+
+        await driver.tableClient.withSession(async (session) => {
+            const query = `
+                DECLARE $cutoffTime AS Timestamp;
+                DELETE FROM socket_connections WHERE created_at < $cutoffTime;
+            `;
+            await session.executeQuery(query, {
+                '$cutoffTime': TypedValues.timestamp(oneHourAgo)
+            });
+        });
+
+        console.log('[Cleanup] Removed stale connections older than 1 hour');
+    } catch (error) {
+        console.error('[Cleanup] Error removing stale connections:', error);
+    }
 }
 
 async function handleMessage(driver, event, connectionId) {
@@ -348,12 +388,36 @@ async function getChats(driver, requestHeaders, responseHeaders) {
 
     let chats = [];
     await driver.tableClient.withSession(async (session) => {
-        // Read from chats table where user is participant
+        // 🔥 OPTIMIZED: Single query with JOIN instead of loop
         const chatsQuery = `
             DECLARE $userId AS Utf8;
-            SELECT id, user1_id, user2_id, last_message, last_message_time, created_at
-            FROM chats
-            WHERE user1_id = $userId OR user2_id = $userId;
+            
+            SELECT 
+                c.id as chat_id,
+                c.user1_id,
+                c.user2_id,
+                c.last_message,
+                c.last_message_time,
+                c.created_at,
+                u.id as other_user_id,
+                u.name,
+                u.age,
+                u.photos,
+                u.ethnicity,
+                u.macro_groups,
+                m.sender_id as last_sender_id
+            FROM chats c
+            JOIN users u ON (
+                (c.user1_id = $userId AND u.id = c.user2_id) OR
+                (c.user2_id = $userId AND u.id = c.user1_id)
+            )
+            LEFT JOIN (
+                SELECT DISTINCT ON (chat_id) chat_id, sender_id
+                FROM messages
+                ORDER BY chat_id, timestamp DESC
+            ) m ON m.chat_id = c.id
+            WHERE c.user1_id = $userId OR c.user2_id = $userId
+            ORDER BY c.last_message_time DESC NULLS LAST;
         `;
 
         const { resultSets } = await session.executeQuery(chatsQuery, {
@@ -361,72 +425,27 @@ async function getChats(driver, requestHeaders, responseHeaders) {
         });
         const chatRecords = resultSets[0] ? TypedData.createNativeObjects(resultSets[0]) : [];
 
-        console.log(`[getChats] Found ${chatRecords.length} chats for user ${userId}`);
+        console.log(`[getChats] Found ${chatRecords.length} chats for user ${userId} (optimized query)`);
 
-        // For each chat, get other participant's data
-        for (const chat of chatRecords) {
-            const otherUserId = chat.user1_id === userId ? chat.user2_id : chat.user1_id;
-
-            const userQuery = `
-                DECLARE $userId AS Utf8;
-                SELECT id, name, age, photos, ethnicity, macro_groups FROM users WHERE id = $userId;
-            `;
-            const { resultSets: userResults } = await session.executeQuery(userQuery, {
-                '$userId': TypedValues.utf8(otherUserId)
-            });
-            const users = userResults[0] ? TypedData.createNativeObjects(userResults[0]) : [];
-            if (users.length === 0) {
-                console.log(`[getChats] User ${otherUserId} not found, skipping chat ${chat.id}`);
-                continue;
-            }
-
-            const user = users[0];
-
-            // Determine if last message was sent by current user
-            let isOwnMessage = false;
-            if (chat.last_message) {
-                // Get the sender of last message
-                const lastMsgQuery = `
-                    DECLARE $chatId AS Utf8;
-                    SELECT sender_id FROM messages
-                    WHERE chat_id = $chatId
-                    ORDER BY timestamp DESC
-                    LIMIT 1;
-                `;
-                const { resultSets: msgResults } = await session.executeQuery(lastMsgQuery, {
-                    '$chatId': TypedValues.utf8(chat.id)
-                });
-                const msgRows = msgResults[0] ? TypedData.createNativeObjects(msgResults[0]) : [];
-                if (msgRows.length > 0) {
-                    isOwnMessage = msgRows[0].sender_id === userId;
-                }
-            }
-
-            chats.push({
-                id: chat.id,
-                matchId: user.id,
-                name: user.name,
-                age: user.age,
-                ethnicity: user.ethnicity,
-                macroGroups: tryParse(user.macro_groups),
-                photo: tryParse(user.photos)[0] || null,
-                lastMessage: chat.last_message || '',
-                lastMessageTime: chat.last_message_time ? new Date(chat.last_message_time).toISOString() : null,
-                isOwnMessage: isOwnMessage
-            });
-        }
-
-        // Sort by last message time or created_at
-        chats.sort((a, b) => {
-            const timeA = a.lastMessageTime ? new Date(a.lastMessageTime).getTime() : (chatRecords.find(c => c.id === a.id)?.created_at?.getTime() || 0);
-            const timeB = b.lastMessageTime ? new Date(b.lastMessageTime).getTime() : (chatRecords.find(c => c.id === b.id)?.created_at?.getTime() || 0);
-            return timeB - timeA;
-        });
+        // Transform results
+        chats = chatRecords.map(row => ({
+            id: row.chat_id,
+            matchId: row.other_user_id,
+            name: row.name,
+            age: row.age,
+            ethnicity: row.ethnicity,
+            macroGroups: tryParse(row.macro_groups),
+            photo: tryParse(row.photos)[0] || null,
+            lastMessage: row.last_message || '',
+            lastMessageTime: row.last_message_time ? new Date(row.last_message_time).toISOString() : null,
+            isOwnMessage: row.last_sender_id === userId
+        }));
     });
 
     console.log(`[getChats] Returning ${chats.length} chats`);
     return { statusCode: 200, headers: responseHeaders, body: JSON.stringify({ chats }) };
 }
+
 
 async function getHistory(driver, requestHeaders, chatId, responseHeaders) {
     const userId = checkAuth(requestHeaders);
