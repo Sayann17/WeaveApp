@@ -34,7 +34,7 @@ export default function OnboardingGenderScreen() {
             //     router.replace('/onboarding/ethnicity');
             // }
             await yandexAuth.updateProfile({ gender: gender });
-            router.replace('/onboarding/ethnicity');
+            router.replace('/onboarding/age');
         } catch (error) {
             console.error('Gender screen error:', error);
             const msg = error instanceof Error ? error.message : String(error);
@@ -50,7 +50,7 @@ export default function OnboardingGenderScreen() {
             <View style={{ flex: 1 }}>
                 <View style={styles.header}>
                     {/* 🔥 ЧЕРНЫЙ СЧЕТЧИК */}
-                    <Text style={styles.step}>ШАГ 1 из 6</Text>
+                    <Text style={styles.step}>ШАГ 1 из 7</Text>
                     <Text style={[styles.title, hasError && { color: '#ef4444' }]}>Ваш пол</Text>
                     <Text style={styles.subtitle}>Это поможет нам настроить поиск.</Text>
                 </View>
