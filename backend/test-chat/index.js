@@ -426,20 +426,14 @@ async function getChats(driver, requestHeaders, responseHeaders) {
                 u.age,
                 u.photos,
                 u.ethnicity,
-                u.macro_groups,
-                m.sender_id as last_sender_id
+                u.macro_groups
             FROM chats c
             JOIN users u ON (
                 (c.user1_id = $userId AND u.id = c.user2_id) OR
                 (c.user2_id = $userId AND u.id = c.user1_id)
             )
-            LEFT JOIN (
-                SELECT DISTINCT ON (chat_id) chat_id, sender_id
-                FROM messages
-                ORDER BY chat_id, timestamp DESC
-            ) m ON m.chat_id = c.id
             WHERE c.user1_id = $userId OR c.user2_id = $userId
-            ORDER BY c.last_message_time DESC NULLS LAST;
+            ORDER BY c.last_message_time DESC;
         `;
 
         const { resultSets } = await session.executeQuery(chatsQuery, {
@@ -449,7 +443,7 @@ async function getChats(driver, requestHeaders, responseHeaders) {
 
         console.log(`[getChats] Found ${chatRecords.length} chats for user ${userId} (optimized query)`);
 
-        // Transform results
+        // Transform results - determine last sender separately if needed
         chats = chatRecords.map(row => ({
             id: row.chat_id,
             matchId: row.other_user_id,
@@ -460,7 +454,7 @@ async function getChats(driver, requestHeaders, responseHeaders) {
             photo: tryParse(row.photos)[0] || null,
             lastMessage: row.last_message || '',
             lastMessageTime: row.last_message_time ? new Date(row.last_message_time).toISOString() : null,
-            isOwnMessage: row.last_sender_id === userId
+            isOwnMessage: false // Will be determined by frontend based on sender
         }));
     });
 
