@@ -14,6 +14,7 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { ThemedBackground } from '../components/ThemedBackground';
+import { useNotifications } from '../context/NotificationContext';
 import { useTelegram } from '../context/TelegramProvider';
 import { useTheme } from '../context/ThemeContext';
 import { yandexAuth } from '../services/yandex/AuthService';
@@ -23,6 +24,7 @@ import { getPlatformPadding } from '../utils/platformPadding';
 export default function MatchesScreen() {
     const router = useRouter();
     const { theme, themeType } = useTheme();
+    const { resetNewLikes } = useNotifications();
     const [matches, setMatches] = useState<any[]>([]);
     const [likesYou, setLikesYou] = useState<any[]>([]);
     const [yourLikes, setYourLikes] = useState<any[]>([]);
@@ -36,6 +38,7 @@ export default function MatchesScreen() {
     useFocusEffect(
         useCallback(() => {
             loadMatches();
+            resetNewLikes();
         }, [])
     );
 

@@ -14,6 +14,7 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { ThemedBackground } from '../components/ThemedBackground';
+import { useNotifications } from '../context/NotificationContext';
 import { useTheme } from '../context/ThemeContext';
 import { yandexAuth } from '../services/yandex/AuthService';
 import { yandexChat, type Chat } from '../services/yandex/ChatService';
@@ -36,6 +37,7 @@ export default function ChatsScreen() {
   const [isLoading, setIsLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const router = useRouter();
+  const { resetUnreadMessages } = useNotifications();
   const insets = useSafeAreaInsets();
 
   const isLight = themeType === 'light';
@@ -82,6 +84,7 @@ export default function ChatsScreen() {
       };
 
       loadChats();
+      resetUnreadMessages();
 
       // Ensure we are connected for real-time updates
       yandexChat.connect().catch(console.error);

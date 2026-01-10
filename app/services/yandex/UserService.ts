@@ -72,6 +72,7 @@ export class YandexUserService implements IUserService {
             bio: data.about,
             gender: data.gender,
             macroGroups: tryParse(data.macroGroups || data.macro_groups),
+            ethnicity: data.ethnicity,
             customEthnicity: data.ethnicity,
             zodiac: data.zodiac,
             religions: tryParse(data.religions || data.religion),

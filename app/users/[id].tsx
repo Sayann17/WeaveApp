@@ -46,7 +46,7 @@ export default function UserProfileScreen() {
                     // Check if this user is a match
                     try {
                         const matches = await yandexMatch.getMatches();
-                        const isUserMatch = matches.some((match: any) => match.id === id);
+                        const isUserMatch = matches.some((match: any) => String(match.id) === String(id));
                         setIsMatch(isUserMatch);
                     } catch (e) {
                         console.error('Error checking match status:', e);
