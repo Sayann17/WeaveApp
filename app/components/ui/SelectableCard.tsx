@@ -20,12 +20,12 @@ export const SelectableCard = ({ title, emoji, selected, onPress }: SelectableCa
       ]}
     >
       <View style={styles.content}>
-        <Text style={styles.emoji}>{emoji}</Text>
+        {emoji ? <Text style={styles.emoji}>{emoji}</Text> : null}
         <Text style={[styles.title, selected && styles.titleSelected]}>{title}</Text>
       </View>
       {selected && (
         <View style={styles.checkIcon}>
-           <Ionicons name="checkmark-circle" size={24} color="#e1306c" />
+          <Ionicons name="checkmark-circle" size={24} color="#e1306c" />
         </View>
       )}
     </Pressable>

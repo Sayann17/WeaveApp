@@ -86,7 +86,6 @@ export default function OnboardingEthnicityScreen() {
                     <Text style={styles.title}>Ваше происхождение</Text>
                     <Text style={styles.subtitle}>
                         Это фундамент вашей культуры.
-                        {'\n'}(укажите ваши корни)
                     </Text>
                 </View>
 
@@ -111,7 +110,7 @@ export default function OnboardingEthnicityScreen() {
                     </View>
 
                     {/* Макрогруппы */}
-                    <Text style={styles.label}>Культурный код</Text>
+                    <Text style={styles.label}>Культурный код (укажите ваши корни)</Text>
                     <View style={styles.grid}>
                         {ethnicityGroups.map((group, index) => (
                             <SelectableCard
@@ -141,7 +140,7 @@ export default function OnboardingEthnicityScreen() {
 
 const styles = StyleSheet.create({
     container: { flex: 1, backgroundColor: THEME.background },
-    header: { padding: 20, paddingTop: 90 },
+    header: { padding: 20, paddingTop: 92 },
     // 🔥 ЧЕРНЫЙ СЧЕТЧИК
     stepCount: { fontSize: 12, color: '#000000', marginBottom: 8, fontWeight: 'bold', textTransform: 'uppercase', letterSpacing: 1 },
     title: { fontSize: 32, fontWeight: '300', color: THEME.text, marginBottom: 10 },

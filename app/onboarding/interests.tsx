@@ -114,7 +114,7 @@ export default function OnboardingInterestsScreen() {
 
 const styles = StyleSheet.create({
     container: { flex: 1, backgroundColor: '#f4f4e7' },
-    header: { padding: 20, paddingTop: 90 },
+    header: { padding: 20, paddingTop: 92 },
     // 🔥 ЧЕРНЫЙ СЧЕТЧИК
     stepCount: { fontSize: 12, color: '#000000', marginBottom: 8, fontWeight: 'bold', textTransform: 'uppercase', letterSpacing: 1 },
     title: { fontSize: 32, fontWeight: '300', color: '#1c1c1e', marginBottom: 10 },
