@@ -109,7 +109,7 @@ export default function EditEthnicityScreen() {
           >
             <ScrollView
               style={{ flex: 1 }}
-              contentContainerStyle={[styles.scrollContent, { paddingBottom: 100 }]}
+              contentContainerStyle={[styles.scrollContent, { paddingBottom: 20 }]}
             >
 
               {/* 1. Поле для ввода */}
