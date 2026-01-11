@@ -35,6 +35,7 @@ import ZodiacSection from './components/ZodiacSection';
 import { PrimaryButton } from '../components/ui/PrimaryButton';
 import InterestsModal from './components/modals/InterestsModal';
 import ZodiacModal from './components/modals/ZodiacModal';
+import { ThemedBackground } from '../components/ThemedBackground';
 
 export default function EditProfileScreen() {
   const router = useRouter();
@@ -255,248 +256,250 @@ export default function EditProfileScreen() {
   }
 
   return (
-    <View style={[styles.container, { backgroundColor: theme.background }]}>
-      <View style={{ flex: 1, paddingTop: getPlatformPadding(insets, isMobile, 78) }}>
-        <KeyboardAvoidingView
-          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-          style={{ flex: 1 }}
-        >
-          <View style={[styles.header, { backgroundColor: theme.background, borderBottomColor: theme.border }]}>
-            <Text style={[styles.headerTitle, { color: theme.text }]}>
-              {isFirstEdit ? 'Заполните профиль' : 'Редактировать'}
-            </Text>
-          </View>
-
-          <ScrollView contentContainerStyle={styles.scrollContent}>
-
-            {/* 1. Фото */}
-            <PhotoSection
-              photos={photos}
-              setPhotos={setPhotos}
-              isFirstEdit={isFirstEdit}
-            />
-
-            {/* 2. Имя и 3. Возраст */}
-            <BasicInfoSection
-              name={name} setName={setName}
-              age={age} setAge={setAge}
-              isFirstEdit={isFirstEdit}
-            />
-
-            {/* 3.5. Город и Локация */}
-            <View style={{ marginBottom: 25 }}>
-              <Text style={[styles.sectionTitle, { color: theme.text }]}>Где вы находитесь?</Text>
-
-              <TextInput
-                style={[styles.input, {
-                  backgroundColor: theme.cardBg,
-                  borderColor: theme.border,
-                  color: theme.text
-                }]}
-                placeholder="Ваш город (например, Москва)"
-                placeholderTextColor={theme.subText}
-                value={city}
-                onChangeText={setCity}
-              />
-
-              <TouchableOpacity
-                style={[styles.locationButton, { backgroundColor: theme.cardBg, borderColor: theme.border }]}
-                onPress={handleUpdateLocation}
-                disabled={isLocationLoading}
-              >
-                {isLocationLoading ? (
-                  <ActivityIndicator size="small" color={Colors.primary} />
-                ) : (
-                  <Ionicons name="location-outline" size={20} color={Colors.primary} />
-                )}
-                <Text style={[styles.locationButtonText, { color: theme.text }]}>
-                  {latitude && longitude ? 'Геолокация обновлена (GPS)' : 'Обновить геолокацию (GPS)'}
-                </Text>
-              </TouchableOpacity>
+    <ThemedBackground>
+      <View style={styles.container}>
+        <View style={{ flex: 1, paddingTop: getPlatformPadding(insets, isMobile, 78) }}>
+          <KeyboardAvoidingView
+            behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+            style={{ flex: 1 }}
+          >
+            <View style={[styles.header, { borderBottomColor: theme.border }]}>
+              <Text style={[styles.headerTitle, { color: theme.text }]}>
+                {isFirstEdit ? 'Заполните профиль' : 'Редактировать'}
+              </Text>
             </View>
 
-            {/* 4. Вероисповедание */}
-            <ReligionSection
-              selectedReligions={religions}
-              setSelectedReligions={setReligions}
-            />
+            <ScrollView contentContainerStyle={styles.scrollContent}>
 
-            {/* 4.5 Социальные сети */}
-            <View style={styles.inputContainer}>
-              <Text style={[styles.sectionTitle, { color: theme.text }]}>Соцсети (опционально)</Text>
+              {/* 1. Фото */}
+              <PhotoSection
+                photos={photos}
+                setPhotos={setPhotos}
+                isFirstEdit={isFirstEdit}
+              />
 
-              <View style={{ gap: 10 }}>
+              {/* 2. Имя и 3. Возраст */}
+              <BasicInfoSection
+                name={name} setName={setName}
+                age={age} setAge={setAge}
+                isFirstEdit={isFirstEdit}
+              />
+
+              {/* 3.5. Город и Локация */}
+              <View style={{ marginBottom: 25 }}>
+                <Text style={[styles.sectionTitle, { color: theme.text }]}>Где вы находитесь?</Text>
+
                 <TextInput
                   style={[styles.input, {
                     backgroundColor: theme.cardBg,
                     borderColor: theme.border,
                     color: theme.text
                   }]}
-                  placeholder="Telegram (@username)"
+                  placeholder="Ваш город (например, Москва)"
                   placeholderTextColor={theme.subText}
-                  value={socialTelegram}
-                  onChangeText={setSocialTelegram}
-                  autoCapitalize="none"
+                  value={city}
+                  onChangeText={setCity}
                 />
+
+                <TouchableOpacity
+                  style={[styles.locationButton, { backgroundColor: theme.cardBg, borderColor: theme.border }]}
+                  onPress={handleUpdateLocation}
+                  disabled={isLocationLoading}
+                >
+                  {isLocationLoading ? (
+                    <ActivityIndicator size="small" color={Colors.primary} />
+                  ) : (
+                    <Ionicons name="location-outline" size={20} color={Colors.primary} />
+                  )}
+                  <Text style={[styles.locationButtonText, { color: theme.text }]}>
+                    {latitude && longitude ? 'Геолокация обновлена (GPS)' : 'Обновить геолокацию (GPS)'}
+                  </Text>
+                </TouchableOpacity>
+              </View>
+
+              {/* 4. Вероисповедание */}
+              <ReligionSection
+                selectedReligions={religions}
+                setSelectedReligions={setReligions}
+              />
+
+              {/* 4.5 Социальные сети */}
+              <View style={styles.inputContainer}>
+                <Text style={[styles.sectionTitle, { color: theme.text }]}>Соцсети (опционально)</Text>
+
+                <View style={{ gap: 10 }}>
+                  <TextInput
+                    style={[styles.input, {
+                      backgroundColor: theme.cardBg,
+                      borderColor: theme.border,
+                      color: theme.text
+                    }]}
+                    placeholder="Telegram (@username)"
+                    placeholderTextColor={theme.subText}
+                    value={socialTelegram}
+                    onChangeText={setSocialTelegram}
+                    autoCapitalize="none"
+                  />
+                  <TextInput
+                    style={[styles.input, {
+                      backgroundColor: theme.cardBg,
+                      borderColor: theme.border,
+                      color: theme.text
+                    }]}
+                    placeholder="ВКонтакте (ссылка или ID)"
+                    placeholderTextColor={theme.subText}
+                    value={socialVk}
+                    onChangeText={setSocialVk}
+                    autoCapitalize="none"
+                  />
+                  <TextInput
+                    style={[styles.input, {
+                      backgroundColor: theme.cardBg,
+                      borderColor: theme.border,
+                      color: theme.text
+                    }]}
+                    placeholder="Instagram (@username)"
+                    placeholderTextColor={theme.subText}
+                    value={socialInstagram}
+                    onChangeText={setSocialInstagram}
+                    autoCapitalize="none"
+                  />
+                </View>
+              </View>
+
+              {/* 5. Знак зодиака */}
+              <ZodiacSection
+                zodiac={zodiac}
+                setZodiac={setZodiac}
+                onEditPress={() => setShowZodiacModal(true)}
+              />
+
+              {/* 6. Твои корни */}
+              <EthnicitySection
+                ethnicities={ethnicities}
+                macroGroups={macroGroups}
+                isFirstEdit={isFirstEdit}
+                onEditPress={() => router.push('/profile/switcher/ethnicity')}
+              />
+
+              {/* 7. О себе */}
+              <View style={styles.inputContainer}>
+                <Text style={[styles.sectionTitle, { color: theme.text }]}>О себе</Text>
                 <TextInput
-                  style={[styles.input, {
-                    backgroundColor: theme.cardBg,
-                    borderColor: theme.border,
-                    color: theme.text
-                  }]}
-                  placeholder="ВКонтакте (ссылка или ID)"
+                  style={[
+                    styles.input,
+                    styles.bioInput,
+                    {
+                      backgroundColor: themeType === 'space' ? 'rgba(18, 22, 40, 0.9)' : theme.cardBg,
+                      borderColor: theme.border,
+                      color: theme.text
+                    }
+                  ]}
+                  value={bio}
+                  onChangeText={setBio}
+                  multiline
+                  numberOfLines={4}
+                  placeholder="Расскажите о себе, своих увлечениях и мечтах..."
                   placeholderTextColor={theme.subText}
-                  value={socialVk}
-                  onChangeText={setSocialVk}
-                  autoCapitalize="none"
-                />
-                <TextInput
-                  style={[styles.input, {
-                    backgroundColor: theme.cardBg,
-                    borderColor: theme.border,
-                    color: theme.text
-                  }]}
-                  placeholder="Instagram (@username)"
-                  placeholderTextColor={theme.subText}
-                  value={socialInstagram}
-                  onChangeText={setSocialInstagram}
-                  autoCapitalize="none"
+                  maxLength={500}
+                  autoCapitalize="sentences"
                 />
               </View>
+
+              {/* 8. Пол */}
+              <GenderSection
+                gender={gender}
+                setGender={setGender}
+                isFirstEdit={isFirstEdit}
+              />
+
+              {/* 9-13. Детали (Хуки) */}
+              <View style={styles.hooksBlock}>
+                <Text style={[styles.sectionTitle, { color: theme.text }]}>Детали личности ✨</Text>
+
+                {/* 9. Чем я горжусь */}
+                <HookInput
+                  label="Чем я горжусь в своей культуре"
+                  value={culturePride}
+                  onChange={setCulturePride}
+                  placeholder="Гостеприимство, музыка, традиции..."
+                  icon="trophy-outline"
+                />
+
+                {/* 10. Язык любви */}
+                <HookInput
+                  label="Мой язык любви"
+                  value={loveLanguage}
+                  onChange={setLoveLanguage}
+                  placeholder="Слова поощрения, Подарки, Время..."
+                  icon="heart-half-outline"
+                />
+
+                {/* 11. Семейное воспоминание */}
+                <HookInput
+                  label="Любимое семейное воспоминание"
+                  value={familyMemory}
+                  onChange={setFamilyMemory}
+                  placeholder="Как мы всей семьей лепили пельмени..."
+                  icon="people-outline"
+                />
+
+                {/* 12. Что значит близость */}
+                <HookInput
+                  label="Что для тебя значит настоящая близость?"
+                  value={stereotypeTrue}
+                  onChange={setStereotypeTrue}
+                  placeholder="Доверие, общие цели, поддержка..."
+                  icon="heart-outline"
+                />
+
+                {/* 13. Перезагрузка */}
+                <HookInput
+                  label="Чем ты занимаешься, когда хочешь перезагрузиться?"
+                  value={stereotypeFalse}
+                  onChange={setStereotypeFalse}
+                  placeholder="Читаю, гуляю, смотрю сериалы..."
+                  icon="refresh-outline"
+                />
+              </View>
+
+              {/* 14. Интересы */}
+              <InterestsSection
+                interests={interests}
+                onEditPress={() => setShowInterestsModal(true)}
+              />
+
+              {/* <View style={{ height: 100 }} />  Removed extra space */}
+            </ScrollView>
+
+            <View style={[styles.footer, { backgroundColor: theme.background, borderTopColor: theme.border }]}>
+              <PrimaryButton
+                title={isFirstEdit ? "Готово" : "Сохранить"}
+                onPress={handleSave}
+                isLoading={isSaving}
+                disabled={!isFormValid}
+                style={{ backgroundColor: theme.accent || '#1c1c1e' }}
+              />
             </View>
 
-            {/* 5. Знак зодиака */}
-            <ZodiacSection
+            <InterestsModal
+              visible={showInterestsModal}
+              interests={interests}
+              setInterests={setInterests}
+              onClose={() => setShowInterestsModal(false)}
+            />
+
+            <ZodiacModal
+              visible={showZodiacModal}
               zodiac={zodiac}
               setZodiac={setZodiac}
-              onEditPress={() => setShowZodiacModal(true)}
+              onClose={() => setShowZodiacModal(false)}
             />
 
-            {/* 6. Твои корни */}
-            <EthnicitySection
-              ethnicities={ethnicities}
-              macroGroups={macroGroups}
-              isFirstEdit={isFirstEdit}
-              onEditPress={() => router.push('/profile/switcher/ethnicity')}
-            />
-
-            {/* 7. О себе */}
-            <View style={styles.inputContainer}>
-              <Text style={[styles.sectionTitle, { color: theme.text }]}>О себе</Text>
-              <TextInput
-                style={[
-                  styles.input,
-                  styles.bioInput,
-                  {
-                    backgroundColor: themeType === 'space' ? 'rgba(18, 22, 40, 0.9)' : theme.cardBg,
-                    borderColor: theme.border,
-                    color: theme.text
-                  }
-                ]}
-                value={bio}
-                onChangeText={setBio}
-                multiline
-                numberOfLines={4}
-                placeholder="Расскажите о себе, своих увлечениях и мечтах..."
-                placeholderTextColor={theme.subText}
-                maxLength={500}
-                autoCapitalize="sentences"
-              />
-            </View>
-
-            {/* 8. Пол */}
-            <GenderSection
-              gender={gender}
-              setGender={setGender}
-              isFirstEdit={isFirstEdit}
-            />
-
-            {/* 9-13. Детали (Хуки) */}
-            <View style={styles.hooksBlock}>
-              <Text style={[styles.sectionTitle, { color: theme.text }]}>Детали личности ✨</Text>
-
-              {/* 9. Чем я горжусь */}
-              <HookInput
-                label="Чем я горжусь в своей культуре"
-                value={culturePride}
-                onChange={setCulturePride}
-                placeholder="Гостеприимство, музыка, традиции..."
-                icon="trophy-outline"
-              />
-
-              {/* 10. Язык любви */}
-              <HookInput
-                label="Мой язык любви"
-                value={loveLanguage}
-                onChange={setLoveLanguage}
-                placeholder="Слова поощрения, Подарки, Время..."
-                icon="heart-half-outline"
-              />
-
-              {/* 11. Семейное воспоминание */}
-              <HookInput
-                label="Любимое семейное воспоминание"
-                value={familyMemory}
-                onChange={setFamilyMemory}
-                placeholder="Как мы всей семьей лепили пельмени..."
-                icon="people-outline"
-              />
-
-              {/* 12. Что значит близость */}
-              <HookInput
-                label="Что для тебя значит настоящая близость?"
-                value={stereotypeTrue}
-                onChange={setStereotypeTrue}
-                placeholder="Доверие, общие цели, поддержка..."
-                icon="heart-outline"
-              />
-
-              {/* 13. Перезагрузка */}
-              <HookInput
-                label="Чем ты занимаешься, когда хочешь перезагрузиться?"
-                value={stereotypeFalse}
-                onChange={setStereotypeFalse}
-                placeholder="Читаю, гуляю, смотрю сериалы..."
-                icon="refresh-outline"
-              />
-            </View>
-
-            {/* 14. Интересы */}
-            <InterestsSection
-              interests={interests}
-              onEditPress={() => setShowInterestsModal(true)}
-            />
-
-            {/* <View style={{ height: 100 }} />  Removed extra space */}
-          </ScrollView>
-
-          <View style={[styles.footer, { backgroundColor: theme.background, borderTopColor: theme.border }]}>
-            <PrimaryButton
-              title={isFirstEdit ? "Готово" : "Сохранить"}
-              onPress={handleSave}
-              isLoading={isSaving}
-              disabled={!isFormValid}
-              style={{ backgroundColor: theme.accent || '#1c1c1e' }}
-            />
-          </View>
-
-          <InterestsModal
-            visible={showInterestsModal}
-            interests={interests}
-            setInterests={setInterests}
-            onClose={() => setShowInterestsModal(false)}
-          />
-
-          <ZodiacModal
-            visible={showZodiacModal}
-            zodiac={zodiac}
-            setZodiac={setZodiac}
-            onClose={() => setShowZodiacModal(false)}
-          />
-
-        </KeyboardAvoidingView>
+          </KeyboardAvoidingView>
+        </View>
       </View>
-    </View>
+    </ThemedBackground>
   );
 }
 

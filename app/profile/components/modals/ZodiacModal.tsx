@@ -14,6 +14,7 @@ import { useTheme } from '../../../context/ThemeContext';
 import { yandexAuth } from '../../../services/yandex/AuthService';
 import { zodiacSigns } from '../../../utils/basic_info';
 import { PrimaryButton } from '../../../components/ui/PrimaryButton';
+import { ThemedBackground } from '../../../components/ThemedBackground';
 
 interface ZodiacModalProps {
   visible: boolean;
@@ -45,7 +46,6 @@ export default function ZodiacModal({ visible, zodiac, setZodiac, onClose }: Zod
           zodiac: zodiac || undefined
         });
         onClose();
-        // showAlert('Знак зодиака обновлен');
       }
     } catch (error) {
       console.error('Ошибка сохранения знака зодиака:', error);
@@ -92,38 +92,40 @@ export default function ZodiacModal({ visible, zodiac, setZodiac, onClose }: Zod
       <TouchableWithoutFeedback onPress={onClose}>
         <View style={styles.modalOverlay}>
           <TouchableWithoutFeedback>
-            <View style={[styles.modalContent, { backgroundColor: theme.background }]}>
-              <View style={[styles.header, { borderBottomColor: theme.border }]}>
-                <Text style={[styles.title, { color: theme.text }]}>Знаки зодиака</Text>
-                <TouchableOpacity
-                  style={styles.closeButton}
-                  onPress={onClose}
-                >
-                  <Ionicons name="close" size={24} color={theme.text} />
-                </TouchableOpacity>
-              </View>
+            <View style={[styles.modalContent, { overflow: 'hidden' }]}>
+              <ThemedBackground>
+                <View style={[styles.header, { borderBottomColor: theme.border }]}>
+                  <Text style={[styles.title, { color: theme.text }]}>Знаки зодиака</Text>
+                  <TouchableOpacity
+                    style={styles.closeButton}
+                    onPress={onClose}
+                  >
+                    <Ionicons name="close" size={24} color={theme.text} />
+                  </TouchableOpacity>
+                </View>
 
-              <View style={styles.subheader}>
-                <Text style={[styles.subtitle, { color: theme.subText }]}>
-                  Выберите ваш знак зодиака
-                </Text>
-              </View>
+                <View style={styles.subheader}>
+                  <Text style={[styles.subtitle, { color: theme.subText }]}>
+                    Выберите ваш знак зодиака
+                  </Text>
+                </View>
 
-              <FlatList
-                data={zodiacSigns}
-                renderItem={renderZodiacItem}
-                keyExtractor={(item) => item.id}
-                contentContainerStyle={styles.list}
-                showsVerticalScrollIndicator={false}
-              />
-
-              <View style={[styles.footer, { borderTopColor: theme.border }]}>
-                <PrimaryButton
-                  title={zodiac ? 'Сохранить' : 'Закрыть'}
-                  onPress={zodiac ? saveZodiac : onClose}
-                  style={{ backgroundColor: theme.accent || '#1c1c1e' }}
+                <FlatList
+                  data={zodiacSigns}
+                  renderItem={renderZodiacItem}
+                  keyExtractor={(item) => item.id}
+                  contentContainerStyle={styles.list}
+                  showsVerticalScrollIndicator={false}
                 />
-              </View>
+
+                <View style={[styles.footer, { borderTopColor: theme.border }]}>
+                  <PrimaryButton
+                    title={zodiac ? 'Сохранить' : 'Закрыть'}
+                    onPress={zodiac ? saveZodiac : onClose}
+                    style={{ backgroundColor: theme.accent || '#1c1c1e' }}
+                  />
+                </View>
+              </ThemedBackground>
             </View>
           </TouchableWithoutFeedback>
         </View>
@@ -206,20 +208,5 @@ const styles = StyleSheet.create({
     borderTopWidth: 1,
     gap: 10,
     paddingBottom: 40,
-  },
-  removeButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: 'transparent',
-    padding: 16,
-    borderRadius: 12,
-    borderWidth: 1,
-  },
-  removeButtonText: {
-    color: '#ff4444',
-    fontSize: 16,
-    fontWeight: 'bold',
-    marginLeft: 8,
   },
 });

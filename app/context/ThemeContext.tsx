@@ -16,7 +16,7 @@ export const THEMES = {
     subText: '#555555',
     cardBg: '#fafaf2', // Soft beige instead of pure white
     border: '#e0e0e0',
-    accent: '#2a2a2a', // Темные кнопки
+    accent: '#000000', // Темные кнопки (Black)
     icon: '#1c1c1e',
     tint: 'rgba(0,0,0,0.05)'
   },

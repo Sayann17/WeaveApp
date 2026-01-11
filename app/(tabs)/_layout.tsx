@@ -64,13 +64,17 @@ export default function TabLayout() {
       screenOptions={{
         headerShown: false,
         tabBarStyle: {
-          backgroundColor: themeType === 'space' ? '#0b0d15' : theme.background,
-          borderTopColor: isLight ? theme.border : theme.background, // Hide border in dark mode to blend with bg
+          backgroundColor: themeType === 'space' ? 'transparent' : theme.background,
+          borderTopColor: isLight ? theme.border : theme.background,
           elevation: 0,
-          borderTopWidth: 1,
+          borderTopWidth: isLight ? 1 : 0, // No border for space
           height: 96,
           paddingBottom: 34,
           paddingTop: 8,
+          position: themeType === 'space' ? 'absolute' : undefined,
+          bottom: 0,
+          left: 0,
+          right: 0,
         },
         tabBarActiveTintColor: isLight ? '#2a2a2a' : '#81B29A',
         tabBarInactiveTintColor: isLight ? '#999' : '#666',

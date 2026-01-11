@@ -19,6 +19,7 @@ import { PrimaryButton } from '../../components/ui/PrimaryButton';
 import { yandexAuth } from '../../services/yandex/AuthService';
 import { ethnicityGroups } from '../../utils/ethnicities';
 import { useTheme } from '../../context/ThemeContext';
+import { ThemedBackground } from '../../components/ThemedBackground';
 
 export default function EditEthnicityScreen() {
   const router = useRouter();
@@ -88,106 +89,107 @@ export default function EditEthnicityScreen() {
   }
 
   return (
-    <View style={[styles.container, { backgroundColor: theme.background }]}>
-
-      {/* 
+    <ThemedBackground>
+      <View style={styles.container}>
+        {/* 
          🔥 ВАЖНОЕ ИЗМЕНЕНИЕ: 
          Супер-большой паддинг сверху, чтобы контент начинался НИЖЕ системных кнопок.
          Telegram WebApp Header обычно занимает около 60-80px, плюс статус бар.
       */}
-      <View style={{ paddingTop: 120 }}>
+        <View style={{ paddingTop: 120 }}>
 
-        <View style={styles.header}>
-          {/* Кнопка "Назад" убрана из UI, полагаемся на системный жест или кнопку BackButton (если есть) */}
-          <Text style={[styles.headerTitle, { color: theme.text }]}>Редактировать происхождение</Text>
-        </View>
-
-        <KeyboardAvoidingView
-          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-          style={{ height: '90%' }} // Ограничим высоту
-        >
-          <ScrollView contentContainerStyle={[styles.scrollContent, { paddingBottom: 250 }]}>
-
-            {/* 1. Поле для ввода */}
-            <View style={styles.section}>
-              <Text style={[styles.label, { color: theme.text }]}>Ваша национальность</Text>
-              <View style={[styles.inputWrapper, {
-                backgroundColor: theme.cardBg,
-                borderColor: theme.border
-              }]}>
-                <TextInput
-                  style={[styles.input, { color: theme.text }]}
-                  placeholder="Например: Русский"
-                  placeholderTextColor={theme.subText}
-                  value={customEthnicity}
-                  onChangeText={setCustomEthnicity}
-                  autoCapitalize="words"
-                />
-                {customEthnicity.length > 0 && (
-                  <TouchableOpacity onPress={() => setCustomEthnicity('')}>
-                    <Ionicons name="close-circle" size={20} color={theme.subText} />
-                  </TouchableOpacity>
-                )}
-              </View>
-            </View>
-
-            {/* 2. Макрогруппы */}
-            <View style={styles.section}>
-              <Text style={[styles.label, { color: theme.text }]}>Макрогруппы (Культурный код)</Text>
-              <Text style={[styles.hint, { color: theme.subText }]}>
-                Выберите группы, близкие вам по духу. Это влияет на рекомендации.
-              </Text>
-              <View style={styles.grid}>
-                {ethnicityGroups.map((group, index) => {
-                  const isSelected = selectedGroups.includes(group.id);
-                  return (
-                    <TouchableOpacity
-                      key={group.id}
-                      style={[
-                        styles.card,
-                        {
-                          backgroundColor: theme.cardBg,
-                          borderColor: theme.border,
-                          // 🔥 Мятная обводка при выборе
-                          ...(isSelected && { borderColor: '#10b981', borderWidth: 2 }),
-                        }
-                      ]}
-                      onPress={() => toggleGroup(group.id)}
-                      activeOpacity={0.7}
-                    >
-                      <Text style={styles.emoji}>{group.emoji}</Text>
-                      <Text style={[
-                        styles.title,
-                        { color: theme.text },
-                        isSelected && { color: '#10b981', fontWeight: 'bold' }
-                      ]}>
-                        {group.name}
-                      </Text>
-                    </TouchableOpacity>
-                  );
-                })}
-              </View>
-            </View>
-
-            <View style={{ height: 100 }} />
-
-          </ScrollView>
-
-          <View style={[styles.footer, {
-            backgroundColor: theme.background,
-            borderTopColor: theme.border
-          }]}>
-            {/* 🔥 Кнопка стала ЧЕРНОЙ (theme.accent) */}
-            <PrimaryButton
-              title="Сохранить изменения"
-              onPress={handleSave}
-              isLoading={isSaving}
-              style={{ backgroundColor: theme.accent || '#1c1c1e' }}
-            />
+          <View style={styles.header}>
+            {/* Кнопка "Назад" убрана из UI, полагаемся на системный жест или кнопку BackButton (если есть) */}
+            <Text style={[styles.headerTitle, { color: theme.text }]}>Редактировать происхождение</Text>
           </View>
-        </KeyboardAvoidingView>
+
+          <KeyboardAvoidingView
+            behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+            style={{ height: '90%' }} // Ограничим высоту
+          >
+            <ScrollView contentContainerStyle={[styles.scrollContent, { paddingBottom: 250 }]}>
+
+              {/* 1. Поле для ввода */}
+              <View style={styles.section}>
+                <Text style={[styles.label, { color: theme.text }]}>Ваша национальность</Text>
+                <View style={[styles.inputWrapper, {
+                  backgroundColor: theme.cardBg,
+                  borderColor: theme.border
+                }]}>
+                  <TextInput
+                    style={[styles.input, { color: theme.text }]}
+                    placeholder="Например: Русский"
+                    placeholderTextColor={theme.subText}
+                    value={customEthnicity}
+                    onChangeText={setCustomEthnicity}
+                    autoCapitalize="words"
+                  />
+                  {customEthnicity.length > 0 && (
+                    <TouchableOpacity onPress={() => setCustomEthnicity('')}>
+                      <Ionicons name="close-circle" size={20} color={theme.subText} />
+                    </TouchableOpacity>
+                  )}
+                </View>
+              </View>
+
+              {/* 2. Макрогруппы */}
+              <View style={styles.section}>
+                <Text style={[styles.label, { color: theme.text }]}>Макрогруппы (Культурный код)</Text>
+                <Text style={[styles.hint, { color: theme.subText }]}>
+                  Выберите группы, близкие вам по духу. Это влияет на рекомендации.
+                </Text>
+                <View style={styles.grid}>
+                  {ethnicityGroups.map((group, index) => {
+                    const isSelected = selectedGroups.includes(group.id);
+                    return (
+                      <TouchableOpacity
+                        key={group.id}
+                        style={[
+                          styles.card,
+                          {
+                            backgroundColor: theme.cardBg,
+                            borderColor: theme.border,
+                            // 🔥 Мятная обводка при выборе
+                            ...(isSelected && { borderColor: '#10b981', borderWidth: 2 }),
+                          }
+                        ]}
+                        onPress={() => toggleGroup(group.id)}
+                        activeOpacity={0.7}
+                      >
+                        <Text style={styles.emoji}>{group.emoji}</Text>
+                        <Text style={[
+                          styles.title,
+                          { color: theme.text },
+                          isSelected && { color: '#10b981', fontWeight: 'bold' }
+                        ]}>
+                          {group.name}
+                        </Text>
+                      </TouchableOpacity>
+                    );
+                  })}
+                </View>
+              </View>
+
+              <View style={{ height: 100 }} />
+
+            </ScrollView>
+
+            <View style={[styles.footer, {
+              backgroundColor: theme.background,
+              borderTopColor: theme.border
+            }]}>
+              {/* 🔥 Кнопка стала ЧЕРНОЙ (theme.accent) */}
+              <PrimaryButton
+                title="Сохранить изменения"
+                onPress={handleSave}
+                isLoading={isSaving}
+                style={{ backgroundColor: theme.accent || '#1c1c1e' }}
+              />
+            </View>
+          </KeyboardAvoidingView>
+        </View>
       </View>
-    </View>
+    </ThemedBackground>
   );
 }
 
