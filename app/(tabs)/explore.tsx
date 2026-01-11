@@ -263,7 +263,12 @@ export default function ExploreScreen() {
 
                     {/* Floating Filter Button */}
                     <Pressable
-                        style={[styles.floatingFilterBtn, { backgroundColor: '#00b894' }, isLight ? styles.lightShadow : styles.darkShadow]}
+                        style={[
+                            styles.floatingFilterBtn,
+                            { backgroundColor: '#00b894' },
+                            isLight ? styles.lightShadow : styles.darkShadow,
+                            { bottom: isLight ? 20 : 110 }
+                        ]}
                         onPress={openFilters}
                     >
                         <Ionicons name="options" size={24} color="#fff" />
@@ -289,7 +294,11 @@ export default function ExploreScreen() {
                 </View>
 
                 {/* 🔥 ПЛАВАЮЩИЕ КНОПКИ ДЕЙСТВИЙ */}
-                <View style={[styles.floatingActions, isLight ? styles.lightShadow : styles.darkShadow]}>
+                <View style={[
+                    styles.floatingActions,
+                    isLight ? styles.lightShadow : styles.darkShadow,
+                    { bottom: isLight ? 20 : 110 }
+                ]}>
                     <Pressable style={[styles.btn, styles.filterBtnFloating, { backgroundColor: '#00b894' }]} onPress={openFilters}>
                         <Ionicons name="options" size={22} color="#fff" />
                     </Pressable>
