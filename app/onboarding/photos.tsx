@@ -60,7 +60,7 @@ export default function OnboardingPhotosScreen() {
                     Добавьте пару кадров, чтобы вас узнали.
                 </Text>
                 <Text style={{ fontSize: 14, color: hasError ? '#ef4444' : '#555555', marginTop: 5, fontWeight: '600' }}>
-                    (минимум 1 фото)
+                    (минимум 1 фото, максимум 4)
                 </Text>
             </View>
 

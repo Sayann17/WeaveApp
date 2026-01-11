@@ -34,7 +34,8 @@ const HookInputItem = ({
     placeholder,
     multiline = false,
     icon,
-    hasError = false // 🔥 New prop
+    hasError = false,
+    onFocus
 }: {
     label: string,
     value: string,
@@ -42,7 +43,8 @@ const HookInputItem = ({
     placeholder: string,
     multiline?: boolean,
     icon?: any,
-    hasError?: boolean
+    hasError?: boolean,
+    onFocus?: () => void
 }) => {
     return (
         <View style={styles.inputGroup}>
@@ -74,6 +76,7 @@ const HookInputItem = ({
                     // 🔥 Важные свойства для iOS
                     blurOnSubmit={!multiline}
                     returnKeyType={multiline ? "default" : "done"}
+                    onFocus={onFocus}
                 />
             </View>
         </View>
@@ -118,6 +121,14 @@ export default function OnboardingHooksScreen() {
         }
     };
 
+    // 🔥 Scroll Handler
+    const scrollViewRef = React.useRef<ScrollView>(null);
+
+    const scrollToInput = (y: number) => {
+        // Approximate scrolling + header offset
+        scrollViewRef.current?.scrollTo({ y: y - 100, animated: true });
+    };
+
     return (
         <SafeAreaView style={styles.container}>
             <StatusBar barStyle="dark-content" backgroundColor={THEME.background} />
@@ -127,6 +138,7 @@ export default function OnboardingHooksScreen() {
                 keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 20}
             >
                 <ScrollView
+                    ref={scrollViewRef}
                     contentContainerStyle={styles.scrollContent}
                     keyboardShouldPersistTaps="handled"
                     showsVerticalScrollIndicator={false}
@@ -149,6 +161,7 @@ export default function OnboardingHooksScreen() {
                                 multiline={true}
                                 icon="person-outline"
                                 hasError={bioError}
+                                onFocus={() => scrollToInput(0)}
                             />
                         </View>
 
@@ -164,6 +177,7 @@ export default function OnboardingHooksScreen() {
                                 onChange={setLoveLanguage}
                                 placeholder="Слова, подарки, время..."
                                 icon="heart-outline"
+                                onFocus={() => scrollToInput(250)}
                             />
 
                             <HookInputItem
@@ -172,6 +186,7 @@ export default function OnboardingHooksScreen() {
                                 onChange={setCulturePride}
                                 placeholder="Гостеприимство, музыка, традиции..."
                                 icon="earth-outline"
+                                onFocus={() => scrollToInput(350)}
                             />
 
                             <HookInputItem
@@ -180,6 +195,7 @@ export default function OnboardingHooksScreen() {
                                 onChange={setFamilyMemory}
                                 placeholder="Как мы всей семьей..."
                                 icon="people-outline"
+                                onFocus={() => scrollToInput(450)}
                             />
 
                             <HookInputItem
@@ -188,6 +204,7 @@ export default function OnboardingHooksScreen() {
                                 onChange={setStereotypeTrue}
                                 placeholder="Доверие, общие цели, поддержка..."
                                 icon="checkmark-circle-outline"
+                                onFocus={() => scrollToInput(550)}
                             />
 
                             <HookInputItem
@@ -196,6 +213,7 @@ export default function OnboardingHooksScreen() {
                                 onChange={setStereotypeFalse}
                                 placeholder="Читаю, гуляю, смотрю сериалы..."
                                 icon="close-circle-outline"
+                                onFocus={() => scrollToInput(650)}
                             />
                         </View>
                     </View>

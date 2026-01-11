@@ -49,10 +49,12 @@ export const PhotoGrid = ({ photos, setPhotos, maxPhotos = 4 }: PhotoGridProps) 
       });
 
       if (!result.canceled && result.assets && result.assets.length > 0) {
+        // 🔥 Enforce limit manually as selectionLimit might be ignored
+        const assetsToUpload = result.assets.slice(0, limit);
         const newPhotos: string[] = [];
 
-        // Loop through all selected assets
-        for (const asset of result.assets) {
+        // Loop through allowed assets
+        for (const asset of assetsToUpload) {
           const localUri = asset.uri;
 
           // 🔥 COMPRESSION

@@ -102,16 +102,16 @@ export default function OnboardingGenderScreen() {
                     </View>
 
                 </ScrollView>
-                <View style={styles.footer}>
-                    <PrimaryButton
-                        title="Продолжить"
-                        onPress={handleContinue}
-                        disabled={isLoading}
-                        isLoading={isLoading}
-                        style={{ backgroundColor: '#2a2a2a' }}
-                    />
-                </View>
             </KeyboardAvoidingView>
+            <View style={styles.footer}>
+                <PrimaryButton
+                    title="Продолжить"
+                    onPress={handleContinue}
+                    disabled={isLoading}
+                    isLoading={isLoading}
+                    style={{ backgroundColor: '#2a2a2a' }}
+                />
+            </View>
         </SafeAreaView>
     );
 }
