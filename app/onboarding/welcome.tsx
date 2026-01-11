@@ -96,6 +96,9 @@ export default function WelcomeScreen() {
 
   const renderItem = ({ item }: { item: typeof SLIDES[0] }) => (
     <View style={styles.slide}>
+      {/* Spacer to push content down */}
+      <View style={styles.topSpacer} />
+
       {/* Верхняя часть с "воздухом" и иконкой */}
       <View style={styles.visualContainer}>
         <View style={styles.iconCircle}>
@@ -184,15 +187,18 @@ const styles = StyleSheet.create({
     width: width,
     flex: 1,
     paddingHorizontal: 30,
-    // justifyContent: 'space-between', 
+  },
+
+  // Пространство для сдвига контента вниз
+  topSpacer: {
+    flex: 1.2, // Занимает ~55% экрана, толкая всё вниз
   },
 
   // Визуальная часть (Иконка)
   visualContainer: {
-    flex: 1,
-    justifyContent: 'flex-end', // Прижимаем иконку к низу "верхней части"
+    // flex убрали, теперь это просто блок под спейсером
     alignItems: 'center',
-    paddingBottom: 60, // Отступ от иконки до текста
+    marginBottom: 40, // Отступ от иконки до текста
   },
   iconCircle: {
     width: 120,
@@ -207,7 +213,6 @@ const styles = StyleSheet.create({
 
   // Текстовая часть
   textContainer: {
-    justifyContent: 'flex-end',
     paddingBottom: 40, // Отступ текста от футера
   },
   title: {
