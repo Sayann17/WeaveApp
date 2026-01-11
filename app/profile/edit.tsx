@@ -476,6 +476,7 @@ export default function EditProfileScreen() {
               onPress={handleSave}
               isLoading={isSaving}
               disabled={!isFormValid}
+              style={{ backgroundColor: theme.accent || '#1c1c1e' }}
             />
           </View>
 

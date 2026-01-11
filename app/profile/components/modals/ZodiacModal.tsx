@@ -4,14 +4,16 @@ import {
   Alert,
   FlatList,
   Modal,
-  SafeAreaView,
   StyleSheet,
   Text,
   TouchableOpacity,
+  TouchableWithoutFeedback,
   View
 } from 'react-native';
+import { useTheme } from '../../../context/ThemeContext';
 import { yandexAuth } from '../../../services/yandex/AuthService';
 import { zodiacSigns } from '../../../utils/basic_info';
+import { PrimaryButton } from '../../../components/ui/PrimaryButton';
 
 interface ZodiacModalProps {
   visible: boolean;
@@ -21,6 +23,7 @@ interface ZodiacModalProps {
 }
 
 export default function ZodiacModal({ visible, zodiac, setZodiac, onClose }: ZodiacModalProps) {
+  const { theme, themeType } = useTheme();
 
   const showAlert = (message: string) => {
     if (typeof window !== 'undefined') {
@@ -42,7 +45,7 @@ export default function ZodiacModal({ visible, zodiac, setZodiac, onClose }: Zod
           zodiac: zodiac || undefined
         });
         onClose();
-        showAlert('Знак зодиака обновлен');
+        // showAlert('Знак зодиака обновлен');
       }
     } catch (error) {
       console.error('Ошибка сохранения знака зодиака:', error);
@@ -54,6 +57,10 @@ export default function ZodiacModal({ visible, zodiac, setZodiac, onClose }: Zod
     <TouchableOpacity
       style={[
         styles.zodiacItem,
+        {
+          backgroundColor: themeType === 'space' ? 'rgba(255, 255, 255, 0.05)' : theme.cardBg,
+          borderColor: themeType === 'space' ? 'rgba(255, 255, 255, 0.1)' : theme.border
+        },
         zodiac === item.id && styles.zodiacItemSelected
       ]}
       onPress={() => selectZodiac(item.id)}
@@ -62,14 +69,15 @@ export default function ZodiacModal({ visible, zodiac, setZodiac, onClose }: Zod
       <View style={styles.zodiacInfo}>
         <Text style={[
           styles.zodiacName,
+          { color: theme.text },
           zodiac === item.id && styles.zodiacNameSelected
         ]}>
           {item.name}
         </Text>
-        <Text style={styles.zodiacDates}>{item.dates}</Text>
+        <Text style={[styles.zodiacDates, { color: theme.subText }]}>{item.dates}</Text>
       </View>
       {zodiac === item.id && (
-        <Ionicons name="checkmark-circle" size={24} color="#e1306c" />
+        <Ionicons name="checkmark-circle" size={24} color="#81B29A" />
       )}
     </TouchableOpacity>
   );
@@ -77,65 +85,75 @@ export default function ZodiacModal({ visible, zodiac, setZodiac, onClose }: Zod
   return (
     <Modal
       visible={visible}
-      animationType="slide"
-      presentationStyle="pageSheet"
+      animationType="fade"
+      transparent={true}
+      onRequestClose={onClose}
     >
-      <SafeAreaView style={styles.container}>
-        <View style={styles.header}>
-          <Text style={styles.title}>Выберите знак зодиака</Text>
-          <TouchableOpacity
-            style={styles.closeButton}
-            onPress={onClose}
-          >
-            <Ionicons name="close" size={24} color="#ffffff" />
-          </TouchableOpacity>
-        </View>
+      <TouchableWithoutFeedback onPress={onClose}>
+        <View style={styles.modalOverlay}>
+          <TouchableWithoutFeedback>
+            <View style={[styles.modalContent, { backgroundColor: theme.background }]}>
+              <View style={[styles.header, { borderBottomColor: theme.border }]}>
+                <Text style={[styles.title, { color: theme.text }]}>Знаки зодиака</Text>
+                <TouchableOpacity
+                  style={styles.closeButton}
+                  onPress={onClose}
+                >
+                  <Ionicons name="close" size={24} color={theme.text} />
+                </TouchableOpacity>
+              </View>
 
-        <View style={styles.subheader}>
-          <Text style={styles.subtitle}>
-            Выберите ваш знак зодиака (необязательно)
-          </Text>
-        </View>
+              <View style={styles.subheader}>
+                <Text style={[styles.subtitle, { color: theme.subText }]}>
+                  Выберите ваш знак зодиака
+                </Text>
+              </View>
 
-        <FlatList
-          data={zodiacSigns}
-          renderItem={renderZodiacItem}
-          keyExtractor={(item) => item.id}
-          contentContainerStyle={styles.list}
-          showsVerticalScrollIndicator={false}
-        />
+              <FlatList
+                data={zodiacSigns}
+                renderItem={renderZodiacItem}
+                keyExtractor={(item) => item.id}
+                contentContainerStyle={styles.list}
+                showsVerticalScrollIndicator={false}
+              />
 
-        <View style={styles.footer}>
-          {zodiac && (
-            <TouchableOpacity
-              style={styles.removeButton}
-              onPress={() => {
-                setZodiac(null);
-                onClose();
-              }}
-            >
-              <Ionicons name="close" size={20} color="#ff4444" />
-              <Text style={styles.removeButtonText}>Убрать знак зодиака</Text>
-            </TouchableOpacity>
-          )}
-          <TouchableOpacity
-            style={styles.saveButton}
-            onPress={saveZodiac}
-          >
-            <Text style={styles.saveButtonText}>
-              {zodiac ? 'Сохранить знак зодиака' : 'Не выбирать знак зодиака'}
-            </Text>
-          </TouchableOpacity>
+              <View style={[styles.footer, { borderTopColor: theme.border }]}>
+                {zodiac && (
+                  <TouchableOpacity
+                    style={[styles.removeButton, { borderColor: '#ff4444' }]}
+                    onPress={() => {
+                      setZodiac(null);
+                      onClose();
+                    }}
+                  >
+                    <Ionicons name="close" size={20} color="#ff4444" />
+                    <Text style={styles.removeButtonText}>Убрать знак</Text>
+                  </TouchableOpacity>
+                )}
+                <PrimaryButton
+                  title={zodiac ? 'Сохранить' : 'Закрыть'}
+                  onPress={zodiac ? saveZodiac : onClose}
+                  style={{ backgroundColor: theme.accent || '#1c1c1e' }}
+                />
+              </View>
+            </View>
+          </TouchableWithoutFeedback>
         </View>
-      </SafeAreaView>
+      </TouchableWithoutFeedback>
     </Modal>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
+  modalOverlay: {
     flex: 1,
-    backgroundColor: '#0a0a0a',
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'flex-end',
+  },
+  modalContent: {
+    height: '60%', // Half/Part screen
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
   },
   header: {
     flexDirection: 'row',
@@ -143,24 +161,22 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     padding: 20,
     borderBottomWidth: 1,
-    borderBottomColor: '#1a1a1a',
   },
   title: {
     fontSize: 20,
     fontWeight: 'bold',
-    color: '#ffffff',
   },
   closeButton: {
     padding: 4,
   },
   subheader: {
-    padding: 20,
+    paddingHorizontal: 20,
     paddingTop: 10,
+    paddingBottom: 0,
   },
   subtitle: {
     fontSize: 14,
-    color: '#cccccc',
-    textAlign: 'center',
+    textAlign: 'left',
   },
   list: {
     padding: 20,
@@ -168,16 +184,13 @@ const styles = StyleSheet.create({
   zodiacItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#1a1a1a',
     padding: 16,
     borderRadius: 12,
     marginBottom: 10,
     borderWidth: 1,
-    borderColor: '#333',
   },
   zodiacItemSelected: {
-    backgroundColor: '#1a1a1a',
-    borderColor: '#e1306c',
+    borderColor: '#81B29A',
   },
   zodiacEmoji: {
     fontSize: 32,
@@ -189,34 +202,22 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   zodiacName: {
-    color: '#ffffff',
     fontSize: 16,
     fontWeight: '500',
     marginBottom: 2,
   },
   zodiacNameSelected: {
-    color: '#e1306c',
+    color: '#81B29A',
     fontWeight: 'bold',
   },
   zodiacDates: {
-    color: '#999',
     fontSize: 12,
   },
   footer: {
     padding: 20,
     borderTopWidth: 1,
-    borderTopColor: '#1a1a1a',
-  },
-  saveButton: {
-    backgroundColor: '#e1306c',
-    padding: 16,
-    borderRadius: 12,
-    alignItems: 'center',
-  },
-  saveButtonText: {
-    color: '#ffffff',
-    fontSize: 16,
-    fontWeight: 'bold',
+    gap: 10,
+    paddingBottom: 40,
   },
   removeButton: {
     flexDirection: 'row',
@@ -226,13 +227,11 @@ const styles = StyleSheet.create({
     padding: 16,
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: '#ff4444',
-    marginBottom: 10,
-    gap: 8,
   },
   removeButtonText: {
     color: '#ff4444',
     fontSize: 16,
     fontWeight: 'bold',
+    marginLeft: 8,
   },
 });

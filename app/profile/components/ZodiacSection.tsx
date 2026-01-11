@@ -33,12 +33,6 @@ export default function ZodiacSection({ zodiac, setZodiac, onEditPress }: Zodiac
               <Text style={styles.removeZodiacText}>Убрать</Text>
             </TouchableOpacity>
           )}
-          <TouchableOpacity
-            style={styles.editButton}
-            onPress={onEditPress}
-          >
-            <Ionicons name={zodiac ? "create-outline" : "planet-outline"} size={20} color="#e1306c" />
-          </TouchableOpacity>
         </View>
       </View>
 
@@ -71,7 +65,7 @@ export default function ZodiacSection({ zodiac, setZodiac, onEditPress }: Zodiac
           style={styles.addZodiacButton}
           onPress={onEditPress}
         >
-          <Ionicons name="planet-outline" size={24} color="#e1306c" />
+          <Ionicons name="planet-outline" size={24} color="#81B29A" />
           <Text style={styles.addZodiacText}>Выбрать знак зодиака</Text>
         </TouchableOpacity>
       )}
@@ -156,7 +150,7 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   addZodiacText: {
-    color: '#e1306c',
+    color: '#81B29A',
     fontSize: 16,
     fontWeight: '600',
   },

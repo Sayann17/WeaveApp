@@ -13,9 +13,10 @@ export const PrimaryButton = ({ title, onPress, disabled, isLoading, style }: Pr
   return (
     <TouchableOpacity
       style={[
-        styles.button, 
-        disabled && styles.disabled,
-        style // Позволяет переопределять цвет (например, на черный)
+        styles.button,
+        // Позволяет переопределять цвет (например, на черный)
+        style,
+        disabled && styles.disabled
       ]}
       onPress={onPress}
       disabled={disabled || isLoading}

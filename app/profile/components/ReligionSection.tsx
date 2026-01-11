@@ -62,7 +62,7 @@ export default function ReligionSection({ selectedReligions, setSelectedReligion
               {religionItem.name}
             </Text>
             {selectedReligions.includes(religionItem.id) && (
-              <Ionicons name="checkmark" size={16} color="#e1306c" />
+              <Ionicons name="checkmark" size={16} color="#81B29A" />
             )}
           </Pressable>
         ))}
@@ -110,7 +110,7 @@ const styles = StyleSheet.create({
   },
   religionButtonSelected: {
     backgroundColor: '#1a1a1a',
-    borderColor: '#e1306c',
+    borderColor: '#81B29A',
   },
   religionEmoji: {
     fontSize: 16,
@@ -121,11 +121,11 @@ const styles = StyleSheet.create({
     fontWeight: '500',
   },
   religionTextSelected: {
-    color: '#e1306c',
+    color: '#81B29A',
     fontWeight: '600',
   },
   selectedReligion: {
-    color: '#e1306c',
+    color: '#81B29A',
     fontSize: 14,
     fontWeight: '500',
     marginTop: 10,

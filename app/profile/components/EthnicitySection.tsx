@@ -35,9 +35,6 @@ export default function EthnicitySection({
         <Text style={[styles.sectionTitle, { color: theme.text }]}>
           Твои корни {isFirstEdit && <Text style={styles.requiredStar}>*</Text>}
         </Text>
-        <TouchableOpacity style={styles.editButton} onPress={onEditPress}>
-          <Ionicons name="create-outline" size={20} color="#e1306c" />
-        </TouchableOpacity>
       </View>
 
       <TouchableOpacity
@@ -75,13 +72,13 @@ const styles = StyleSheet.create({
   section: { marginBottom: 30 },
   sectionHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 15 },
   sectionTitle: { fontSize: 18, fontWeight: 'bold' },
-  requiredStar: { color: '#e1306c' },
+  requiredStar: { color: '#81B29A' },
   editButton: { padding: 5 },
   ethnicityDisplayContainer: {
     flexDirection: 'row', alignItems: 'center', backgroundColor: 'rgba(255, 255, 255, 0.05)',
     padding: 16, borderRadius: 12, borderWidth: 1, borderColor: 'rgba(255, 255, 255, 0.1)'
   },
-  requiredField: { borderColor: '#e1306c' },
+  requiredField: { borderColor: '#81B29A' },
   mainText: { fontSize: 18, fontWeight: '600', marginBottom: 4 },
   subText: { color: '#999', fontSize: 14 }
 });

@@ -103,11 +103,11 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   genderButtonSelected: {
-    backgroundColor: '#e1306c',
-    borderColor: '#e1306c',
+    backgroundColor: '#81B29A',
+    borderColor: '#81B29A',
   },
   requiredField: {
-    borderColor: '#e1306c',
+    borderColor: '#81B29A',
   },
   genderText: {
     color: '#666',
