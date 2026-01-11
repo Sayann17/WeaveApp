@@ -178,20 +178,6 @@ export const MenuModal = ({ visible, onClose }: MenuModalProps) => {
                                     Space
                                 </Text>
                             </Pressable>
-
-                            <Pressable
-                                style={[
-                                    styles.themeOption,
-                                    { backgroundColor: theme.cardBg },
-                                    themeType === 'aura' && styles.themeOptionActive
-                                ]}
-                                onPress={() => setTheme('aura')}
-                            >
-                                <Ionicons name="sparkles" size={20} color={themeType === 'aura' ? '#FF6B9D' : theme.subText} />
-                                <Text style={[styles.themeOptionText, { color: themeType === 'aura' ? theme.text : theme.subText }]}>
-                                    Aura
-                                </Text>
-                            </Pressable>
                         </View>
 
                         {/* Logout */}
