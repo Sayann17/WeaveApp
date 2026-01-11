@@ -106,20 +106,19 @@ export default function OnboardingGenderScreen() {
                         </View>
                     </View>
 
+                    {/* Footer inside ScrollView */}
+                    <View style={styles.footer}>
+                        <PrimaryButton
+                            title="Продолжить"
+                            onPress={handleContinue}
+                            disabled={isLoading}
+                            isLoading={isLoading}
+                            style={{ backgroundColor: '#2a2a2a' }}
+                        />
+                    </View>
+                    <View style={{ height: 20 }} />
                 </ScrollView>
             </KeyboardAvoidingView>
-
-            {!isKeyboardVisible && (
-                <View style={styles.footer}>
-                    <PrimaryButton
-                        title="Продолжить"
-                        onPress={handleContinue}
-                        disabled={isLoading}
-                        isLoading={isLoading}
-                        style={{ backgroundColor: '#2a2a2a' }}
-                    />
-                </View>
-            )}
         </SafeAreaView>
     );
 }
