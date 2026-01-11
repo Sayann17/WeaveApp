@@ -5,7 +5,7 @@ import { yandexAuth } from '../services/yandex/AuthService';
 import { useTelegram } from './TelegramProvider';
 
 // Типы тем
-export type ThemeType = 'light' | 'space' | 'aura';
+export type ThemeType = 'light' | 'space';
 
 // Цветовые палитры
 export const THEMES = {
@@ -30,17 +30,6 @@ export const THEMES = {
     accent: '#e1306c', // Яркий акцент для космоса
     icon: '#ffffff',
     tint: 'rgba(255,255,255,0.1)'
-  },
-  aura: {
-    type: 'aura' as ThemeType,
-    background: '#0a0a0a',
-    text: '#ffffff',
-    subText: '#cccccc',
-    cardBg: 'rgba(20, 20, 20, 0.7)', // Полупрозрачный черный
-    border: 'rgba(255,255,255,0.1)',
-    accent: '#e1306c',
-    icon: '#ffffff',
-    tint: 'rgba(255,255,255,0.1)'
   }
 };
 
@@ -49,21 +38,19 @@ type ThemeContextType = {
   themeType: ThemeType;
   isLight: boolean;
   setTheme: (type: ThemeType) => Promise<void>;
-  userPhotoForAura: string | null; // Фото для ауры
 };
 
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 
 export const ThemeProvider = ({ children }: { children: React.ReactNode }) => {
   const [themeType, setThemeType] = useState<ThemeType>('light');
-  const [userPhotoForAura, setUserPhotoForAura] = useState<string | null>(null);
 
   // Load theme from AsyncStorage on mount
   useEffect(() => {
     const loadTheme = async () => {
       try {
         const savedTheme = await AsyncStorage.getItem('app_theme');
-        if (savedTheme && (savedTheme === 'light' || savedTheme === 'space' || savedTheme === 'aura')) {
+        if (savedTheme && (savedTheme === 'light' || savedTheme === 'space')) {
           setThemeType(savedTheme as ThemeType);
         }
       } catch (e) {
@@ -80,7 +67,6 @@ export const ThemeProvider = ({ children }: { children: React.ReactNode }) => {
     if (webApp) {
       const bg = THEMES[themeType].background;
       const isLightTheme = themeType === 'light';
-      const buttonColor = isLightTheme ? '#000000' : '#FFFFFF';
 
       // Sync colors with Telegram
       const applyTheme = () => {
@@ -101,14 +87,6 @@ export const ThemeProvider = ({ children }: { children: React.ReactNode }) => {
 
         // 2. Main Button (Bottom Action Button)
         if (webApp.MainButton) {
-          // User requested:
-          // Light theme -> Button BG: Light? Text: Black? 
-          // Actually "При светлой теме - цвет текста кнопок - черные, фон кнопки как у светлой темы"
-          // This usually implies a secondary button style, but MainButton is usually the Primary Action.
-          // Let's stick to visible defaults that match the theme logic:
-          // Light: Black Button, White Text (Standard "Apple" style)
-          // Dark: Theme Accent / White Button
-
           if (isLightTheme) {
             webApp.MainButton.setParams({
               color: '#000000',
@@ -117,7 +95,7 @@ export const ThemeProvider = ({ children }: { children: React.ReactNode }) => {
           } else {
             // Dark theme
             webApp.MainButton.setParams({
-              color: THEMES[themeType].accent, // e.g. Pink for Space
+              color: THEMES[themeType].accent,
               text_color: '#ffffff'
             });
           }
@@ -134,22 +112,11 @@ export const ThemeProvider = ({ children }: { children: React.ReactNode }) => {
     }
   }, [themeType, webApp]);
 
-  // Listen to auth changes to get user photo
+  // Listen to auth changes to reset theme on logout if needed
   useEffect(() => {
     const unsubscribe = yandexAuth.onAuthStateChanged((user) => {
-      if (user) {
-        // Get first photo for aura background
-        console.log('[ThemeContext] User photos:', user.photos);
-        if (user.photos && Array.isArray(user.photos) && user.photos.length > 0) {
-          console.log('[ThemeContext] Setting aura photo:', user.photos[0]);
-          setUserPhotoForAura(user.photos[0]);
-        } else {
-          console.log('[ThemeContext] No photos available for aura');
-          setUserPhotoForAura(null);
-        }
-      } else {
+      if (!user) {
         setThemeType('light');
-        setUserPhotoForAura(null);
       }
     });
 
@@ -160,7 +127,6 @@ export const ThemeProvider = ({ children }: { children: React.ReactNode }) => {
     setThemeType(type);
     try {
       await AsyncStorage.setItem('app_theme', type);
-      // TODO: Optionally save to backend when profile update API supports it
     } catch (e) {
       console.error('Failed to save theme', e);
     }
@@ -170,7 +136,7 @@ export const ThemeProvider = ({ children }: { children: React.ReactNode }) => {
   const isLight = themeType === 'light';
 
   return (
-    <ThemeContext.Provider value={{ theme, themeType, isLight, setTheme, userPhotoForAura }}>
+    <ThemeContext.Provider value={{ theme, themeType, isLight, setTheme }}>
       {children}
     </ThemeContext.Provider>
   );
