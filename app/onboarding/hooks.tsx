@@ -77,6 +77,7 @@ const HookInputItem = ({
                     blurOnSubmit={!multiline}
                     returnKeyType={multiline ? "default" : "done"}
                     onFocus={onFocus}
+                    selectionColor="#000000"
                 />
             </View>
         </View>

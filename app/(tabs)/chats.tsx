@@ -143,7 +143,8 @@ export default function ChatsScreen() {
       finno_ugric: 'Финно-угорские', european: 'Европейские', african: 'Африканские',
       latin: 'Латиноамериканские', arab: 'Арабские', jewish: 'Еврейские',
       indian: 'Индийские', native_american: 'Коренные', pacific: 'Тихоокеанские',
-      middle_eastern: 'Ближневосточные', turkic: 'Тюркские'
+      middle_eastern: 'Ближневосточные', turkic: 'Тюркские',
+      indo_european: 'Индоевропейские корни', world_citizen: 'Человек мира'
     };
 
     const parts = [];

@@ -105,6 +105,7 @@ export default function OnboardingEthnicityScreen() {
                                 value={customEthnicity}
                                 onChangeText={setCustomEthnicity}
                                 autoCapitalize="words"
+                                selectionColor="#000000"
                             />
                         </View>
                     </View>

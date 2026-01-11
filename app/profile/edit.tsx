@@ -299,6 +299,7 @@ export default function EditProfileScreen() {
                   placeholderTextColor={theme.subText}
                   value={city}
                   onChangeText={setCity}
+                  selectionColor={themeType === 'light' ? '#000000' : '#FFFFFF'}
                 />
 
                 <TouchableOpacity
@@ -339,6 +340,7 @@ export default function EditProfileScreen() {
                     value={socialTelegram}
                     onChangeText={setSocialTelegram}
                     autoCapitalize="none"
+                    selectionColor={themeType === 'light' ? '#000000' : '#FFFFFF'}
                   />
                   <TextInput
                     style={[styles.input, {
@@ -351,6 +353,7 @@ export default function EditProfileScreen() {
                     value={socialVk}
                     onChangeText={setSocialVk}
                     autoCapitalize="none"
+                    selectionColor={themeType === 'light' ? '#000000' : '#FFFFFF'}
                   />
                   <TextInput
                     style={[styles.input, {
@@ -363,6 +366,7 @@ export default function EditProfileScreen() {
                     value={socialInstagram}
                     onChangeText={setSocialInstagram}
                     autoCapitalize="none"
+                    selectionColor={themeType === 'light' ? '#000000' : '#FFFFFF'}
                   />
                 </View>
               </View>
@@ -403,6 +407,7 @@ export default function EditProfileScreen() {
                   placeholderTextColor={theme.subText}
                   maxLength={500}
                   autoCapitalize="sentences"
+                  selectionColor={themeType === 'light' ? '#000000' : '#FFFFFF'}
                 />
               </View>
 

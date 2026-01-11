@@ -47,6 +47,7 @@ export default function BasicInfoSection({
           placeholderTextColor={theme.subText}
           maxLength={50}
           autoCapitalize="words"
+          selectionColor={themeType === 'light' ? '#000000' : '#FFFFFF'}
         />
       </View>
 
@@ -70,6 +71,8 @@ export default function BasicInfoSection({
           placeholder="Введите ваш возраст"
           placeholderTextColor={theme.subText}
           maxLength={3}
+          selectionColor={themeType === 'light' ? '#000000' : '#FFFFFF'}
+          textAlignVertical="center"
         />
       </View>
     </View>

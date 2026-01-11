@@ -39,6 +39,7 @@ export default function HookInput({ label, value, onChange, placeholder, icon }:
         numberOfLines={3}
         maxLength={300} // Ограничение, чтобы не писали поэмы
         autoCapitalize="sentences"
+        selectionColor={themeType === 'light' ? '#000000' : '#FFFFFF'}
       />
     </View>
   );

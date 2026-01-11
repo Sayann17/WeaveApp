@@ -375,6 +375,7 @@ export default function ExploreScreen() {
                                             keyboardType="numeric"
                                             placeholder="18"
                                             placeholderTextColor={theme.subText}
+                                            selectionColor={isLight ? '#000000' : '#FFFFFF'}
                                         />
                                     </View>
                                     <Text style={[styles.ageSeparator, { color: theme.subText }]}>—</Text>

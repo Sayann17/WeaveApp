@@ -452,6 +452,7 @@ export default function ChatScreen() {
                   multiline
                   blurOnSubmit={false}
                   maxLength={500}
+                  selectionColor={themeType === 'light' ? '#000000' : '#FFFFFF'}
                   underlineColorAndroid="transparent"
                   // @ts-ignore
                   dataSet={{ outline: 'none' }}
