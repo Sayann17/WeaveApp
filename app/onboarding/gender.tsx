@@ -101,16 +101,16 @@ export default function OnboardingGenderScreen() {
                         </View>
                     </View>
 
-                    <View style={styles.footer}>
-                        <PrimaryButton
-                            title="Продолжить"
-                            onPress={handleContinue}
-                            disabled={isLoading}
-                            isLoading={isLoading}
-                            style={{ backgroundColor: '#2a2a2a' }}
-                        />
-                    </View>
                 </ScrollView>
+                <View style={styles.footer}>
+                    <PrimaryButton
+                        title="Продолжить"
+                        onPress={handleContinue}
+                        disabled={isLoading}
+                        isLoading={isLoading}
+                        style={{ backgroundColor: '#2a2a2a' }}
+                    />
+                </View>
             </KeyboardAvoidingView>
         </SafeAreaView>
     );
@@ -138,5 +138,5 @@ const styles = StyleSheet.create({
         paddingBottom: 5,
         fontFamily: Platform.OS === 'ios' ? 'System' : 'Roboto',
     },
-    footer: { padding: 24, paddingBottom: 40 },
+    footer: { padding: 24, paddingBottom: 20 }, // Reduced bottom padding
 });

@@ -178,20 +178,21 @@ export default function WelcomeScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: THEME.background, // #f4f4e7
+    backgroundColor: THEME.background,
   },
   slide: {
     width: width,
     flex: 1,
     paddingHorizontal: 30,
-    justifyContent: 'flex-end', // 🔥 Force content to bottom
-    paddingBottom: 30, // Space from bottom elements
+    paddingTop: 92, // 🔥 User specified padding
   },
 
   // Визуальная часть (Иконка)
   visualContainer: {
+    flex: 1, // Занимает всё пространство до текста
+    justifyContent: 'center', // Центр свободного места
     alignItems: 'center',
-    marginBottom: 60, // Gap between icon and text
+    paddingBottom: 20,
   },
   iconCircle: {
     width: 120,
@@ -207,7 +208,7 @@ const styles = StyleSheet.create({
   // Текстовая часть
   textContainer: {
     justifyContent: 'flex-end',
-    // removed paddingBottom as it's handled by slide padding/margins
+    marginBottom: 20, // Отступ от текста до футера
   },
   title: {
     fontSize: 36, // Крупный, журнальный заголовок
