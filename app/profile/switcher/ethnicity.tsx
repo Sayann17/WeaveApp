@@ -176,8 +176,9 @@ export default function EditEthnicityScreen() {
             </ScrollView>
 
             <View style={[styles.footer, {
-              backgroundColor: theme.background,
-              borderTopColor: theme.border
+              backgroundColor: themeType === 'space' ? 'transparent' : theme.background,
+              borderTopColor: themeType === 'space' ? 'transparent' : theme.border,
+              borderTopWidth: themeType === 'space' ? 0 : 1
             }]}>
               <PrimaryButton
                 title="Сохранить"

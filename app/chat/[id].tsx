@@ -168,10 +168,8 @@ export default function ChatScreen() {
     const text = newMessage.trim();
     setNewMessage('');
 
-    // Force keep focus - REMOVED to prevent flicker
-    // setTimeout(() => {
-    //   inputRef.current?.focus();
-    // }, 10);
+    // Force keep focus to prevent keyboard dismissal on button press
+    inputRef.current?.focus();
 
     if (editingMessage) {
       const updatedMsg = { ...editingMessage, text: text, isEdited: true, editedAt: new Date() };
