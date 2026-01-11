@@ -1,6 +1,5 @@
 // context/ThemeContext.tsx
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { StatusBar } from 'expo-status-bar';
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { yandexAuth } from '../services/yandex/AuthService';
 import { useTelegram } from './TelegramProvider';
@@ -85,39 +84,25 @@ export const ThemeProvider = ({ children }: { children: React.ReactNode }) => {
 
       // Force header color
       const applyTheme = () => {
-        if (!webApp) return;
-
         // Essential: Set header color to matching background
         // Telegram automatically adjusts status bar icons based on contrast of this color
-        // For Light theme, we force #ffffff to GUARANTEE Black icons, even if our bg is off-white.
-        const headerColorToCheck = isLightTheme ? '#ffffff' : bg;
-
         if (webApp.setHeaderColor) {
-          webApp.setHeaderColor(headerColorToCheck);
+          webApp.setHeaderColor(bg);
         }
 
         // Ensure background is set
         if (webApp.setBackgroundColor) {
-          webApp.setBackgroundColor(headerColorToCheck);
+          webApp.setBackgroundColor(bg);
         }
 
         // Set Bottom Bar code
         if (webApp.setBottomBarColor) {
-          webApp.setBottomBarColor(headerColorToCheck);
+          webApp.setBottomBarColor(bg);
         }
 
         // Colors for buttons
-        if (webApp.BackButton) {
-          // On Android, BackButton color might need to be explicitly set
-          // But normally it adapts. We force it for consistency.
-          if (webApp.BackButton.isVisible) {
-            // Only separate check if needed, but safe to set color always
-          }
-          webApp.BackButton.color = buttonColor;
-        }
-
+        if (webApp.BackButton) webApp.BackButton.color = buttonColor;
         if (webApp.SettingsButton) webApp.SettingsButton.color = buttonColor;
-
         if (webApp.MainButton) {
           webApp.MainButton.color = buttonColor;
           webApp.MainButton.textColor = isLightTheme ? '#FFFFFF' : '#000000';
@@ -171,7 +156,6 @@ export const ThemeProvider = ({ children }: { children: React.ReactNode }) => {
 
   return (
     <ThemeContext.Provider value={{ theme, themeType, isLight, setTheme, userPhotoForAura }}>
-      <StatusBar style={isLight ? 'dark' : 'light'} />
       {children}
     </ThemeContext.Provider>
   );
