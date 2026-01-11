@@ -123,6 +123,7 @@ export default function ZodiacModal({ visible, zodiac, setZodiac, onClose }: Zod
                     title={zodiac ? 'Сохранить' : 'Закрыть'}
                     onPress={zodiac ? saveZodiac : onClose}
                     style={{ backgroundColor: theme.accent || '#1c1c1e' }}
+                    textColor={theme.accentText || '#ffffff'}
                   />
                 </View>
               </ThemedBackground>

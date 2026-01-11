@@ -129,6 +129,7 @@ export default function InterestsModal({ visible, interests, setInterests, onClo
                     onPress={saveInterests}
                     disabled={interests.length === 0}
                     style={{ backgroundColor: theme.accent || '#1c1c1e' }}
+                    textColor={theme.accentText || '#ffffff'}
                   />
                 </View>
               </ThemedBackground>

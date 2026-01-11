@@ -17,6 +17,7 @@ export const THEMES = {
     cardBg: '#fafaf2', // Soft beige instead of pure white
     border: '#e0e0e0',
     accent: '#000000', // Темные кнопки (Black)
+    accentText: '#ffffff', // Белый текст на черной кнопке
     icon: '#1c1c1e',
     tint: 'rgba(0,0,0,0.05)'
   },
@@ -27,7 +28,8 @@ export const THEMES = {
     subText: '#a0a0a0',
     cardBg: 'rgba(23, 27, 44, 0.85)', // Полупрозрачный темный
     border: 'rgba(255,255,255,0.1)',
-    accent: '#e1306c', // Яркий акцент для космоса
+    accent: '#ffffff', // Белая кнопка для контраста (как Black в светлой теме)
+    accentText: '#000000', // Черный текст на белой кнопке
     icon: '#ffffff',
     tint: 'rgba(255,255,255,0.1)'
   }

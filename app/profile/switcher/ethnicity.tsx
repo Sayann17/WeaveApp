@@ -184,6 +184,7 @@ export default function EditEthnicityScreen() {
                 onPress={handleSave}
                 isLoading={isSaving}
                 style={{ backgroundColor: theme.accent || '#1c1c1e' }}
+                textColor={theme.accentText || '#ffffff'}
               />
             </View>
           </KeyboardAvoidingView>
@@ -194,7 +195,7 @@ export default function EditEthnicityScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1 },
+  container: { flex: 1 }, // Removed backgroundColor
   centerContainer: { flex: 1, justifyContent: 'center', alignItems: 'center' },
 
   header: {

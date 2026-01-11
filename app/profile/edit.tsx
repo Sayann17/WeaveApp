@@ -479,6 +479,7 @@ export default function EditProfileScreen() {
                 isLoading={isSaving}
                 disabled={!isFormValid}
                 style={{ backgroundColor: theme.accent || '#1c1c1e' }}
+                textColor={theme.accentText || '#ffffff'}
               />
             </View>
 
@@ -506,7 +507,7 @@ export default function EditProfileScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: Colors.background,
+    // backgroundColor: Colors.background, // Removed to allow ThemedBackground to show
   },
   header: {
     flexDirection: 'row',

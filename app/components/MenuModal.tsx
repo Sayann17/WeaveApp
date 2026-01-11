@@ -15,6 +15,7 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme } from '../context/ThemeContext';
 import { yandexAuth } from '../services/yandex/AuthService';
+import { ThemedBackground } from './ThemedBackground';
 
 interface MenuModalProps {
     visible: boolean;
@@ -97,117 +98,120 @@ export const MenuModal = ({ visible, onClose }: MenuModalProps) => {
                     style={[
                         styles.menuContainer,
                         {
-                            backgroundColor: theme.background,
+                            backgroundColor: themeType === 'space' ? 'transparent' : theme.background,
                             paddingBottom: insets.bottom + 20,
+                            overflow: 'hidden' // Ensure gradient respects border radius
                         }
                     ]}
                     onPress={(e) => e.stopPropagation()}
                 >
-                    {/* Header */}
-                    <View style={styles.header}>
-                        <Text style={[styles.headerTitle, { color: theme.text }]}>Меню</Text>
-                        <Pressable onPress={onClose} style={styles.closeButton}>
-                            <Ionicons name="close" size={24} color={theme.text} />
-                        </Pressable>
-                    </View>
-
-                    {/* Menu Items */}
-                    <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
-                        {/* Edit Profile */}
-                        <Pressable
-                            style={[styles.menuItem, { backgroundColor: theme.cardBg }]}
-                            onPress={() => handleNavigation('/profile/edit')}
-                        >
-                            <View style={[styles.iconContainer, { backgroundColor: isLight ? '#f0f0f0' : 'rgba(255,255,255,0.1)' }]}>
-                                <Ionicons name="create-outline" size={24} color={theme.text} />
-                            </View>
-                            <View style={styles.menuTextContainer}>
-                                <Text style={[styles.menuText, { color: theme.text }]}>Редактировать профиль</Text>
-                                <Text style={[styles.menuSubtext, { color: theme.subText }]}>Изменить фото и информацию</Text>
-                            </View>
-                            <Ionicons name="chevron-forward" size={20} color={theme.subText} />
-                        </Pressable>
-
-                        {/* Visibility Toggle */}
-                        <View style={[styles.menuItem, { backgroundColor: theme.cardBg }]}>
-                            <View style={[styles.iconContainer, { backgroundColor: isLight ? '#f0f0f0' : 'rgba(255,255,255,0.1)' }]}>
-                                <Ionicons name={isVisibleProfile ? "eye-outline" : "eye-off-outline"} size={24} color={theme.text} />
-                            </View>
-                            <View style={styles.menuTextContainer}>
-                                <Text style={[styles.menuText, { color: theme.text }]}>
-                                    {isVisibleProfile ? 'Профиль виден' : 'Профиль скрыт'}
-                                </Text>
-                                <Text style={[styles.menuSubtext, { color: theme.subText }]}>
-                                    {isVisibleProfile ? 'Вас могут найти в поиске' : 'Вас никто не увидит'}
-                                </Text>
-                            </View>
-                            <Switch
-                                value={isVisibleProfile}
-                                onValueChange={toggleVisibility}
-                                trackColor={{ false: '#767577', true: '#4A9EFF' }}
-                                thumbColor={'#fff'}
-                            />
-                        </View>
-
-                        {/* Theme Options */}
-                        <View style={styles.themeOptions}>
-                            <Pressable
-                                style={[
-                                    styles.themeOption,
-                                    { backgroundColor: theme.cardBg },
-                                    themeType === 'light' && styles.themeOptionActive
-                                ]}
-                                onPress={() => setTheme('light')}
-                            >
-                                <Ionicons name="sunny" size={20} color={themeType === 'light' ? '#FFD700' : theme.subText} />
-                                <Text style={[styles.themeOptionText, { color: themeType === 'light' ? theme.text : theme.subText }]}>
-                                    Светлая
-                                </Text>
-                            </Pressable>
-
-                            <Pressable
-                                style={[
-                                    styles.themeOption,
-                                    { backgroundColor: theme.cardBg },
-                                    themeType === 'space' && styles.themeOptionActive
-                                ]}
-                                onPress={() => setTheme('space')}
-                            >
-                                <Ionicons name="moon" size={20} color={themeType === 'space' ? '#9D84FF' : theme.subText} />
-                                <Text style={[styles.themeOptionText, { color: themeType === 'space' ? theme.text : theme.subText }]}>
-                                    Space
-                                </Text>
+                    <ThemedBackground>
+                        {/* Header */}
+                        <View style={styles.header}>
+                            <Text style={[styles.headerTitle, { color: theme.text }]}>Меню</Text>
+                            <Pressable onPress={onClose} style={styles.closeButton}>
+                                <Ionicons name="close" size={24} color={theme.text} />
                             </Pressable>
                         </View>
 
-                        {/* Logout */}
-                        <Pressable
-                            style={[styles.menuItem, styles.logoutItem, { backgroundColor: theme.cardBg }]}
-                            onPress={handleLogout}
-                        >
-                            <View style={[styles.iconContainer, { backgroundColor: 'rgba(255,59,48,0.1)' }]}>
-                                <Ionicons name="log-out-outline" size={24} color="#FF3B30" />
-                            </View>
-                            <View style={styles.menuTextContainer}>
-                                <Text style={[styles.menuText, { color: '#FF3B30' }]}>Выйти</Text>
-                                <Text style={[styles.menuSubtext, { color: theme.subText }]}>Выход из аккаунта</Text>
-                            </View>
-                        </Pressable>
+                        {/* Menu Items */}
+                        <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
+                            {/* Edit Profile */}
+                            <Pressable
+                                style={[styles.menuItem, { backgroundColor: theme.cardBg }]}
+                                onPress={() => handleNavigation('/profile/edit')}
+                            >
+                                <View style={[styles.iconContainer, { backgroundColor: isLight ? '#f0f0f0' : 'rgba(255,255,255,0.1)' }]}>
+                                    <Ionicons name="create-outline" size={24} color={theme.text} />
+                                </View>
+                                <View style={styles.menuTextContainer}>
+                                    <Text style={[styles.menuText, { color: theme.text }]}>Редактировать профиль</Text>
+                                    <Text style={[styles.menuSubtext, { color: theme.subText }]}>Изменить фото и информацию</Text>
+                                </View>
+                                <Ionicons name="chevron-forward" size={20} color={theme.subText} />
+                            </Pressable>
 
-                        {/* Delete Account */}
-                        <Pressable
-                            style={[styles.menuItem, styles.deleteItem, { backgroundColor: theme.cardBg }]}
-                            onPress={handleDeleteAccount}
-                        >
-                            <View style={[styles.iconContainer, { backgroundColor: 'rgba(255,59,48,0.1)' }]}>
-                                <Ionicons name="trash-outline" size={24} color="#FF3B30" />
+                            {/* Visibility Toggle */}
+                            <View style={[styles.menuItem, { backgroundColor: theme.cardBg }]}>
+                                <View style={[styles.iconContainer, { backgroundColor: isLight ? '#f0f0f0' : 'rgba(255,255,255,0.1)' }]}>
+                                    <Ionicons name={isVisibleProfile ? "eye-outline" : "eye-off-outline"} size={24} color={theme.text} />
+                                </View>
+                                <View style={styles.menuTextContainer}>
+                                    <Text style={[styles.menuText, { color: theme.text }]}>
+                                        {isVisibleProfile ? 'Профиль виден' : 'Профиль скрыт'}
+                                    </Text>
+                                    <Text style={[styles.menuSubtext, { color: theme.subText }]}>
+                                        {isVisibleProfile ? 'Вас могут найти в поиске' : 'Вас никто не увидит'}
+                                    </Text>
+                                </View>
+                                <Switch
+                                    value={isVisibleProfile}
+                                    onValueChange={toggleVisibility}
+                                    trackColor={{ false: '#767577', true: '#4A9EFF' }}
+                                    thumbColor={'#fff'}
+                                />
                             </View>
-                            <View style={styles.menuTextContainer}>
-                                <Text style={[styles.menuText, { color: "#FF3B30" }]}>Удалить аккаунт</Text>
-                                <Text style={[styles.menuSubtext, { color: theme.subText }]}>Безвозвратно</Text>
+
+                            {/* Theme Options */}
+                            <View style={styles.themeOptions}>
+                                <Pressable
+                                    style={[
+                                        styles.themeOption,
+                                        { backgroundColor: theme.cardBg },
+                                        themeType === 'light' && styles.themeOptionActive
+                                    ]}
+                                    onPress={() => setTheme('light')}
+                                >
+                                    <Ionicons name="sunny" size={20} color={themeType === 'light' ? '#FFD700' : theme.subText} />
+                                    <Text style={[styles.themeOptionText, { color: themeType === 'light' ? theme.text : theme.subText }]}>
+                                        Светлая
+                                    </Text>
+                                </Pressable>
+
+                                <Pressable
+                                    style={[
+                                        styles.themeOption,
+                                        { backgroundColor: theme.cardBg },
+                                        themeType === 'space' && styles.themeOptionActive
+                                    ]}
+                                    onPress={() => setTheme('space')}
+                                >
+                                    <Ionicons name="moon" size={20} color={themeType === 'space' ? '#9D84FF' : theme.subText} />
+                                    <Text style={[styles.themeOptionText, { color: themeType === 'space' ? theme.text : theme.subText }]}>
+                                        Space
+                                    </Text>
+                                </Pressable>
                             </View>
-                        </Pressable>
-                    </ScrollView>
+
+                            {/* Logout */}
+                            <Pressable
+                                style={[styles.menuItem, styles.logoutItem, { backgroundColor: theme.cardBg }]}
+                                onPress={handleLogout}
+                            >
+                                <View style={[styles.iconContainer, { backgroundColor: 'rgba(255,59,48,0.1)' }]}>
+                                    <Ionicons name="log-out-outline" size={24} color="#FF3B30" />
+                                </View>
+                                <View style={styles.menuTextContainer}>
+                                    <Text style={[styles.menuText, { color: '#FF3B30' }]}>Выйти</Text>
+                                    <Text style={[styles.menuSubtext, { color: theme.subText }]}>Выход из аккаунта</Text>
+                                </View>
+                            </Pressable>
+
+                            {/* Delete Account */}
+                            <Pressable
+                                style={[styles.menuItem, styles.deleteItem, { backgroundColor: theme.cardBg }]}
+                                onPress={handleDeleteAccount}
+                            >
+                                <View style={[styles.iconContainer, { backgroundColor: 'rgba(255,59,48,0.1)' }]}>
+                                    <Ionicons name="trash-outline" size={24} color="#FF3B30" />
+                                </View>
+                                <View style={styles.menuTextContainer}>
+                                    <Text style={[styles.menuText, { color: "#FF3B30" }]}>Удалить аккаунт</Text>
+                                    <Text style={[styles.menuSubtext, { color: theme.subText }]}>Безвозвратно</Text>
+                                </View>
+                            </Pressable>
+                        </ScrollView>
+                    </ThemedBackground>
                 </Pressable>
             </Pressable >
         </Modal >

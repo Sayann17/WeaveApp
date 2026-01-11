@@ -7,14 +7,14 @@ interface PrimaryButtonProps {
   disabled?: boolean;
   isLoading?: boolean;
   style?: any;
+  textColor?: string;
 }
 
-export const PrimaryButton = ({ title, onPress, disabled, isLoading, style }: PrimaryButtonProps) => {
+export const PrimaryButton = ({ title, onPress, disabled, isLoading, style, textColor }: PrimaryButtonProps) => {
   return (
     <TouchableOpacity
       style={[
         styles.button,
-        // Позволяет переопределять цвет (например, на черный)
         style,
         disabled && styles.disabled
       ]}
@@ -23,10 +23,9 @@ export const PrimaryButton = ({ title, onPress, disabled, isLoading, style }: Pr
       activeOpacity={0.8}
     >
       {isLoading ? (
-        <ActivityIndicator color="#ffffff" />
+        <ActivityIndicator color={textColor || "#ffffff"} />
       ) : (
-        // 🔥 ЯВНО ЗАДАЕМ ЦВЕТ ТЕКСТА #FFFFFF
-        <Text style={styles.text}>{title}</Text>
+        <Text style={[styles.text, textColor ? { color: textColor } : null]}>{title}</Text>
       )}
     </TouchableOpacity>
   );
