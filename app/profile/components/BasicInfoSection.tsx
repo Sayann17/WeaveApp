@@ -78,7 +78,7 @@ export default function BasicInfoSection({
 
 const styles = StyleSheet.create({
   section: {
-    marginBottom: 30,
+    marginBottom: 15,
   },
   sectionTitle: {
     fontSize: 18,

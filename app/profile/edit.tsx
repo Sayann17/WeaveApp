@@ -284,7 +284,7 @@ export default function EditProfileScreen() {
             />
 
             {/* 3.5. Город и Локация */}
-            <View style={{ marginBottom: 10 }}>
+            <View style={{ marginBottom: 25 }}>
               <Text style={[styles.sectionTitle, { color: theme.text }]}>Где вы находитесь?</Text>
 
               <TextInput

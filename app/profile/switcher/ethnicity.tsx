@@ -98,7 +98,8 @@ export default function EditEthnicityScreen() {
       <View style={{ paddingTop: 120 }}>
 
         <View style={styles.header}>
-          {/* Header title removed */}
+          {/* Кнопка "Назад" убрана из UI, полагаемся на системный жест или кнопку BackButton (если есть) */}
+          <Text style={[styles.headerTitle, { color: theme.text }]}>Редактировать происхождение</Text>
         </View>
 
         <KeyboardAvoidingView
