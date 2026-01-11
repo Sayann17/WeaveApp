@@ -472,7 +472,14 @@ export default function EditProfileScreen() {
               {/* <View style={{ height: 100 }} />  Removed extra space */}
             </ScrollView>
 
-            <View style={[styles.footer, { backgroundColor: theme.background, borderTopColor: theme.border }]}>
+            <View style={[
+              styles.footer,
+              {
+                backgroundColor: themeType === 'space' ? 'transparent' : theme.background,
+                borderTopColor: themeType === 'space' ? 'transparent' : theme.border,
+                borderTopWidth: themeType === 'space' ? 0 : 1
+              }
+            ]}>
               <PrimaryButton
                 title={isFirstEdit ? "Готово" : "Сохранить"}
                 onPress={handleSave}
@@ -515,8 +522,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     padding: 15,
     borderBottomWidth: 1,
-    borderBottomColor: Colors.border,
-    backgroundColor: Colors.background,
+    // borderBottomColor: Colors.border, // Removed to use dynamic theme.border in component
   },
   backButton: {
     padding: 5,
@@ -544,8 +550,6 @@ const styles = StyleSheet.create({
   footer: {
     padding: 20,
     borderTopWidth: 1,
-    borderTopColor: Colors.border,
-    backgroundColor: Colors.background,
   },
 
   // Styles for Bio Input

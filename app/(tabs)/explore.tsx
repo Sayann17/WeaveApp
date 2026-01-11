@@ -312,122 +312,127 @@ export default function ExploreScreen() {
         return (
             <Modal visible={showFilters} animationType="slide" transparent>
                 <View style={styles.modalOverlay}>
-                    <View style={[styles.modalContainer, { backgroundColor: theme.background }]}>
-                        <View style={styles.modalHeader}>
-                            <Text style={[styles.modalTitle, { color: theme.text }]}>Фильтры</Text>
-                            <Pressable onPress={() => setShowFilters(false)} style={styles.closeBtn}>
-                                <Ionicons name="close" size={24} color={theme.text} />
-                            </Pressable>
-                        </View>
-
-                        <ScrollView style={{ padding: 20 }}>
-                            {/* ПОЛ */}
-                            <Text style={[styles.filterLabel, { color: theme.text }]}>Кого искать?</Text>
-                            <View style={styles.genderRow}>
-                                {(['all', 'male', 'female'] as const).map(g => (
-                                    <Pressable
-                                        key={g}
-                                        style={[
-                                            styles.genderBtn,
-                                            tempFilters.gender === g && { backgroundColor: theme.accent || '#00b894', borderColor: theme.accent || '#00b894' },
-                                            tempFilters.gender !== g && { borderColor: theme.border }
-                                        ]}
-                                        onPress={() => setTempFilters({ ...tempFilters, gender: g })}
-                                    >
-                                        <Text style={[
-                                            styles.genderText,
-                                            { color: tempFilters.gender === g ? '#fff' : theme.subText }
-                                        ]}>
-                                            {g === 'all' ? 'Всех' : g === 'male' ? 'Мужчин' : 'Женщин'}
-                                        </Text>
-                                    </Pressable>
-                                ))}
+                    <View style={[
+                        styles.modalContainer,
+                        { backgroundColor: theme.type === 'space' ? 'transparent' : theme.background }
+                    ]}>
+                        <ThemedBackground>
+                            <View style={styles.modalHeader}>
+                                <Text style={[styles.modalTitle, { color: theme.text }]}>Фильтры</Text>
+                                <Pressable onPress={() => setShowFilters(false)} style={styles.closeBtn}>
+                                    <Ionicons name="close" size={24} color={theme.text} />
+                                </Pressable>
                             </View>
 
-                            {/* ВОЗРАСТ */}
-                            <Text style={[styles.filterLabel, { color: theme.text, marginTop: 20 }]}>Возраст</Text>
-                            <View style={styles.ageRow}>
-                                <View style={{ flex: 1 }}>
-                                    <Text style={[styles.ageLabel, { color: theme.subText }]}>От</Text>
-                                    <TextInput
-                                        style={[styles.ageInput, { color: theme.text, borderColor: theme.border, backgroundColor: theme.cardBg }]}
-                                        value={tempFilters.minAge}
-                                        onChangeText={(t: string) => setTempFilters({ ...tempFilters, minAge: t })}
-                                        keyboardType="numeric"
-                                        placeholder="18"
-                                        placeholderTextColor={theme.subText}
-                                    />
+                            <ScrollView style={{ padding: 20 }}>
+                                {/* ПОЛ */}
+                                <Text style={[styles.filterLabel, { color: theme.text }]}>Кого искать?</Text>
+                                <View style={styles.genderRow}>
+                                    {(['all', 'male', 'female'] as const).map(g => (
+                                        <Pressable
+                                            key={g}
+                                            style={[
+                                                styles.genderBtn,
+                                                tempFilters.gender === g && { backgroundColor: theme.accent || '#00b894', borderColor: theme.accent || '#00b894' },
+                                                tempFilters.gender !== g && { borderColor: theme.border }
+                                            ]}
+                                            onPress={() => setTempFilters({ ...tempFilters, gender: g })}
+                                        >
+                                            <Text style={[
+                                                styles.genderText,
+                                                { color: tempFilters.gender === g ? (theme.accentText || '#fff') : theme.subText }
+                                            ]}>
+                                                {g === 'all' ? 'Всех' : g === 'male' ? 'Мужчин' : 'Женщин'}
+                                            </Text>
+                                        </Pressable>
+                                    ))}
                                 </View>
-                                <Text style={[styles.ageSeparator, { color: theme.subText }]}>—</Text>
-                                <View style={{ flex: 1 }}>
-                                    <Text style={[styles.ageLabel, { color: theme.subText }]}>До</Text>
-                                    <TextInput
-                                        style={[styles.ageInput, { color: theme.text, borderColor: theme.border, backgroundColor: theme.cardBg }]}
-                                        value={tempFilters.maxAge}
-                                        onChangeText={(t: string) => setTempFilters({ ...tempFilters, maxAge: t })}
-                                        keyboardType="numeric"
-                                        placeholder="50"
-                                        placeholderTextColor={theme.subText}
-                                    />
+
+                                {/* ВОЗРАСТ */}
+                                <Text style={[styles.filterLabel, { color: theme.text, marginTop: 20 }]}>Возраст</Text>
+                                <View style={styles.ageRow}>
+                                    <View style={{ flex: 1 }}>
+                                        <Text style={[styles.ageLabel, { color: theme.subText }]}>От</Text>
+                                        <TextInput
+                                            style={[styles.ageInput, { color: theme.text, borderColor: theme.border, backgroundColor: theme.cardBg }]}
+                                            value={tempFilters.minAge}
+                                            onChangeText={(t: string) => setTempFilters({ ...tempFilters, minAge: t })}
+                                            keyboardType="numeric"
+                                            placeholder="18"
+                                            placeholderTextColor={theme.subText}
+                                        />
+                                    </View>
+                                    <Text style={[styles.ageSeparator, { color: theme.subText }]}>—</Text>
+                                    <View style={{ flex: 1 }}>
+                                        <Text style={[styles.ageLabel, { color: theme.subText }]}>До</Text>
+                                        <TextInput
+                                            style={[styles.ageInput, { color: theme.text, borderColor: theme.border, backgroundColor: theme.cardBg }]}
+                                            value={tempFilters.maxAge}
+                                            onChangeText={(t: string) => setTempFilters({ ...tempFilters, maxAge: t })}
+                                            keyboardType="numeric"
+                                            placeholder="50"
+                                            placeholderTextColor={theme.subText}
+                                        />
+                                    </View>
                                 </View>
+
+                                {/* ЭТНОС */}
+                                <Text style={[styles.filterLabel, { color: theme.text, marginTop: 20 }]}>Этническая группа</Text>
+                                <View style={styles.chipContainer}>
+                                    {ethnicityGroups.map(group => (
+                                        <Pressable
+                                            key={group.id}
+                                            style={[
+                                                styles.chip,
+                                                { borderColor: theme.border, backgroundColor: theme.cardBg },
+                                                tempFilters.ethnicity === group.id && { backgroundColor: '#00b894', borderColor: '#00b894' }
+                                            ]}
+                                            onPress={() => setTempFilters({ ...tempFilters, ethnicity: tempFilters.ethnicity === group.id ? '' : group.id })}
+                                        >
+                                            <Text style={styles.chipEmoji}>{group.emoji}</Text>
+                                            <Text style={[
+                                                styles.chipText,
+                                                { color: tempFilters.ethnicity === group.id ? '#fff' : theme.text }
+                                            ]}>
+                                                {group.name}
+                                            </Text>
+                                        </Pressable>
+                                    ))}
+                                </View>
+
+                                {/* РЕЛИГИЯ */}
+                                <Text style={[styles.filterLabel, { color: theme.text, marginTop: 20 }]}>Религия</Text>
+                                <View style={styles.chipContainer}>
+                                    {religions.map(rel => (
+                                        <Pressable
+                                            key={rel.id}
+                                            style={[
+                                                styles.chip,
+                                                { borderColor: theme.border, backgroundColor: theme.cardBg },
+                                                tempFilters.religion === rel.id && { backgroundColor: '#00b894', borderColor: '#00b894' }
+                                            ]}
+                                            onPress={() => setTempFilters({ ...tempFilters, religion: tempFilters.religion === rel.id ? '' : rel.id })}
+                                        >
+                                            <Text style={styles.chipEmoji}>{rel.emoji}</Text>
+                                            <Text style={[
+                                                styles.chipText,
+                                                { color: tempFilters.religion === rel.id ? '#fff' : theme.text }
+                                            ]}>
+                                                {rel.name}
+                                            </Text>
+                                        </Pressable>
+                                    ))}
+                                </View>
+
+                                <View style={{ height: 40 }} />
+                            </ScrollView>
+
+                            <View style={[styles.modalFooter, { borderTopColor: theme.border }]}>
+                                <Pressable style={[styles.applyBtn, { backgroundColor: '#00b894' }]} onPress={applyFilters}>
+                                    <Text style={styles.applyBtnText}>Применить</Text>
+                                </Pressable>
                             </View>
-
-                            {/* ЭТНОС */}
-                            <Text style={[styles.filterLabel, { color: theme.text, marginTop: 20 }]}>Этническая группа</Text>
-                            <View style={styles.chipContainer}>
-                                {ethnicityGroups.map(group => (
-                                    <Pressable
-                                        key={group.id}
-                                        style={[
-                                            styles.chip,
-                                            { borderColor: theme.border, backgroundColor: theme.cardBg },
-                                            tempFilters.ethnicity === group.id && { backgroundColor: '#00b894', borderColor: '#00b894' }
-                                        ]}
-                                        onPress={() => setTempFilters({ ...tempFilters, ethnicity: tempFilters.ethnicity === group.id ? '' : group.id })}
-                                    >
-                                        <Text style={styles.chipEmoji}>{group.emoji}</Text>
-                                        <Text style={[
-                                            styles.chipText,
-                                            { color: tempFilters.ethnicity === group.id ? '#fff' : theme.text }
-                                        ]}>
-                                            {group.name}
-                                        </Text>
-                                    </Pressable>
-                                ))}
-                            </View>
-
-                            {/* РЕЛИГИЯ */}
-                            <Text style={[styles.filterLabel, { color: theme.text, marginTop: 20 }]}>Религия</Text>
-                            <View style={styles.chipContainer}>
-                                {religions.map(rel => (
-                                    <Pressable
-                                        key={rel.id}
-                                        style={[
-                                            styles.chip,
-                                            { borderColor: theme.border, backgroundColor: theme.cardBg },
-                                            tempFilters.religion === rel.id && { backgroundColor: '#00b894', borderColor: '#00b894' }
-                                        ]}
-                                        onPress={() => setTempFilters({ ...tempFilters, religion: tempFilters.religion === rel.id ? '' : rel.id })}
-                                    >
-                                        <Text style={styles.chipEmoji}>{rel.emoji}</Text>
-                                        <Text style={[
-                                            styles.chipText,
-                                            { color: tempFilters.religion === rel.id ? '#fff' : theme.text }
-                                        ]}>
-                                            {rel.name}
-                                        </Text>
-                                    </Pressable>
-                                ))}
-                            </View>
-
-                            <View style={{ height: 40 }} />
-                        </ScrollView>
-
-                        <View style={[styles.modalFooter, { borderTopColor: theme.border }]}>
-                            <Pressable style={[styles.applyBtn, { backgroundColor: '#00b894' }]} onPress={applyFilters}>
-                                <Text style={styles.applyBtnText}>Применить</Text>
-                            </Pressable>
-                        </View>
+                        </ThemedBackground>
                     </View>
                 </View>
             </Modal>
@@ -469,18 +474,19 @@ const styles = StyleSheet.create({
     actionBtnText: { fontSize: 16, fontWeight: 'bold', color: '#fff' },
 
     // Floating Buttons
-    floatingActions: { position: 'absolute', bottom: 30, alignSelf: 'center', flexDirection: 'row', gap: 20, zIndex: 100 },
+    // Floating Buttons
+    floatingActions: { position: 'absolute', bottom: 110, alignSelf: 'center', flexDirection: 'row', gap: 20, zIndex: 100 },
     btn: { width: 60, height: 60, borderRadius: 30, justifyContent: 'center', alignItems: 'center' },
     filterBtnFloating: { backgroundColor: '#00b894' },
     passBtn: { backgroundColor: 'rgba(255,255,255,0.1)', borderWidth: 1, borderColor: 'rgba(255,255,255,0.2)' },
     likeBtn: { backgroundColor: '#fff' },
-    floatingFilterBtn: { position: 'absolute', bottom: 30, right: 30, width: 60, height: 60, borderRadius: 30, justifyContent: 'center', alignItems: 'center', zIndex: 100 },
+    floatingFilterBtn: { position: 'absolute', bottom: 110, right: 30, width: 60, height: 60, borderRadius: 30, justifyContent: 'center', alignItems: 'center', zIndex: 100 },
     lightShadow: { shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.1, shadowRadius: 4 },
     darkShadow: { shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.3, shadowRadius: 6 },
 
     // Modal
     modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'flex-end' },
-    modalContainer: { height: '80%', borderTopLeftRadius: 20, borderTopRightRadius: 20 },
+    modalContainer: { height: '80%', borderTopLeftRadius: 20, borderTopRightRadius: 20, overflow: 'hidden' }, // Added overflow: hidden
     modalHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', padding: 20 },
     modalTitle: { fontSize: 24, fontWeight: 'bold' },
     closeBtn: { padding: 5 },
