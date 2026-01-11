@@ -48,23 +48,7 @@ export default function OnboardingGenderScreen() {
         }
     };
 
-    const [isKeyboardVisible, setKeyboardVisible] = useState(false);
 
-    React.useEffect(() => {
-        const keyboardShowListener = Keyboard.addListener(
-            Platform.OS === 'ios' ? 'keyboardWillShow' : 'keyboardDidShow',
-            () => setKeyboardVisible(true)
-        );
-        const keyboardHideListener = Keyboard.addListener(
-            Platform.OS === 'ios' ? 'keyboardWillHide' : 'keyboardDidHide',
-            () => setKeyboardVisible(false)
-        );
-
-        return () => {
-            keyboardShowListener.remove();
-            keyboardHideListener.remove();
-        };
-    }, []);
 
     return (
         <SafeAreaView style={styles.container}>
