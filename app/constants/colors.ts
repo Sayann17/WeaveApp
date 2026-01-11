@@ -3,6 +3,7 @@
 export const Colors = {
   // 🔥 ДОБАВЛЯЕМ "as [string, string, ...string[]]" - это фиксирует ошибку
   backgroundGradient: ['#0b0d15', '#1a1f35', '#2b3252'] as [string, string, ...string[]],
+  tabBarBackground: '#252a47',
 
   background: '#1a0f0f',
 

@@ -1,4 +1,5 @@
 // app/(tabs)/_layout.tsx
+import { Colors } from '../constants/colors';
 import { Ionicons } from '@expo/vector-icons';
 import { Tabs } from 'expo-router';
 import { Text, View, useColorScheme } from 'react-native';
@@ -64,7 +65,7 @@ export default function TabLayout() {
       screenOptions={{
         headerShown: false,
         tabBarStyle: {
-          backgroundColor: themeType === 'space' ? '#0b0d15' : theme.background, // Explicit dark BG for Space
+          backgroundColor: themeType === 'space' ? Colors.tabBarBackground : theme.background, // Explicit dark BG for Space
           borderTopColor: isLight ? theme.border : 'transparent', // No visible border for Space
           elevation: 0,
           borderTopWidth: isLight ? 1 : 0, // No border width for Space
