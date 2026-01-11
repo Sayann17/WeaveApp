@@ -82,37 +82,29 @@ export const ThemeProvider = ({ children }: { children: React.ReactNode }) => {
       const isLightTheme = themeType === 'light';
       const buttonColor = isLightTheme ? '#000000' : '#FFFFFF';
 
-      // Force header color
+      // Force button colors ONLY
       const applyTheme = () => {
-        // Essential: Set header color to matching background
-        // Telegram automatically adjusts status bar icons based on contrast of this color
-        if (webApp.setHeaderColor) {
-          webApp.setHeaderColor(bg);
+        // Set BackButton color
+        if (webApp.BackButton && webApp.BackButton.color !== buttonColor) {
+          webApp.BackButton.color = buttonColor;
         }
 
-        // Ensure background is set
-        if (webApp.setBackgroundColor) {
-          webApp.setBackgroundColor(bg);
-        }
-
-        // Set Bottom Bar code
-        if (webApp.setBottomBarColor) {
-          webApp.setBottomBarColor(bg);
-        }
-
-        // Colors for buttons
-        if (webApp.BackButton) webApp.BackButton.color = buttonColor;
-        if (webApp.SettingsButton) webApp.SettingsButton.color = buttonColor;
+        // Set MainButton color (if used)
         if (webApp.MainButton) {
-          webApp.MainButton.color = buttonColor;
           webApp.MainButton.textColor = isLightTheme ? '#FFFFFF' : '#000000';
+          webApp.MainButton.color = buttonColor;
+        }
+
+        // Set SettingsButton color (if available)
+        if (webApp.SettingsButton && webApp.SettingsButton.color !== buttonColor) {
+          webApp.SettingsButton.color = buttonColor;
         }
       };
 
       // 1. Apply immediately
       applyTheme();
 
-      // 2. Re-apply after small delay to fight initial race conditions
+      // 2. Re-apply after small delay
       const timer = setTimeout(applyTheme, 100);
 
       return () => clearTimeout(timer);
