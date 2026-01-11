@@ -64,10 +64,10 @@ export default function TabLayout() {
       screenOptions={{
         headerShown: false,
         tabBarStyle: {
-          backgroundColor: themeType === 'space' ? 'rgba(11, 13, 21, 0.96)' : theme.background, // Almost opaque to provide framing
-          borderTopColor: isLight ? theme.border : 'rgba(255, 255, 255, 0.15)', // Visible border for Space
+          backgroundColor: theme.background, // Seamless with background
+          borderTopColor: isLight ? theme.border : '#C0C0C0', // Silver border for Space
           elevation: 0,
-          borderTopWidth: 1, // Always show border for framing
+          borderTopWidth: 1, // Always show border
           height: 96,
           paddingBottom: 34,
           paddingTop: 8,
