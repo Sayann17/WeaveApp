@@ -184,7 +184,7 @@ const styles = StyleSheet.create({
     width: width,
     flex: 1,
     paddingHorizontal: 30,
-    paddingTop: 92, // 🔥 User specified padding
+    paddingTop: 142, // 🔥 User specified padding
   },
 
   // Визуальная часть (Иконка)

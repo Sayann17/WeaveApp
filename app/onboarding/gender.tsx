@@ -57,7 +57,7 @@ export default function OnboardingGenderScreen() {
                 keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 20}
             >
                 <ScrollView
-                    contentContainerStyle={styles.scrollContent}
+                    contentContainerStyle={[styles.scrollContent, { paddingBottom: 120 }]} // 🔥 Fix: Add padding for pinned footer
                     showsVerticalScrollIndicator={false}
                 >
                     <View style={styles.header}>
