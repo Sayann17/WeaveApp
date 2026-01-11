@@ -124,91 +124,94 @@ export default function OnboardingHooksScreen() {
             <KeyboardAvoidingView
                 behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
                 style={{ flex: 1 }}
-                keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 0}
+                keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 20}
             >
-                <View style={styles.header}>
-                    <Text style={styles.stepCount}>Шаг 3 из 6</Text>
-                    <Text style={styles.title}>Личность</Text>
-                    <Text style={styles.subtitle}>
-                        Расскажите немного о себе. Это самое интересное.
-                    </Text>
-                </View>
-
                 <ScrollView
                     contentContainerStyle={styles.scrollContent}
                     keyboardShouldPersistTaps="handled"
                     showsVerticalScrollIndicator={false}
                 >
-                    <View style={styles.requiredContainer}>
-                        <HookInputItem
-                            label="Об о себе (Био) *"
-                            value={bio}
-                            onChange={(t) => { setBio(t); if (t) setBioError(false); }}
-                            placeholder="Кто вы? Чем живете? Что ищете?"
-                            multiline={true}
-                            icon="person-outline"
-                            hasError={bioError}
+                    <View style={styles.header}>
+                        <Text style={styles.stepCount}>Шаг 3 из 6</Text>
+                        <Text style={styles.title}>Личность</Text>
+                        <Text style={styles.subtitle}>
+                            Расскажите немного о себе. Это самое интересное.
+                        </Text>
+                    </View>
+
+                    <View style={styles.formContent}>
+                        <View style={styles.requiredContainer}>
+                            <HookInputItem
+                                label="Об о себе (Био) *"
+                                value={bio}
+                                onChange={(t) => { setBio(t); if (t) setBioError(false); }}
+                                placeholder="Кто вы? Чем живете? Что ищете?"
+                                multiline={true}
+                                icon="person-outline"
+                                hasError={bioError}
+                            />
+                        </View>
+
+                        <View style={styles.divider} />
+                        <View style={styles.sectionHeader}>
+                            <Text style={styles.sectionTitle}>Детали (Можно пропустить)</Text>
+                        </View>
+
+                        <View style={styles.optionalContainer}>
+                            <HookInputItem
+                                label="Мой язык любви"
+                                value={loveLanguage}
+                                onChange={setLoveLanguage}
+                                placeholder="Слова, подарки, время..."
+                                icon="heart-outline"
+                            />
+
+                            <HookInputItem
+                                label="Чем я больше всего горжусь в своей культуре"
+                                value={culturePride}
+                                onChange={setCulturePride}
+                                placeholder="Гостеприимство, музыка, традиции..."
+                                icon="earth-outline"
+                            />
+
+                            <HookInputItem
+                                label="Любимое семейное воспоминание"
+                                value={familyMemory}
+                                onChange={setFamilyMemory}
+                                placeholder="Как мы всей семьей..."
+                                icon="people-outline"
+                            />
+
+                            <HookInputItem
+                                label="Что для меня значит настоящая близость"
+                                value={stereotypeTrue}
+                                onChange={setStereotypeTrue}
+                                placeholder="Доверие, общие цели, поддержка..."
+                                icon="checkmark-circle-outline"
+                            />
+
+                            <HookInputItem
+                                label="Чем я занимаюсь, когда хочу перезагрузиться"
+                                value={stereotypeFalse}
+                                onChange={setStereotypeFalse}
+                                placeholder="Читаю, гуляю, смотрю сериалы..."
+                                icon="close-circle-outline"
+                            />
+                        </View>
+                    </View>
+
+                    <View style={styles.footer}>
+                        <PrimaryButton
+                            title="Продолжить"
+                            onPress={handleContinue}
+                            isLoading={isLoading}
+                            style={{ backgroundColor: '#2a2a2a' }}
                         />
                     </View>
 
-                    <View style={styles.divider} />
-                    <View style={styles.sectionHeader}>
-                        <Text style={styles.sectionTitle}>Детали (Можно пропустить)</Text>
-                    </View>
-
-                    <View style={styles.optionalContainer}>
-                        <HookInputItem
-                            label="Мой язык любви"
-                            value={loveLanguage}
-                            onChange={setLoveLanguage}
-                            placeholder="Слова, подарки, время..."
-                            icon="heart-outline"
-                        />
-
-                        <HookInputItem
-                            label="Чем я больше всего горжусь в своей культуре"
-                            value={culturePride}
-                            onChange={setCulturePride}
-                            placeholder="Гостеприимство, музыка, традиции..."
-                            icon="earth-outline"
-                        />
-
-                        <HookInputItem
-                            label="Любимое семейное воспоминание"
-                            value={familyMemory}
-                            onChange={setFamilyMemory}
-                            placeholder="Как мы всей семьей..."
-                            icon="people-outline"
-                        />
-
-                        <HookInputItem
-                            label="Что для меня значит настоящая близость"
-                            value={stereotypeTrue}
-                            onChange={setStereotypeTrue}
-                            placeholder="Доверие, общие цели, поддержка..."
-                            icon="checkmark-circle-outline"
-                        />
-
-                        <HookInputItem
-                            label="Чем я занимаюсь, когда хочу перезагрузиться"
-                            value={stereotypeFalse}
-                            onChange={setStereotypeFalse}
-                            placeholder="Читаю, гуляю, смотрю сериалы..."
-                            icon="close-circle-outline"
-                        />
-                    </View>
-
+                    {/* Extra spacing for scrolling past keyboard */}
                     <View style={{ height: 40 }} />
                 </ScrollView>
-
-                <View style={styles.footer}>
-                    <PrimaryButton
-                        title="Продолжить"
-                        onPress={handleContinue}
-                        isLoading={isLoading}
-                        style={{ backgroundColor: '#2a2a2a' }}
-                    />
-                </View>
             </KeyboardAvoidingView>
         </SafeAreaView>
     );
@@ -216,12 +219,13 @@ export default function OnboardingHooksScreen() {
 
 const styles = StyleSheet.create({
     container: { flex: 1, backgroundColor: THEME.background },
+    scrollContent: { flexGrow: 1 }, // Allows scrolling
     header: { padding: 20, paddingTop: 92 },
     stepCount: { fontSize: 12, color: '#000', marginBottom: 8, fontWeight: 'bold', textTransform: 'uppercase', letterSpacing: 1 },
     title: { fontSize: 32, fontWeight: '300', color: THEME.text, marginBottom: 10 },
     subtitle: { fontSize: 16, color: THEME.subText },
 
-    scrollContent: { padding: 20 },
+    formContent: { padding: 20 },
 
     sectionHeader: { marginBottom: 15, marginTop: 10 },
     sectionTitle: { fontSize: 16, fontWeight: '600', color: THEME.text, opacity: 0.8 },
