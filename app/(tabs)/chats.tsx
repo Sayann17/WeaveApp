@@ -1,4 +1,5 @@
 import { Ionicons } from '@expo/vector-icons';
+import { useTelegram } from '../context/TelegramProvider';
 import { useFocusEffect, useRouter } from 'expo-router';
 import React, { useCallback, useState } from 'react';
 import {
@@ -39,11 +40,15 @@ export default function ChatsScreen() {
   const router = useRouter();
   const { resetUnreadMessages } = useNotifications();
   const insets = useSafeAreaInsets();
+  const { hideBackButton } = useTelegram(); // Added hideBackButton
 
   const isLight = themeType === 'light';
 
   useFocusEffect(
     useCallback(() => {
+      // Logic to run when the screen comes into focus
+      hideBackButton();
+
       const loadChats = async () => {
         try {
           const currentUser = yandexAuth.getCurrentUser();

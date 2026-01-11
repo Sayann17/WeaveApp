@@ -141,12 +141,30 @@ export const ProfileView = ({ userData, isOwnProfile = false, isMatch = false }:
 
     const router = useRouter(); // Ensure useRouter is imported from 'expo-router'
 
-    // Manage Telegram BackButton for photo viewer
+    // Manage Telegram BackButton & Viewport Zoom for photo viewer
     useEffect(() => {
         if (isFullScreenPhoto) {
             setBackButtonHandler(closeFullScreen);
             showBackButton();
+
+            // Enable Zoom: Allow user scaling
+            if (Platform.OS === 'web') {
+                const metaTag = document.querySelector('meta[name="viewport"]');
+                if (metaTag) {
+                    metaTag.setAttribute('content', 'width=device-width, initial-scale=1, maximum-scale=3, user-scalable=yes');
+                }
+            }
+
         } else {
+            // Disable Zoom: Restrict user scaling
+            if (Platform.OS === 'web') {
+                const metaTag = document.querySelector('meta[name="viewport"]');
+                if (metaTag) {
+                    // Revert to strict no-zoom
+                    metaTag.setAttribute('content', 'width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover');
+                }
+            }
+
             // If not in full screen mode:
             if (!isOwnProfile) {
                 // If it's a foreign profile (stack navigation), we want the Back button to go back

@@ -29,7 +29,7 @@ export default function ProfileScreen() {
   const [userData, setUserData] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
   const insets = useSafeAreaInsets();
-  const { isMobile } = useTelegram();
+  const { isMobile, hideBackButton } = useTelegram();
 
   const [isMenuVisible, setMenuVisible] = useState(false);
   const [settingsVisible, setSettingsVisible] = useState(false);
@@ -37,6 +37,7 @@ export default function ProfileScreen() {
   // Refresh user data whenever screen comes into focus
   useFocusEffect(
     useCallback(() => {
+      hideBackButton();
       const loadUserData = () => {
         const currentUser = yandexAuth.getCurrentUser();
         console.log('[ProfileScreen] Loading user data:', currentUser?.name, currentUser?.bio);

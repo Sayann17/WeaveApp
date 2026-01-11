@@ -33,12 +33,12 @@ async function notifyNewMessage(driver, recipientId, senderName, text) {
         }
 
         // 2. Send message via Bot API
-        const messageText = `BSNew message from ${senderName}:\n${text.substring(0, 50)}${text.length > 50 ? '...' : ''}`;
+        const messageText = `💬 <b>Новое сообщение от ${senderName}</b>\n\n${text.substring(0, 100)}${text.length > 100 ? '...' : ''}`;
 
         // Use a button to open the Mini App
         const keyboard = {
             inline_keyboard: [[
-                { text: "Open Chat", url: "https://t.me/WeaveMe_bot/app" }
+                { text: '📱 Открыть чат', url: 'https://t.me/WeaveMe_bot/app' }
             ]]
         };
 
@@ -48,6 +48,7 @@ async function notifyNewMessage(driver, recipientId, senderName, text) {
             body: JSON.stringify({
                 chat_id: telegramId,
                 text: messageText,
+                parse_mode: 'HTML',
                 reply_markup: keyboard
             })
         });

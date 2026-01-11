@@ -58,7 +58,13 @@ export default function ExploreScreen() {
     const router = useRouter();
     const { theme, isLight } = useTheme();
     const insets = useSafeAreaInsets();
-    const { isMobile } = useTelegram();
+    const { isMobile, hideBackButton } = useTelegram();
+
+    useFocusEffect(
+        useCallback(() => {
+            hideBackButton();
+        }, [])
+    );
 
     // Data States
     const [currentUser, setCurrentUser] = useState<any>(null);

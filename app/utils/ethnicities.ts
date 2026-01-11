@@ -47,7 +47,7 @@ export const ethnicityGroups: EthnicityGroup[] = [
   },
   {
     id: 'indo_european',
-    name: 'Индоевропейские',
+    name: 'Индоевропейские корни',
     emoji: '🏛️',
     description: 'Общее наследие'
   },

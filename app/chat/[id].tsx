@@ -50,6 +50,7 @@ export default function ChatScreen() {
   const [selectedMessage, setSelectedMessage] = useState<Message | null>(null);
 
   const flatListRef = useRef<FlatList>(null);
+  const inputRef = useRef<TextInput>(null);
   const router = useRouter();
   const { setBackButtonHandler, showBackButton, hideBackButton, isMobile } = useTelegram();
 
@@ -166,6 +167,11 @@ export default function ChatScreen() {
 
     const text = newMessage.trim();
     setNewMessage('');
+
+    // Force keep focus
+    setTimeout(() => {
+      inputRef.current?.focus();
+    }, 10);
 
     if (editingMessage) {
       const updatedMsg = { ...editingMessage, text: text, isEdited: true, editedAt: new Date() };
@@ -437,12 +443,14 @@ export default function ChatScreen() {
             <View style={[styles.inputWrapper]}>
               <View style={[styles.inputContainer, { backgroundColor: theme.cardBg }]}>
                 <TextInput
+                  ref={inputRef}
                   style={[styles.textInput, { color: theme.text }]}
                   value={newMessage}
                   onChangeText={setNewMessage}
                   placeholder="Сообщение..."
                   placeholderTextColor={theme.subText}
                   multiline
+                  blurOnSubmit={false}
                   maxLength={500}
                   underlineColorAndroid="transparent"
                   // @ts-ignore

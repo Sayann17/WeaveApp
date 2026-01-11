@@ -31,9 +31,16 @@ export default function MatchesScreen() {
     const [activeTab, setActiveTab] = useState<'matches' | 'likes' | 'sent'>('matches');
     const [loading, setLoading] = useState(true);
     const insets = useSafeAreaInsets();
-    const { isMobile } = useTelegram();
+    const { isMobile, hideBackButton } = useTelegram(); // Added hideBackButton
 
     const isLight = themeType === 'light';
+
+    useFocusEffect(
+        useCallback(() => {
+            // Logic to run when the screen comes into focus
+            hideBackButton();
+        }, [])
+    );
 
     useFocusEffect(
         useCallback(() => {
