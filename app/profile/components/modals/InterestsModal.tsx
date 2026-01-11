@@ -4,13 +4,14 @@ import {
   Alert,
   FlatList,
   Modal,
-  Pressable,
-  SafeAreaView,
   StyleSheet,
   Text,
   TouchableOpacity,
+  TouchableWithoutFeedback,
   View
 } from 'react-native';
+import { PrimaryButton } from '../../../components/ui/PrimaryButton';
+import { useTheme } from '../../../context/ThemeContext';
 import { yandexAuth } from '../../../services/yandex/AuthService';
 import { availableInterests } from '../../../utils/basic_info';
 
@@ -22,6 +23,7 @@ interface InterestsModalProps {
 }
 
 export default function InterestsModal({ visible, interests, setInterests, onClose }: InterestsModalProps) {
+  const { theme, themeType } = useTheme();
 
   const showAlert = (message: string) => {
     if (typeof window !== 'undefined') {
@@ -56,80 +58,97 @@ export default function InterestsModal({ visible, interests, setInterests, onClo
     }
   };
 
-  const renderInterestItem = ({ item }: { item: string }) => (
-    <Pressable
-      style={[
-        styles.interestItem,
-        interests.includes(item) && styles.interestItemSelected
-      ]}
-      onPress={() => toggleInterest(item)}
-    >
-      <Text style={[
-        styles.interestItemText,
-        interests.includes(item) && styles.interestItemTextSelected
-      ]}>
-        {item}
-      </Text>
-      {interests.includes(item) && (
-        <Ionicons name="checkmark" size={20} color="#ffffff" />
-      )}
-    </Pressable>
-  );
+  const renderInterestItem = ({ item }: { item: string }) => {
+    const isSelected = interests.includes(item);
+    return (
+      <TouchableOpacity
+        style={[
+          styles.interestItem,
+          {
+            backgroundColor: themeType === 'space' ? 'rgba(255, 255, 255, 0.05)' : theme.cardBg,
+            borderColor: themeType === 'space' ? 'rgba(255, 255, 255, 0.1)' : theme.border
+          },
+          isSelected && styles.interestItemSelected
+        ]}
+        onPress={() => toggleInterest(item)}
+      >
+        <Text style={[
+          styles.interestItemText,
+          { color: theme.text },
+          isSelected && styles.interestItemTextSelected
+        ]}>
+          {item}
+        </Text>
+        {isSelected && (
+          <Ionicons name="checkmark-circle" size={20} color="#10b981" />
+        )}
+      </TouchableOpacity>
+    );
+  };
 
   return (
     <Modal
       visible={visible}
-      animationType="slide"
-      presentationStyle="pageSheet"
+      animationType="fade"
+      transparent={true}
+      onRequestClose={onClose}
     >
-      <SafeAreaView style={styles.container}>
-        <View style={styles.header}>
-          <Text style={styles.title}>Выберите интересы</Text>
-          <TouchableOpacity
-            style={styles.closeButton}
-            onPress={onClose}
-          >
-            <Ionicons name="close" size={24} color="#ffffff" />
-          </TouchableOpacity>
-        </View>
+      <TouchableWithoutFeedback onPress={onClose}>
+        <View style={styles.modalOverlay}>
+          <TouchableWithoutFeedback>
+            <View style={[styles.modalContent, { backgroundColor: theme.background }]}>
 
-        <View style={styles.subheader}>
-          <Text style={styles.subtitle}>
-            Выберите минимум один интерес ({interests.length} выбрано)
-          </Text>
-        </View>
+              <View style={[styles.header, { borderBottomColor: theme.border }]}>
+                <Text style={[styles.title, { color: theme.text }]}>Интересы</Text>
+                <TouchableOpacity
+                  style={styles.closeButton}
+                  onPress={onClose}
+                >
+                  <Ionicons name="close" size={24} color={theme.text} />
+                </TouchableOpacity>
+              </View>
 
-        <FlatList
-          data={availableInterests}
-          renderItem={renderInterestItem}
-          keyExtractor={(item: string) => item}
-          contentContainerStyle={styles.list}
-          showsVerticalScrollIndicator={false}
-        />
+              <View style={styles.subheader}>
+                <Text style={[styles.subtitle, { color: theme.subText }]}>
+                  Выберите то, что вам интересно
+                </Text>
+              </View>
 
-        <View style={styles.footer}>
-          <TouchableOpacity
-            style={[
-              styles.saveButton,
-              interests.length === 0 && styles.saveButtonDisabled
-            ]}
-            onPress={saveInterests}
-            disabled={interests.length === 0}
-          >
-            <Text style={styles.saveButtonText}>
-              Сохранить ({interests.length})
-            </Text>
-          </TouchableOpacity>
+              <FlatList
+                data={availableInterests}
+                renderItem={renderInterestItem}
+                keyExtractor={(item: string) => item}
+                contentContainerStyle={styles.list}
+                showsVerticalScrollIndicator={false}
+              />
+
+              <View style={[styles.footer, { borderTopColor: theme.border }]}>
+                <PrimaryButton
+                  title="Сохранить"
+                  onPress={saveInterests}
+                  disabled={interests.length === 0}
+                  style={{ backgroundColor: theme.accent || '#1c1c1e' }}
+                />
+              </View>
+
+            </View>
+          </TouchableWithoutFeedback>
         </View>
-      </SafeAreaView>
+      </TouchableWithoutFeedback>
     </Modal>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
+  modalOverlay: {
     flex: 1,
-    backgroundColor: '#0a0a0a',
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'flex-end',
+  },
+  modalContent: {
+    height: '60%', // Half/Part screen like ZodiacModal
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
   },
   header: {
     flexDirection: 'row',
@@ -137,24 +156,22 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     padding: 20,
     borderBottomWidth: 1,
-    borderBottomColor: '#1a1a1a',
   },
   title: {
     fontSize: 20,
     fontWeight: 'bold',
-    color: '#ffffff',
   },
   closeButton: {
     padding: 4,
   },
   subheader: {
-    padding: 20,
+    paddingHorizontal: 20,
     paddingTop: 10,
+    paddingBottom: 0,
   },
   subtitle: {
     fontSize: 14,
-    color: '#cccccc',
-    textAlign: 'center',
+    textAlign: 'left',
   },
   list: {
     padding: 20,
@@ -163,43 +180,25 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    backgroundColor: '#1a1a1a',
+    borderWidth: 1,
     padding: 16,
     borderRadius: 12,
     marginBottom: 10,
-    borderWidth: 1,
-    borderColor: '#333',
   },
   interestItemSelected: {
-    backgroundColor: '#e1306c',
-    borderColor: '#e1306c',
+    borderColor: '#10b981', // Green border
   },
   interestItemText: {
-    color: '#ffffff',
     fontSize: 16,
     fontWeight: '500',
   },
   interestItemTextSelected: {
-    color: '#ffffff',
+    color: '#10b981', // Green text
     fontWeight: 'bold',
   },
   footer: {
     padding: 20,
     borderTopWidth: 1,
-    borderTopColor: '#1a1a1a',
-  },
-  saveButton: {
-    backgroundColor: '#e1306c',
-    padding: 16,
-    borderRadius: 12,
-    alignItems: 'center',
-  },
-  saveButtonDisabled: {
-    backgroundColor: '#666',
-  },
-  saveButtonText: {
-    color: '#ffffff',
-    fontSize: 16,
-    fontWeight: 'bold',
+    paddingBottom: 40,
   },
 });

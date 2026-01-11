@@ -77,7 +77,7 @@ export default function ZodiacModal({ visible, zodiac, setZodiac, onClose }: Zod
         <Text style={[styles.zodiacDates, { color: theme.subText }]}>{item.dates}</Text>
       </View>
       {zodiac === item.id && (
-        <Ionicons name="checkmark-circle" size={24} color="#81B29A" />
+        <Ionicons name="checkmark-circle" size={24} color="#10b981" />
       )}
     </TouchableOpacity>
   );
@@ -178,7 +178,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
   },
   zodiacItemSelected: {
-    borderColor: '#81B29A',
+    borderColor: '#10b981',
   },
   zodiacEmoji: {
     fontSize: 32,
@@ -195,7 +195,7 @@ const styles = StyleSheet.create({
     marginBottom: 2,
   },
   zodiacNameSelected: {
-    color: '#81B29A',
+    color: '#10b981',
     fontWeight: 'bold',
   },
   zodiacDates: {

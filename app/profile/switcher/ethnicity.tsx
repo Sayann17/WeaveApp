@@ -98,15 +98,14 @@ export default function EditEthnicityScreen() {
       <View style={{ paddingTop: 120 }}>
 
         <View style={styles.header}>
-          {/* Кнопка "Назад" убрана из UI, полагаемся на системный жест или кнопку BackButton (если есть) */}
-          <Text style={[styles.headerTitle, { color: theme.text }]}>Редактировать происхождение</Text>
+          {/* Header title removed */}
         </View>
 
         <KeyboardAvoidingView
           behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
           style={{ height: '90%' }} // Ограничим высоту
         >
-          <ScrollView contentContainerStyle={styles.scrollContent}>
+          <ScrollView contentContainerStyle={[styles.scrollContent, { paddingBottom: 250 }]}>
 
             {/* 1. Поле для ввода */}
             <View style={styles.section}>
@@ -149,7 +148,7 @@ export default function EditEthnicityScreen() {
                           backgroundColor: theme.cardBg,
                           borderColor: theme.border,
                           // 🔥 Мятная обводка при выборе
-                          ...(isSelected && { borderColor: '#81B29A', borderWidth: 2 }),
+                          ...(isSelected && { borderColor: '#10b981', borderWidth: 2 }),
                         }
                       ]}
                       onPress={() => toggleGroup(group.id)}
@@ -159,7 +158,7 @@ export default function EditEthnicityScreen() {
                       <Text style={[
                         styles.title,
                         { color: theme.text },
-                        isSelected && { color: '#81B29A', fontWeight: 'bold' }
+                        isSelected && { color: '#10b981', fontWeight: 'bold' }
                       ]}>
                         {group.name}
                       </Text>

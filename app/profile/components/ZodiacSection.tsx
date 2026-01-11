@@ -24,15 +24,7 @@ export default function ZodiacSection({ zodiac, setZodiac, onEditPress }: Zodiac
       <View style={styles.sectionHeader}>
         <Text style={[styles.sectionTitle, { color: theme.text }]}>Знак зодиака</Text>
         <View style={styles.zodiacActions}>
-          {zodiac && (
-            <TouchableOpacity
-              style={styles.removeZodiacButton}
-              onPress={() => setZodiac(null)}
-            >
-              <Ionicons name="close" size={16} color="#ff4444" />
-              <Text style={styles.removeZodiacText}>Убрать</Text>
-            </TouchableOpacity>
-          )}
+          {/* Remove button removed per request */}
         </View>
       </View>
 
