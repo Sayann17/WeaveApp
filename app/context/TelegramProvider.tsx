@@ -151,9 +151,10 @@ export function TelegramProvider({ children }: { children: React.ReactNode }) {
                     }
 
                     // Set viewport height to full
-                    if (WebApp.setHeaderColor) {
-                        WebApp.setHeaderColor('secondary_bg_color');
-                    }
+                    // 🔥 REMOVED: Conflicting setHeaderColor. ThemeContext handles this now.
+                    // if (WebApp.setHeaderColor) {
+                    //     WebApp.setHeaderColor('secondary_bg_color');
+                    // }
 
                     if (WebApp.setViewportHeight) {
                         WebApp.setViewportHeight(window.innerHeight);
