@@ -1,3 +1,4 @@
+// context/ThemeContext.tsx
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { yandexAuth } from '../services/yandex/AuthService';
@@ -81,14 +82,6 @@ export const ThemeProvider = ({ children }: { children: React.ReactNode }) => {
       const isLightTheme = themeType === 'light';
       const buttonColor = isLightTheme ? '#000000' : '#FFFFFF';
 
-      // Set header color to match background (triggers status bar icon color change)
-      if (webApp.setHeaderColor) {
-        webApp.setHeaderColor(bg);
-      }
-      // Set background color for overscroll areas
-      if (webApp.setBackgroundColor) {
-        webApp.setBackgroundColor(bg);
-      }
       // Force header color
       const applyTheme = () => {
         // Essential: Set header color to matching background
@@ -97,29 +90,16 @@ export const ThemeProvider = ({ children }: { children: React.ReactNode }) => {
           webApp.setHeaderColor(bg);
         }
 
-        // Set bottom bar color (for Android navigation bar)
-        if (webApp.setBottomBarColor) {
-          webApp.setBottomBarColor(bg);
-        }
         // Ensure background is set
         if (webApp.setBackgroundColor) {
           webApp.setBackgroundColor(bg);
         }
 
-        // Set BackButton color
-        if (webApp.BackButton && webApp.BackButton.color !== buttonColor) {
-          webApp.BackButton.color = buttonColor;
-        }
         // Set Bottom Bar code
         if (webApp.setBottomBarColor) {
           webApp.setBottomBarColor(bg);
         }
 
-        // Set MainButton color (if used)
-        if (webApp.MainButton) {
-          webApp.MainButton.color = buttonColor;
-          webApp.MainButton.textColor = isLightTheme ? '#FFFFFF' : '#000000';
-        }
         // Colors for buttons
         if (webApp.BackButton) webApp.BackButton.color = buttonColor;
         if (webApp.SettingsButton) webApp.SettingsButton.color = buttonColor;
@@ -129,10 +109,6 @@ export const ThemeProvider = ({ children }: { children: React.ReactNode }) => {
         }
       };
 
-      // Set SettingsButton color (if available)
-      if (webApp.SettingsButton && webApp.SettingsButton.color !== buttonColor) {
-        webApp.SettingsButton.color = buttonColor;
-      }
       // 1. Apply immediately
       applyTheme();
 
