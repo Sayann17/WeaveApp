@@ -1,5 +1,6 @@
 // context/ThemeContext.tsx
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { StatusBar } from 'expo-status-bar';
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { yandexAuth } from '../services/yandex/AuthService';
 import { useTelegram } from './TelegramProvider';
@@ -97,12 +98,12 @@ export const ThemeProvider = ({ children }: { children: React.ReactNode }) => {
 
         // Ensure background is set
         if (webApp.setBackgroundColor) {
-          webApp.setBackgroundColor(bg);
+          webApp.setBackgroundColor(headerColorToCheck);
         }
 
         // Set Bottom Bar code
         if (webApp.setBottomBarColor) {
-          webApp.setBottomBarColor(bg);
+          webApp.setBottomBarColor(headerColorToCheck);
         }
 
         // Colors for buttons
@@ -170,6 +171,7 @@ export const ThemeProvider = ({ children }: { children: React.ReactNode }) => {
 
   return (
     <ThemeContext.Provider value={{ theme, themeType, isLight, setTheme, userPhotoForAura }}>
+      <StatusBar style={isLight ? 'dark' : 'light'} />
       {children}
     </ThemeContext.Provider>
   );
