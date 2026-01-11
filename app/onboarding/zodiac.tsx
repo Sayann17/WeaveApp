@@ -20,7 +20,7 @@ const THEME = {
     text: '#1c1c1e',
     subText: '#555555',
     cardBg: '#ffffff',
-    activeBorder: '#e1306c',
+    activeBorder: '#00b894', // 🔥 Mint
 };
 
 export default function OnboardingZodiacScreen() {
@@ -74,7 +74,7 @@ export default function OnboardingZodiacScreen() {
                                     <Text style={styles.zodiacName}>{sign.name}</Text>
                                     <Text style={styles.zodiacDates}>{sign.dates}</Text>
                                 </View>
-                                {isSelected && <Ionicons name="checkmark-circle" size={24} color="#e1306c" />}
+                                {isSelected && <Ionicons name="checkmark-circle" size={24} color="#00b894" />}
                             </Pressable>
                         );
                     })}

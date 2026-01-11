@@ -19,7 +19,7 @@ const THEME = {
     text: '#1c1c1e',
     subText: '#555555',
     cardBg: '#ffffff',
-    activeBorder: '#e1306c',
+    activeBorder: '#00b894', // 🔥 Mint
 };
 
 export default function OnboardingReligionScreen() {
@@ -135,7 +135,7 @@ const styles = StyleSheet.create({
     },
     religionEmoji: { fontSize: 20 },
     religionText: { color: THEME.text, fontSize: 16, fontWeight: '500' },
-    religionTextSelected: { color: '#e1306c', fontWeight: '600' },
+    religionTextSelected: { color: '#00b894', fontWeight: '600' },
 
     footer: { padding: 20, paddingBottom: 40 },
     continueButton: { backgroundColor: '#2a2a2a', padding: 18, borderRadius: 12, alignItems: 'center', width: '100%' },
