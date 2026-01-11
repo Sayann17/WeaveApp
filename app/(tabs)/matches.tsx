@@ -134,8 +134,21 @@ export default function MatchesScreen() {
         };
         const parts = [];
         if (profile.macroGroups && Array.isArray(profile.macroGroups) && profile.macroGroups.length > 0) {
-            const roots = profile.macroGroups.map((g: string) => ETHNICITY_MAP[g] || g).join(', ');
-            parts.push(`${roots} корни`);
+            const groups = [...profile.macroGroups];
+            const worldCitizenIndex = groups.indexOf('world_citizen');
+            let worldCitizenPart = '';
+
+            if (worldCitizenIndex !== -1) {
+                worldCitizenPart = 'Человек мира';
+                groups.splice(worldCitizenIndex, 1);
+            }
+
+            const otherRoots = groups.map((g: string) => ETHNICITY_MAP[g] || g).join(', ');
+            const otherRootsPart = otherRoots ? `${otherRoots} корни` : '';
+
+            // Combine
+            const combinedRoots = [worldCitizenPart, otherRootsPart].filter(Boolean).join(', ');
+            if (combinedRoots) parts.push(combinedRoots);
         }
         if (profile.ethnicity) {
             parts.push(profile.ethnicity.charAt(0).toUpperCase() + profile.ethnicity.slice(1).toLowerCase());

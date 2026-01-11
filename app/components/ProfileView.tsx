@@ -90,8 +90,22 @@ export const ProfileView = ({ userData, isOwnProfile = false, isMatch = false }:
 
     const getFullHeritageString = () => {
         if (!userData?.macroGroups || !Array.isArray(userData.macroGroups)) return null;
-        const macroNames = userData.macroGroups.map((g: string) => ETHNICITY_MAP[g] || capitalizeFirst(g));
-        let rootsPart = macroNames.length > 0 ? `${macroNames.join(', ')} корни` : '';
+
+        const groups = [...userData.macroGroups];
+        const worldCitizenIndex = groups.indexOf('world_citizen');
+        let worldCitizenPart = '';
+
+        if (worldCitizenIndex !== -1) {
+            worldCitizenPart = 'Человек мира';
+            groups.splice(worldCitizenIndex, 1);
+        }
+
+        const macroNames = groups.map((g: string) => ETHNICITY_MAP[g] || capitalizeFirst(g));
+        let otherRootsPart = macroNames.length > 0 ? `${macroNames.join(', ')} корни` : '';
+
+        // Combine: Человек мира, [Остальные] корни
+        let rootsPart = [worldCitizenPart, otherRootsPart].filter(Boolean).join(', ');
+
         let nationalityPart = userData?.ethnicity ? capitalizeFirst(userData.ethnicity) : '';
 
         if (rootsPart && nationalityPart) return `${rootsPart} • ${nationalityPart}`;

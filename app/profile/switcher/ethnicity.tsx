@@ -135,7 +135,7 @@ export default function EditEthnicityScreen() {
 
               {/* 2. Макрогруппы */}
               <View style={styles.section}>
-                <Text style={[styles.label, { color: theme.text }]}>Макрогруппы (Культурный код)</Text>
+                <Text style={[styles.label, { color: theme.text }]}>Культурный код (твои корни)</Text>
                 <Text style={[styles.hint, { color: theme.subText }]}>
                   Выберите группы, близкие вам по духу. Это влияет на рекомендации.
                 </Text>
@@ -170,18 +170,14 @@ export default function EditEthnicityScreen() {
                   })}
                 </View>
               </View>
-
-              <View style={{ height: 100 }} />
-
             </ScrollView>
 
             <View style={[styles.footer, {
               backgroundColor: theme.background,
               borderTopColor: theme.border
             }]}>
-              {/* 🔥 Кнопка стала ЧЕРНОЙ (theme.accent) */}
               <PrimaryButton
-                title="Сохранить изменения"
+                title="Сохранить"
                 onPress={handleSave}
                 isLoading={isSaving}
                 style={{ backgroundColor: theme.accent || '#1c1c1e' }}
@@ -196,17 +192,17 @@ export default function EditEthnicityScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1 }, // Removed backgroundColor
+  container: { flex: 1 },
   centerContainer: { flex: 1, justifyContent: 'center', alignItems: 'center' },
 
   header: {
     paddingHorizontal: 20,
     paddingBottom: 20,
-    alignItems: 'center', // Center title
+    alignItems: 'center',
   },
   headerTitle: { fontSize: 22, fontWeight: 'bold' },
 
-  scrollContent: { padding: 20 },
+  scrollContent: { padding: 20, paddingBottom: 150 }, // Enough padding for footer
   section: { marginBottom: 30 },
 
   label: { fontSize: 18, fontWeight: '600', marginBottom: 10 },
@@ -221,7 +217,6 @@ const styles = StyleSheet.create({
 
   grid: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between', gap: 10 },
 
-  // Custom Card Styles here since we modified inner logic
   card: {
     width: '48%',
     padding: 16,
@@ -237,9 +232,7 @@ const styles = StyleSheet.create({
   footer: {
     padding: 20,
     borderTopWidth: 1,
-    position: 'absolute',
-    bottom: 120, // Lifted up a bit
-    left: 0,
-    right: 0,
+    // position: 'relative', // Changed from absolute to relative to sit at bottom of flex container
+    paddingBottom: 40
   },
 });

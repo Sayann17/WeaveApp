@@ -151,8 +151,21 @@ export default function ChatsScreen() {
 
     // Show macroGroups (roots) if available
     if (chat.participantMacroGroups && Array.isArray(chat.participantMacroGroups) && chat.participantMacroGroups.length > 0) {
-      const roots = chat.participantMacroGroups.map((g: string) => ETHNICITY_MAP[g] || g).join(', ');
-      parts.push(`${roots} корни`);
+      const groups = [...chat.participantMacroGroups];
+      const worldCitizenIndex = groups.indexOf('world_citizen');
+      let worldCitizenPart = '';
+
+      if (worldCitizenIndex !== -1) {
+        worldCitizenPart = 'Человек мира';
+        groups.splice(worldCitizenIndex, 1);
+      }
+
+      const otherRoots = groups.map((g: string) => ETHNICITY_MAP[g] || g).join(', ');
+      const otherRootsPart = otherRoots ? `${otherRoots} корни` : '';
+
+      // Combine
+      const combinedRoots = [worldCitizenPart, otherRootsPart].filter(Boolean).join(', ');
+      if (combinedRoots) parts.push(combinedRoots);
     }
 
     // Show ethnicity (nationality) if available
