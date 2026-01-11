@@ -120,6 +120,7 @@ export default function WelcomeScreen() {
 
       <FlatList
         ref={flatListRef}
+        style={{ flex: 1 }}
         data={SLIDES}
         renderItem={renderItem}
         horizontal
@@ -188,27 +189,26 @@ const styles = StyleSheet.create({
 
   // Визуальная часть (Иконка)
   visualContainer: {
-    flex: 1, // Занимает всё свободное место сверху
-    justifyContent: 'center', // Центрируем иконку в этом пространстве (это опустит её ниже чем top-50%)
+    flex: 1,
+    justifyContent: 'flex-end', // Прижимаем иконку к низу "верхней части"
     alignItems: 'center',
-    paddingTop: 40, // Чуть сдвигаем вниз от статус бара
+    paddingBottom: 60, // Отступ от иконки до текста
   },
   iconCircle: {
     width: 120,
     height: 120,
     borderRadius: 60,
     borderWidth: 1,
-    borderColor: 'rgba(28, 28, 30, 0.1)', // Тонкая рамка
+    borderColor: 'rgba(28, 28, 30, 0.1)',
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: 'rgba(255, 255, 255, 0.5)', // Легкая подложка
+    backgroundColor: 'rgba(255, 255, 255, 0.5)',
   },
 
   // Текстовая часть
   textContainer: {
-    // flex: 0 не нужен, контент займет сколько нужно
-    justifyContent: 'flex-end', // Прижимаем к низу
-    paddingBottom: 20, // Отступ от футера
+    justifyContent: 'flex-end',
+    paddingBottom: 40, // Отступ текста от футера
   },
   title: {
     fontSize: 36, // Крупный, журнальный заголовок
