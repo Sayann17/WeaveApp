@@ -272,10 +272,23 @@ export default function ChatScreen() {
   const isMyMessage = (message: Message) => message.senderId === yandexAuth.getCurrentUser()?.uid;
 
   const renderItem = ({ item, index }: { item: Message; index: number }) => {
+    // Check if we need to show date separator (inverted list, so check next message)
+    const nextMsg = index < invertedMessages.length - 1 ? invertedMessages[index + 1] : null;
+    const showDateSep = shouldShowDateSeparator(item, nextMsg);
+
     if (item.type === 'system') {
       return (
-        <View key={item.id} style={styles.systemMessageContainer}>
-          <Text style={[styles.systemMessageText, { color: theme.subText }]}>{item.text}</Text>
+        <View key={item.id}>
+          {showDateSep && (
+            <View style={styles.dateSeparatorContainer}>
+              <Text style={[styles.dateSeparatorText, { color: theme.subText }]}>
+                {formatDateSeparator(item.timestamp)}
+              </Text>
+            </View>
+          )}
+          <View style={styles.systemMessageContainer}>
+            <Text style={[styles.systemMessageText, { color: theme.subText }]}>{item.text}</Text>
+          </View>
         </View>
       );
     }
@@ -283,12 +296,8 @@ export default function ChatScreen() {
     const isMine = isMyMessage(item);
     const repliedMsg = item.replyToId ? messages.find(m => m.id === item.replyToId) : null;
 
-    // Check if we need to show date separator (inverted list, so check next message)
-    const nextMsg = index < invertedMessages.length - 1 ? invertedMessages[index + 1] : null;
-    const showDateSep = shouldShowDateSeparator(item, nextMsg);
-
     return (
-      <>
+      <View key={item.id}>
         {showDateSep && (
           <View style={styles.dateSeparatorContainer}>
             <Text style={[styles.dateSeparatorText, { color: theme.subText }]}>
@@ -299,7 +308,6 @@ export default function ChatScreen() {
         <Pressable
           onLongPress={() => onMessageLongPress(item)}
           delayLongPress={200}
-          key={item.id}
           style={[
             styles.messageContainer,
             isMine ? styles.myMessage : styles.theirMessage
@@ -339,7 +347,7 @@ export default function ChatScreen() {
             </View>
           </View>
         </Pressable>
-      </>
+      </View>
     );
   };
 
@@ -436,7 +444,6 @@ export default function ChatScreen() {
                   placeholderTextColor={theme.subText}
                   multiline
                   maxLength={500}
-                  editable={!isSending}
                   underlineColorAndroid="transparent"
                   // @ts-ignore
                   dataSet={{ outline: 'none' }}
