@@ -19,7 +19,7 @@ const THEME = {
     text: '#1c1c1e',
     subText: '#555555',
     cardBg: '#ffffff',
-    active: '#00b894', // 🔥 Mint
+    active: '#10b981', // 🔥 Green
     activeText: '#ffffff'
 };
 
@@ -134,8 +134,8 @@ const styles = StyleSheet.create({
         shadowColor: "#000", shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.05, shadowRadius: 2, elevation: 1,
     },
     interestTagSelected: {
-        backgroundColor: '#00b894',
-        borderColor: '#00b894'
+        backgroundColor: '#10b981',
+        borderColor: '#10b981'
     },
     interestTagText: { color: '#1c1c1e', fontSize: 16, fontWeight: '400' },
     interestTagTextSelected: { color: '#ffffff', fontWeight: '600' },

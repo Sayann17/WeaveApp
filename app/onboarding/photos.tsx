@@ -78,7 +78,7 @@ export default function OnboardingPhotosScreen() {
                     onPress={handleFinish}
                     disabled={isLoading}
                     isLoading={isLoading}
-                    style={{ backgroundColor: '#00b894' }}
+                    style={{ backgroundColor: '#10b981' }}
                 />
             </View>
         </SafeAreaView>

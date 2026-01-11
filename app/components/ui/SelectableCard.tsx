@@ -25,7 +25,7 @@ export const SelectableCard = ({ title, emoji, selected, onPress }: SelectableCa
       </View>
       {selected && (
         <View style={styles.checkIcon}>
-          <Ionicons name="checkmark-circle" size={24} color="#e1306c" />
+          <Ionicons name="checkmark-circle" size={24} color="#10b981" />
         </View>
       )}
     </Pressable>
@@ -50,10 +50,11 @@ const styles = StyleSheet.create({
     shadowRadius: 4,
     elevation: 2,
     marginBottom: 10,
+    height: 140, // Increased fixed height for consistency
   },
   cardSelected: {
-    borderColor: '#e1306c', // Розовая рамка при выборе
-    backgroundColor: '#fff0f5', // Очень светло-розовый фон
+    borderColor: '#10b981', // Green border
+    backgroundColor: '#ecfdf5', // Light green background (Emerald 50)
   },
   content: {
     alignItems: 'center',
@@ -70,7 +71,7 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   titleSelected: {
-    color: '#e1306c',
+    color: '#10b981', // Green text
     fontWeight: '700',
   },
   checkIcon: {

@@ -1,7 +1,7 @@
 // app/onboarding/gender.tsx
 import { useRouter } from 'expo-router';
 import React, { useState } from 'react';
-import { Alert, KeyboardAvoidingView, Platform, SafeAreaView, StatusBar, StyleSheet, Text, TextInput, View } from 'react-native';
+import { Alert, KeyboardAvoidingView, Platform, SafeAreaView, ScrollView, StatusBar, StyleSheet, Text, TextInput, View } from 'react-native';
 import { PrimaryButton } from '../components/ui/PrimaryButton';
 import { SelectableCard } from '../components/ui/SelectableCard';
 import { yandexAuth } from '../services/yandex/AuthService';
@@ -10,7 +10,7 @@ const THEME = {
     background: '#f4f4e7',
     text: '#1c1c1e',
     subText: '#555555',
-    active: '#00b894', // 🔥 Mint Color
+    active: '#10b981', // 🔥 Green (Emerald 500)
 };
 
 export default function OnboardingGenderScreen() {
@@ -38,7 +38,6 @@ export default function OnboardingGenderScreen() {
                 gender: gender,
                 age: ageNum
             });
-            // Navigate directly to Ethnicity (Step 2)
             router.replace('/onboarding/ethnicity');
         } catch (error) {
             console.error('Gender/Age screen error:', error);
@@ -55,8 +54,12 @@ export default function OnboardingGenderScreen() {
             <KeyboardAvoidingView
                 behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
                 style={{ flex: 1 }}
+                keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 20}
             >
-                <View style={{ flex: 1 }}>
+                <ScrollView
+                    contentContainerStyle={styles.scrollContent}
+                    showsVerticalScrollIndicator={false}
+                >
                     <View style={styles.header}>
                         <Text style={styles.step}>ШАГ 1 из 6</Text>
                         <Text style={styles.title}>О вас</Text>
@@ -107,7 +110,7 @@ export default function OnboardingGenderScreen() {
                             style={{ backgroundColor: '#2a2a2a' }}
                         />
                     </View>
-                </View>
+                </ScrollView>
             </KeyboardAvoidingView>
         </SafeAreaView>
     );
@@ -115,11 +118,12 @@ export default function OnboardingGenderScreen() {
 
 const styles = StyleSheet.create({
     container: { flex: 1, backgroundColor: THEME.background },
+    scrollContent: { flexGrow: 1 },
     header: { padding: 24, paddingTop: 92 },
     step: { color: '#000000', fontSize: 12, fontWeight: 'bold', marginBottom: 10, letterSpacing: 1, textTransform: 'uppercase' },
     title: { fontSize: 32, fontWeight: '300', color: THEME.text, marginBottom: 10 },
     subtitle: { fontSize: 16, color: THEME.subText, lineHeight: 24 },
-    content: { flex: 1, padding: 24 },
+    content: { padding: 24 },
     label: { fontSize: 18, fontWeight: '600', color: THEME.text, marginBottom: 15 },
     row: { flexDirection: 'row', justifyContent: 'space-between', gap: 15 },
     inputContainer: { alignItems: 'center' },
