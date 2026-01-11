@@ -96,7 +96,7 @@ export default function EditEthnicityScreen() {
          Супер-большой паддинг сверху, чтобы контент начинался НИЖЕ системных кнопок.
          Telegram WebApp Header обычно занимает около 60-80px, плюс статус бар.
       */}
-        <View style={{ paddingTop: 120 }}>
+        <View style={{ flex: 1, paddingTop: 120 }}>
 
           <View style={styles.header}>
             {/* Кнопка "Назад" убрана из UI, полагаемся на системный жест или кнопку BackButton (если есть) */}
@@ -105,9 +105,12 @@ export default function EditEthnicityScreen() {
 
           <KeyboardAvoidingView
             behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-            style={{ height: '90%' }} // Ограничим высоту
+            style={{ flex: 1 }}
           >
-            <ScrollView contentContainerStyle={[styles.scrollContent, { paddingBottom: 250 }]}>
+            <ScrollView
+              style={{ flex: 1 }}
+              contentContainerStyle={[styles.scrollContent, { paddingBottom: 100 }]}
+            >
 
               {/* 1. Поле для ввода */}
               <View style={styles.section}>
