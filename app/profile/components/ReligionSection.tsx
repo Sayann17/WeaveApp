@@ -62,17 +62,11 @@ export default function ReligionSection({ selectedReligions, setSelectedReligion
               {religionItem.name}
             </Text>
             {selectedReligions.includes(religionItem.id) && (
-              <Ionicons name="checkmark" size={16} color="#81B29A" />
+              <Ionicons name="checkmark" size={16} color="#10b981" />
             )}
           </Pressable>
         ))}
       </View>
-
-      {selectedReligions.length > 0 && (
-        <Text style={styles.selectedReligion}>
-          Выбрано: {getSelectedReligionsNames()}
-        </Text>
-      )}
     </View>
   );
 }
@@ -109,8 +103,8 @@ const styles = StyleSheet.create({
     gap: 6,
   },
   religionButtonSelected: {
-    backgroundColor: '#1a1a1a',
-    borderColor: '#81B29A',
+    // backgroundColor: '#1a1a1a', // Removed black BG
+    borderColor: '#10b981', // Green border
   },
   religionEmoji: {
     fontSize: 16,
@@ -121,14 +115,7 @@ const styles = StyleSheet.create({
     fontWeight: '500',
   },
   religionTextSelected: {
-    color: '#81B29A',
+    color: '#10b981', // Green text
     fontWeight: '600',
-  },
-  selectedReligion: {
-    color: '#81B29A',
-    fontSize: 14,
-    fontWeight: '500',
-    marginTop: 10,
-    textAlign: 'center',
   },
 });

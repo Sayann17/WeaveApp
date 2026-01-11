@@ -284,7 +284,7 @@ export default function EditProfileScreen() {
             />
 
             {/* 3.5. Город и Локация */}
-            <View style={styles.inputContainer}>
+            <View style={{ marginBottom: 25 }}>
               <Text style={[styles.sectionTitle, { color: theme.text }]}>Где вы находитесь?</Text>
 
               <TextInput
@@ -467,7 +467,7 @@ export default function EditProfileScreen() {
               onEditPress={() => setShowInterestsModal(true)}
             />
 
-            <View style={{ height: 100 }} />
+            {/* <View style={{ height: 100 }} />  Removed extra space */}
           </ScrollView>
 
           <View style={[styles.footer, { backgroundColor: theme.background, borderTopColor: theme.border }]}>

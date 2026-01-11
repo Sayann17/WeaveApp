@@ -118,18 +118,6 @@ export default function ZodiacModal({ visible, zodiac, setZodiac, onClose }: Zod
               />
 
               <View style={[styles.footer, { borderTopColor: theme.border }]}>
-                {zodiac && (
-                  <TouchableOpacity
-                    style={[styles.removeButton, { borderColor: '#ff4444' }]}
-                    onPress={() => {
-                      setZodiac(null);
-                      onClose();
-                    }}
-                  >
-                    <Ionicons name="close" size={20} color="#ff4444" />
-                    <Text style={styles.removeButtonText}>Убрать знак</Text>
-                  </TouchableOpacity>
-                )}
                 <PrimaryButton
                   title={zodiac ? 'Сохранить' : 'Закрыть'}
                   onPress={zodiac ? saveZodiac : onClose}
