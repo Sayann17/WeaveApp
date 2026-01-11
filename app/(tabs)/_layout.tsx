@@ -64,7 +64,7 @@ export default function TabLayout() {
       screenOptions={{
         headerShown: false,
         tabBarStyle: {
-          backgroundColor: theme.background,
+          backgroundColor: themeType === 'space' ? '#0b0d15' : theme.background,
           borderTopColor: isLight ? theme.border : theme.background, // Hide border in dark mode to blend with bg
           elevation: 0,
           borderTopWidth: 1,
