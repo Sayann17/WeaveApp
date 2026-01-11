@@ -1,7 +1,7 @@
 // app/onboarding/gender.tsx
 import { useRouter } from 'expo-router';
 import React, { useState } from 'react';
-import { Alert, KeyboardAvoidingView, Platform, SafeAreaView, ScrollView, StatusBar, StyleSheet, Text, TextInput, View } from 'react-native';
+import { Alert, Keyboard, KeyboardAvoidingView, Platform, SafeAreaView, ScrollView, StatusBar, StyleSheet, Text, TextInput, View } from 'react-native';
 import { PrimaryButton } from '../components/ui/PrimaryButton';
 import { SelectableCard } from '../components/ui/SelectableCard';
 import { yandexAuth } from '../services/yandex/AuthService';
@@ -48,6 +48,24 @@ export default function OnboardingGenderScreen() {
         }
     };
 
+    const [isKeyboardVisible, setKeyboardVisible] = useState(false);
+
+    React.useEffect(() => {
+        const keyboardShowListener = Keyboard.addListener(
+            Platform.OS === 'ios' ? 'keyboardWillShow' : 'keyboardDidShow',
+            () => setKeyboardVisible(true)
+        );
+        const keyboardHideListener = Keyboard.addListener(
+            Platform.OS === 'ios' ? 'keyboardWillHide' : 'keyboardDidHide',
+            () => setKeyboardVisible(false)
+        );
+
+        return () => {
+            keyboardShowListener.remove();
+            keyboardHideListener.remove();
+        };
+    }, []);
+
     return (
         <SafeAreaView style={styles.container}>
             <StatusBar barStyle="dark-content" backgroundColor={THEME.background} />
@@ -57,7 +75,10 @@ export default function OnboardingGenderScreen() {
                 keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 20}
             >
                 <ScrollView
-                    contentContainerStyle={[styles.scrollContent, { paddingBottom: 120 }]} // 🔥 Fix: Add padding for pinned footer
+                    contentContainerStyle={[
+                        styles.scrollContent,
+                        { paddingBottom: 120 }
+                    ]}
                     showsVerticalScrollIndicator={false}
                 >
                     <View style={styles.header}>
@@ -103,15 +124,18 @@ export default function OnboardingGenderScreen() {
 
                 </ScrollView>
             </KeyboardAvoidingView>
-            <View style={styles.footer}>
-                <PrimaryButton
-                    title="Продолжить"
-                    onPress={handleContinue}
-                    disabled={isLoading}
-                    isLoading={isLoading}
-                    style={{ backgroundColor: '#2a2a2a' }}
-                />
-            </View>
+
+            {!isKeyboardVisible && (
+                <View style={styles.footer}>
+                    <PrimaryButton
+                        title="Продолжить"
+                        onPress={handleContinue}
+                        disabled={isLoading}
+                        isLoading={isLoading}
+                        style={{ backgroundColor: '#2a2a2a' }}
+                    />
+                </View>
+            )}
         </SafeAreaView>
     );
 }
