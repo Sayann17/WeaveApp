@@ -67,7 +67,7 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     padding: 15,
     color: Colors.text,
-    fontSize: 15,
+    fontSize: 16,
     lineHeight: 22,
     minHeight: 80,
     textAlignVertical: 'top',
