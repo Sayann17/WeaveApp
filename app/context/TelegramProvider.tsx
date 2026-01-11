@@ -151,11 +151,13 @@ export function TelegramProvider({ children }: { children: React.ReactNode }) {
                     }
 
                     // Set viewport height to full
-                    // 🔥 Set Header Color to match App Background
-                    // This forces Telegram to adapt system buttons (Black on Light, White on Dark)
                     if (WebApp.setHeaderColor) {
-                        WebApp.setHeaderColor(WebApp.colorScheme === 'dark' ? '#000000' : '#f4f4e7');
+                        WebApp.setHeaderColor('secondary_bg_color');
                     }
+                    // 🔥 REMOVED: Conflicting setHeaderColor. ThemeContext handles this now.
+                    // if (WebApp.setHeaderColor) {
+                    //     WebApp.setHeaderColor('secondary_bg_color');
+                    // }
 
                     if (WebApp.setViewportHeight) {
                         WebApp.setViewportHeight(window.innerHeight);
