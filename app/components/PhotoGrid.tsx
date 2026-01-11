@@ -1,7 +1,7 @@
 // components/PhotoGrid.tsx
 import { Ionicons } from '@expo/vector-icons';
-import * as ImagePicker from 'expo-image-picker';
 import * as ImageManipulator from 'expo-image-manipulator';
+import * as ImagePicker from 'expo-image-picker';
 import React, { useState } from 'react';
 import {
   ActivityIndicator,
@@ -22,9 +22,8 @@ interface PhotoGridProps {
 
 import { yandexStorage } from '../services/yandex/StorageService'; // Импорт сервиса
 
-export const PhotoGrid = ({ photos, setPhotos, maxPhotos = 6 }: PhotoGridProps) => {
+export const PhotoGrid = ({ photos, setPhotos, maxPhotos = 4 }: PhotoGridProps) => {
   const [loading, setLoading] = useState(false);
-  // ... imports removed
 
   const pickImage = async () => {
     if (photos.length >= maxPhotos) return;
@@ -39,30 +38,37 @@ export const PhotoGrid = ({ photos, setPhotos, maxPhotos = 6 }: PhotoGridProps) 
         return;
       }
 
-      // 2. Выбираем фото
+      // 2. Выбираем фото (Мультивыбор)
+      const limit = maxPhotos - photos.length;
       const result = await ImagePicker.launchImageLibraryAsync({
         mediaTypes: ImagePicker.MediaTypeOptions.Images,
-        allowsEditing: true,
-        // aspect: [3, 4], // Removed to allow freeform cropping
-        quality: 1.0, // Keep high quality, we'll compress manually
+        allowsEditing: false, // Disabling editing for multi-select usually works better
+        quality: 1.0,
+        allowsMultipleSelection: true, // 🔥 Allow multiple selection
+        selectionLimit: limit,         // 🔥 Limit to remaining slots
       });
 
-      if (!result.canceled && result.assets[0].uri) {
-        const localUri = result.assets[0].uri;
+      if (!result.canceled && result.assets && result.assets.length > 0) {
+        const newPhotos: string[] = [];
 
-        // 🔥 COMPRESSION: Resize to max 1080px width, compress to 80% quality
-        console.log('[PhotoGrid] Compressing image...');
-        const manipResult = await ImageManipulator.manipulateAsync(
-          localUri,
-          [{ resize: { width: 1080 } }], // Maintains aspect ratio
-          { compress: 0.8, format: ImageManipulator.SaveFormat.JPEG }
-        );
-        console.log('[PhotoGrid] Compressed:', manipResult.uri);
+        // Loop through all selected assets
+        for (const asset of result.assets) {
+          const localUri = asset.uri;
 
-        // 🔥 YANDEX UPLOAD with compressed image
-        const remoteUrl = await yandexStorage.uploadImage(manipResult.uri, 'avatars');
+          // 🔥 COMPRESSION
+          console.log('[PhotoGrid] Compressing image...', localUri);
+          const manipResult = await ImageManipulator.manipulateAsync(
+            localUri,
+            [{ resize: { width: 1080 } }],
+            { compress: 0.8, format: ImageManipulator.SaveFormat.JPEG }
+          );
 
-        setPhotos([...photos, remoteUrl]);
+          // 🔥 UPLOAD
+          const remoteUrl = await yandexStorage.uploadImage(manipResult.uri, 'avatars');
+          newPhotos.push(remoteUrl);
+        }
+
+        setPhotos([...photos, ...newPhotos]);
       }
     } catch (error) {
       console.error('Pick error:', error);
@@ -135,7 +141,7 @@ export const PhotoGrid = ({ photos, setPhotos, maxPhotos = 6 }: PhotoGridProps) 
       {/* Подсказка если пусто */}
       {photos.length === 0 && !loading && (
         <Text style={styles.hint}>
-          Добавьте фото
+          Добавьте до {maxPhotos} фото
         </Text>
       )}
     </View>

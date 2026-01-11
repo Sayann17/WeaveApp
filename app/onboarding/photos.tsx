@@ -68,7 +68,7 @@ export default function OnboardingPhotosScreen() {
                 <PhotoGrid
                     photos={photos}
                     setPhotos={setPhotos}
-                    maxPhotos={6}
+                    maxPhotos={4}
                 />
             </ScrollView>
 
