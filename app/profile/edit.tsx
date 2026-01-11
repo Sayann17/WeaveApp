@@ -409,7 +409,6 @@ export default function EditProfileScreen() {
                   autoCapitalize="sentences"
                   selectionColor={themeType === 'light' ? '#000000' : '#FFFFFF'}
                   cursorColor={themeType === 'light' ? '#000000' : '#FFFFFF'}
-                  cursorColor={themeType === 'light' ? '#000000' : '#FFFFFF'}
                 />
               </View>
 
