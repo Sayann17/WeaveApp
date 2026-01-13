@@ -1,7 +1,7 @@
 // app/onboarding/gender.tsx
 import { useRouter } from 'expo-router';
 import React, { useState } from 'react';
-import { Alert, Keyboard, KeyboardAvoidingView, Platform, SafeAreaView, ScrollView, StatusBar, StyleSheet, Text, TextInput, View } from 'react-native';
+import { Keyboard, KeyboardAvoidingView, Platform, SafeAreaView, ScrollView, StatusBar, StyleSheet, Text, TextInput, View } from 'react-native';
 import { PrimaryButton } from '../components/ui/PrimaryButton';
 import { SelectableCard } from '../components/ui/SelectableCard';
 import { yandexAuth } from '../services/yandex/AuthService';
@@ -17,32 +17,38 @@ export default function OnboardingGenderScreen() {
     const [gender, setGender] = useState<'male' | 'female' | null>(null);
     const [age, setAge] = useState<string>('');
     const [isLoading, setIsLoading] = useState(false);
+    const [error, setError] = useState<string | null>(null); // 🔥 New error state
     const router = useRouter();
 
     const handleContinue = async () => {
+        setError(null); // Clear previous errors
         const ageNum = parseInt(age, 10);
 
+        console.log('[GenderScreen] handleContinue pressed. Gender:', gender, 'Age:', age);
+
         if (!gender) {
-            Alert.alert('Внимание', 'Пожалуйста, выберите пол.');
+            setError('Пожалуйста, выберите пол.');
             return;
         }
 
         if (!age || isNaN(ageNum) || ageNum < 18 || ageNum > 99) {
-            Alert.alert('Внимание', 'Введите корректный возраст (от 18 до 99).');
+            setError('Введите корректный возраст (от 18 до 99).');
             return;
         }
 
         setIsLoading(true);
         try {
+            console.log('[GenderScreen] Sending updateProfile...');
             await yandexAuth.updateProfile({
                 gender: gender,
                 age: ageNum
             });
+            console.log('[GenderScreen] Success. Navigating to ethnicity.');
             router.replace('/onboarding/ethnicity');
         } catch (error) {
             console.error('Gender/Age screen error:', error);
             const msg = error instanceof Error ? error.message : String(error);
-            Alert.alert('Ошибка сохранения', msg);
+            setError(msg); // Show error in UI
         } finally {
             setIsLoading(false);
         }
@@ -106,6 +112,11 @@ export default function OnboardingGenderScreen() {
                         </View>
                     </View>
 
+                    {/* Error Message */}
+                    {error ? (
+                        <Text style={styles.errorText}>{error}</Text>
+                    ) : null}
+
                     {/* Footer inside ScrollView */}
                     <View style={styles.footer}>
                         <PrimaryButton
@@ -146,4 +157,11 @@ const styles = StyleSheet.create({
         fontFamily: Platform.OS === 'ios' ? 'System' : 'Roboto',
     },
     footer: { padding: 24, paddingBottom: 20 }, // Reduced bottom padding
+    errorText: {
+        color: '#ef4444', // Red-500
+        textAlign: 'center',
+        marginBottom: 10,
+        fontSize: 14,
+        fontWeight: '500',
+    },
 });
