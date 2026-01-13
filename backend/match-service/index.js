@@ -164,7 +164,8 @@ async function getDiscovery(driver, requestHeaders, filters, responseHeaders) {
         const myCity = currentUserData.city ? currentUserData.city.toLowerCase().trim() : null;
 
         // Fetch users with filters
-        let usersQuery = `SELECT * FROM users WHERE profile_completed = 1`;
+        // 🔥 LIMIT 100 for safety (scaling protection)
+        let usersQuery = `SELECT * FROM users WHERE profile_completed = 1 LIMIT 100`;
         const params = {};
 
         if (filters) {
