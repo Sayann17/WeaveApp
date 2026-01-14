@@ -20,6 +20,7 @@ import { useTelegram } from '../context/TelegramProvider';
 import { useTheme } from '../context/ThemeContext';
 import { User } from '../services/interfaces/IAuthService';
 import { yandexAuth } from '../services/yandex/AuthService';
+import { eventService } from '../services/EventService';
 import { getPlatformPadding } from '../utils/platformPadding';
 
 export default function ProfileScreen() {
@@ -38,16 +39,31 @@ export default function ProfileScreen() {
   useFocusEffect(
     useCallback(() => {
       hideBackButton();
-      const loadUserData = () => {
+
+      const loadFullProfile = async () => {
         const currentUser = yandexAuth.getCurrentUser();
-        console.log('[ProfileScreen] Loading user data:', currentUser?.name, currentUser?.bio);
         if (currentUser) {
-          setUserData(currentUser);
+          // Fetch events to show participation
+          try {
+            const events = await eventService.getEvents();
+            // Merge relevant events
+            const myEvents = events.filter((e: any) => e.isGoing).map((e: any) => ({
+              id: e.id,
+              title: e.title,
+              date: e.date,
+              imageKey: e.imageKey
+            }));
+
+            setUserData({ ...currentUser, events: myEvents });
+          } catch (e) {
+            console.log('[ProfileScreen] Failed to load events', e);
+            setUserData(currentUser);
+          }
           setIsLoading(false);
         }
       };
 
-      loadUserData();
+      loadFullProfile();
 
       // Also listen for auth state changes
       const unsubscribe = yandexAuth.onAuthStateChanged((u: User | null) => {

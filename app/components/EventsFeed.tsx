@@ -61,7 +61,7 @@ export const EventsFeed = () => {
             <Text style={[styles.title, { color: theme.text, borderColor: theme.border }]}>Лента событий</Text>
 
             {events.map((event) => (
-                <View key={event.id} style={[styles.card, { backgroundColor: theme.cardBg, borderColor: theme.border, borderWidth: isLight ? 1 : 0 }]}>
+                <View key={event.id} style={[styles.card, { backgroundColor: theme.cardBg, borderColor: theme.border, borderWidth: 0, borderBottomWidth: 1 }]}>
                     {/* Image */}
                     <View style={styles.imageContainer}>
                         <Image
@@ -108,27 +108,26 @@ const styles = StyleSheet.create({
     container: {
         width: '100%',
         paddingBottom: 40,
+        paddingTop: 10,
     },
     title: {
         fontSize: 22,
         fontWeight: 'bold',
         marginBottom: 15,
-        paddingHorizontal: 20,
+        paddingHorizontal: 20, // Title can keep padding
     },
     card: {
         marginBottom: 25,
-        borderRadius: 20,
-        overflow: 'hidden',
-        marginHorizontal: 16,
-        shadowColor: "#000",
-        shadowOffset: { width: 0, height: 4 },
-        shadowOpacity: 0.1,
-        shadowRadius: 10,
-        elevation: 5,
+        borderRadius: 0, // Full width usually implies no radius or custom
+        marginHorizontal: 0, // Edge to edge
+        borderTopWidth: 1,
+        borderBottomWidth: 1,
+        // Removed shadow for flat look or keep it? 
+        // User asked "expand by full screen", usually means full width blocks.
     },
     imageContainer: {
         width: '100%',
-        height: 400, // Large distinct image
+        height: 400,
         position: 'relative',
     },
     image: {
@@ -158,7 +157,7 @@ const styles = StyleSheet.create({
         fontSize: 24,
         fontWeight: 'bold',
         marginBottom: 10,
-        fontFamily: 'System', // Or custom font
+        fontFamily: 'System',
     },
     description: {
         fontSize: 15,

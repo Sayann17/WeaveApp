@@ -10,8 +10,6 @@ x-yc-apigateway:
       - http://localhost:8081
       - http://localhost:19006
       - http://localhost:3000
-      - https://hello-world-app-dusky.vercel.app
-      - https://hello-world-ahse21m0a-sayans-projects-818ed142.vercel.app
       - https://weave-app-henna.vercel.app
     methods:
       - GET
@@ -31,15 +29,15 @@ paths:
     x-yc-apigateway-websocket-connect:
       x-yc-apigateway-integration:
         type: cloud_functions
-        function_id: d4e7l76a7mc4mfhjvc6f
+        function_id: d4ecmpdtnp0imbqrprrv
     x-yc-apigateway-websocket-disconnect:
       x-yc-apigateway-integration:
         type: cloud_functions
-        function_id: d4e7l76a7mc4mfhjvc6f
+        function_id: d4ecmpdtnp0imbqrprrv
     x-yc-apigateway-websocket-message:
       x-yc-apigateway-integration:
         type: cloud_functions
-        function_id: d4e7l76a7mc4mfhjvc6f
+        function_id: d4ecmpdtnp0imbqrprrv
   /register:
     post:
       x-yc-apigateway-integration:
@@ -85,13 +83,13 @@ paths:
     get:
       x-yc-apigateway-integration:
         type: cloud_functions
-        function_id: d4e7l76a7mc4mfhjvc6f
+        function_id: d4ecmpdtnp0imbqrprrv
       operationId: getchat
   /history:
     get:
       x-yc-apigateway-integration:
         type: cloud_functions
-        function_id: d4e7l76a7mc4mfhjvc6f
+        function_id: d4ecmpdtnp0imbqrprrv
       operationId: gethistory
   /like:
     post:
@@ -117,17 +115,23 @@ paths:
         type: cloud_functions
         function_id: d4e7l76a7mc4mfhjvc6f
       operationId: getLikesYou
-  /notifications/stats:
+  /notifications/messages:
+    get:
+      x-yc-apigateway-integration:
+        type: cloud_functions
+        function_id: d4ecmpdtnp0imbqrprrv
+      operationId: getUnreadMessages
+  /notifications/likes:
     get:
       x-yc-apigateway-integration:
         type: cloud_functions
         function_id: d4e7l76a7mc4mfhjvc6f
-      operationId: getNotificationStats
+      operationId: getNewLikes
   /mark-read:
     post:
       x-yc-apigateway-integration:
         type: cloud_functions
-        function_id: d4e7l76a7mc4mfhjvc6f
+        function_id: d4ecmpdtnp0imbqrprrv
       operationId: markAsRead
   /your-likes:
     get:
@@ -135,3 +139,15 @@ paths:
         type: cloud_functions
         function_id: d4e7l76a7mc4mfhjvc6f
       operationId: getYourLikes
+  /events:
+    get:
+      x-yc-apigateway-integration:
+        type: cloud_functions
+        function_id: d4e7l76a7mc4mfhjvc6f
+      operationId: getEvents
+  /events/attend:
+    post:
+      x-yc-apigateway-integration:
+        type: cloud_functions
+        function_id: d4e7l76a7mc4mfhjvc6f
+      operationId: attendEvent
