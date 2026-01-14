@@ -7,7 +7,7 @@ import { Ionicons } from '@expo/vector-icons';
 
 // Mapping imageKey to local assets
 const EVENT_IMAGES: Record<string, any> = {
-    'uzor_love': require('../assets/images/events/uzor_love.jpg'),
+    'uzor_love': require('../../assets/images/events/uzor_love.jpg'),
     // Add placeholders or other keys here
 };
 
