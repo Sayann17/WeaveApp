@@ -362,7 +362,33 @@ export const ProfileView = ({ userData, isOwnProfile = false, isMatch = false }:
                     {/* Остальные хуки */}
                 </View>
 
+                {/* EVENTS */}
+                {userData?.events && Array.isArray(userData.events) && userData.events.length > 0 && (
+                    <View style={styles.sectionContainer}>
+                        <Text style={[styles.sectionTitle, { color: subTextColor }]}>Мероприятия</Text>
+                        <View style={{ gap: 10 }}>
+                            {userData.events.map((evt: any, i: number) => (
+                                <View key={i} style={[
+                                    { flexDirection: 'row', alignItems: 'center', padding: 12, borderRadius: 16, gap: 12 },
+                                    isLight ? { backgroundColor: '#fff', borderWidth: 1, borderColor: '#eee' } : { backgroundColor: 'rgba(255,255,255,0.08)' }
+                                ]}>
+                                    <View style={{ width: 40, height: 40, borderRadius: 10, backgroundColor: Colors.primary, justifyContent: 'center', alignItems: 'center' }}>
+                                        <Ionicons name="calendar" size={20} color="white" />
+                                    </View>
+                                    <View style={{ flex: 1 }}>
+                                        <Text style={{ color: textColor, fontWeight: 'bold', fontSize: 16 }}>{evt.title}</Text>
+                                        <Text style={{ color: subTextColor, fontSize: 13 }}>
+                                            {new Date(evt.date).toLocaleDateString('ru-RU', { day: 'numeric', month: 'long' })}
+                                        </Text>
+                                    </View>
+                                </View>
+                            ))}
+                        </View>
+                    </View>
+                )}
+
                 {/* ИНТЕРЕСЫ */}
+
                 {userData?.interests && Array.isArray(userData.interests) && userData.interests.length > 0 && (
                     <View style={styles.sectionContainer}>
                         <Text style={[styles.sectionTitle, { color: subTextColor }]}>Интересы</Text>
@@ -384,10 +410,10 @@ export const ProfileView = ({ userData, isOwnProfile = false, isMatch = false }:
                 )}
 
                 <View style={{ height: 30 }} />
-            </ScrollView>
+            </ScrollView >
 
             {/* ЛАЙТБОКС */}
-            <Modal
+            < Modal
                 visible={isFullScreenPhoto}
                 transparent={true}
                 animationType="fade"
@@ -418,7 +444,7 @@ export const ProfileView = ({ userData, isOwnProfile = false, isMatch = false }:
                         </>
                     )}
                 </View>
-            </Modal>
+            </Modal >
         </>
     );
 };

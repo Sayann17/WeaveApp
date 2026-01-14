@@ -43,7 +43,14 @@ module.exports.handler = async function (event, context) {
             return await getYourLikes(driver, headers, responseHeaders);
         } else if ((path === '/notifications/likes' || path === '/notifications/likes/') && httpMethod === 'GET') {
             return await getNewLikes(driver, headers, responseHeaders);
+
+            // --- Events API ---
+        } else if ((path === '/events' || path === '/events/') && httpMethod === 'GET') {
+            return await getEvents(driver, headers, responseHeaders);
+        } else if ((path === '/events/attend' || path === '/events/attend/') && httpMethod === 'POST') {
+            return await attendEvent(driver, headers, JSON.parse(body), responseHeaders);
         }
+
 
         return {
             statusCode: 404,
@@ -83,6 +90,7 @@ async function getUserProfile(driver, requestHeaders, userId, responseHeaders) {
     if (!requesterId) return { statusCode: 401, headers: responseHeaders, body: JSON.stringify({ error: 'Unauthorized' }) };
 
     let user = null;
+    let userEvents = []; // [NEW]
     await driver.tableClient.withSession(async (session) => {
         const query = `
             DECLARE $userId AS Utf8;
@@ -93,6 +101,26 @@ async function getUserProfile(driver, requestHeaders, userId, responseHeaders) {
         });
         const rows = TypedData.createNativeObjects(resultSets[0]);
         if (rows.length > 0) user = rows[0];
+
+        // [NEW] Fetch events
+        if (user) {
+            const eventQuery = `
+                DECLARE $userId AS Utf8;
+                SELECT e.id, e.title, e.image_key, e.event_date
+                FROM event_participants ep
+                JOIN events e ON e.id = ep.event_id
+                WHERE ep.user_id = $userId;
+            `;
+            const { resultSets: eventRes } = await session.executeQuery(eventQuery, {
+                '$userId': TypedValues.utf8(userId)
+            });
+            userEvents = TypedData.createNativeObjects(eventRes[0]).map(e => ({
+                id: e.id,
+                title: e.title,
+                imageKey: e.image_key,
+                date: e.event_date
+            }));
+        }
     });
 
     if (!user) return { statusCode: 404, headers: responseHeaders, body: JSON.stringify({ error: 'User not found' }) };
@@ -128,8 +156,8 @@ async function getUserProfile(driver, requestHeaders, userId, responseHeaders) {
             social_telegram: user.social_telegram,
             social_vk: user.social_vk,
             social_instagram: user.social_instagram,
-            latitude: user.latitude,
-            longitude: user.longitude
+            longitude: user.longitude,
+            events: userEvents // [NEW] Attach events
         })
     };
 }
@@ -270,24 +298,10 @@ async function getDiscovery(driver, requestHeaders, queryParams, responseHeaders
         let totalCount = scoredCandidates.length;
 
         // If total count is 0 (filtered out everything), we should probably fetch the SEEN users to loop.
-        if (totalCount === 0 && allCandidates.length > 0) {
-            console.log('[getDiscovery] No new users found. Falling back to seen users (Looping).');
-            scoredCandidates = allCandidates
-                .filter(u => u.id !== userId) // Still exclude self
-                .map(u => {
-                    const candidateData = { ...u, macroGroups: tryParse(u.macro_groups), interests: tryParse(u.interests), religions: tryParse(u.religion), customEthnicity: u.ethnicity };
-                    return {
-                        id: u.id, name: u.name, age: u.age, photos: tryParse(u.photos), bio: u.about, gender: u.gender,
-                        ethnicity: u.ethnicity, religion: u.religion, macroGroups: candidateData.macroGroups, zodiac: u.zodiac,
-                        religions: candidateData.religions, interests: candidateData.interests,
-                        culture_pride: u.culture_pride, love_language: u.love_language,
-                        family_memory: u.family_memory, stereotype_true: u.stereotype_true,
-                        stereotype_false: u.stereotype_false, profileCompleted: true,
-                        score: calculateCulturalScore(currentUser, candidateData) // Re-score
-                    };
-                });
-            totalCount = scoredCandidates.length;
-        }
+        // If total count is 0, we simply return empty (or whatever is left). 
+        // We DO NOT fall back to showing liked users again. 
+        // Disliked users are not tracked in DB, so they remain in 'scoredCandidates' naturally and will loop if pagination wraps.
+
 
         // Sort by Score DESC
         scoredCandidates.sort((a, b) => b.score - a.score);
@@ -739,3 +753,89 @@ async function handleDislike(driver, requestHeaders, body, responseHeaders) {
         body: JSON.stringify({ success: true })
     };
 }
+
+// ========== Events API ==========
+
+async function getEvents(driver, requestHeaders, responseHeaders) {
+    const userId = checkAuth(requestHeaders);
+    // userId is optional if we allow viewing events without login? 
+    // But usually we need it to check 'isGoing'. 
+    // Let's assume auth is required for consistency or at least check it.
+
+    // Fetch all events
+    // Fetch user participation if userId exists
+
+    let events = [];
+
+    await driver.tableClient.withSession(async (session) => {
+        const query = `
+            SELECT * FROM events ORDER BY event_date ASC;
+        `;
+        const { resultSets } = await session.executeQuery(query);
+        const allEvents = TypedData.createNativeObjects(resultSets[0]);
+
+        // Check participation
+        let myEventIds = [];
+        if (userId) {
+            const partQuery = `
+                DECLARE $userId AS Utf8;
+                SELECT event_id FROM event_participants WHERE user_id = $userId;
+            `;
+            const { resultSets: partRes } = await session.executeQuery(partQuery, { '$userId': TypedValues.utf8(userId) });
+            if (partRes[0]) {
+                myEventIds = TypedData.createNativeObjects(partRes[0]).map(r => r.event_id);
+            }
+        }
+
+        events = allEvents.map(e => ({
+            id: e.id,
+            title: e.title,
+            description: e.description,
+            date: e.event_date,
+            imageKey: e.image_key,
+            isGoing: myEventIds.includes(e.id)
+        }));
+    });
+
+    return {
+        statusCode: 200,
+        headers: responseHeaders,
+        body: JSON.stringify({ events })
+    };
+}
+
+async function attendEvent(driver, requestHeaders, body, responseHeaders) {
+    const userId = checkAuth(requestHeaders);
+    if (!userId) return { statusCode: 401, headers: responseHeaders, body: JSON.stringify({ error: 'Unauthorized' }) };
+
+    const { eventId } = body;
+    if (!eventId) return { statusCode: 400, headers: responseHeaders, body: JSON.stringify({ error: 'Missing eventId' }) };
+
+    await driver.tableClient.withSession(async (session) => {
+        const query = `
+            DECLARE $userId AS Utf8;
+            DECLARE $eventId AS Utf8;
+            DECLARE $status AS Utf8;
+            DECLARE $createdAt AS Timestamp;
+            
+            UPSERT INTO event_participants (user_id, event_id, status, created_at)
+            VALUES ($userId, $eventId, $status, $createdAt);
+        `;
+
+        await session.executeQuery(query, {
+            '$userId': TypedValues.utf8(userId),
+            '$eventId': TypedValues.utf8(eventId),
+            '$status': TypedValues.utf8('going'),
+            '$createdAt': TypedValues.timestamp(new Date())
+        }, { commitTx: true, beginTx: { serializableReadWrite: {} } });
+
+        console.log(`[attendEvent] User ${userId} is going to event ${eventId}`);
+    });
+
+    return {
+        statusCode: 200,
+        headers: responseHeaders,
+        body: JSON.stringify({ success: true })
+    };
+}
+

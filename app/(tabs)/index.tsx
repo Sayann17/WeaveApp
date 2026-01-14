@@ -1,6 +1,7 @@
 // app/(tabs)/index.tsx
 import React from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+import { View, Text, StyleSheet, ScrollView } from 'react-native';
+import { EventsFeed } from '../components/EventsFeed';
 import { ThemedBackground } from '../components/ThemedBackground';
 import { useTheme } from '../context/ThemeContext';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -16,13 +17,9 @@ export default function HomeScreen() {
           <Text style={[styles.title, { color: theme.text }]}>Главная</Text>
         </View>
 
-        <View style={styles.content}>
-          <Text style={[styles.placeholder, { color: theme.subText }]}>
-            Добро пожаловать в Weave!
-            {"\n"}
-            Здесь скоро будет лента новостей.
-          </Text>
-        </View>
+        <ScrollView style={styles.content} contentContainerStyle={{ paddingBottom: 100 }}>
+          <EventsFeed />
+        </ScrollView>
       </View>
     </ThemedBackground>
   );
