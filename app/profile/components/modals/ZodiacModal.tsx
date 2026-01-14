@@ -35,7 +35,11 @@ export default function ZodiacModal({ visible, zodiac, setZodiac, onClose }: Zod
   };
 
   const selectZodiac = (zodiacId: string) => {
-    setZodiac(zodiacId);
+    if (zodiac === zodiacId) {
+      setZodiac(null);
+    } else {
+      setZodiac(zodiacId);
+    }
   };
 
   const saveZodiac = async () => {
