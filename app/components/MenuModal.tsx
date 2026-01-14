@@ -183,33 +183,7 @@ export const MenuModal = ({ visible, onClose }: MenuModalProps) => {
                                 </Pressable>
                             </View>
 
-                            {/* Logout */}
-                            <Pressable
-                                style={[styles.menuItem, styles.logoutItem, { backgroundColor: theme.cardBg }]}
-                                onPress={handleLogout}
-                            >
-                                <View style={[styles.iconContainer, { backgroundColor: 'rgba(255,59,48,0.1)' }]}>
-                                    <Ionicons name="log-out-outline" size={24} color="#FF3B30" />
-                                </View>
-                                <View style={styles.menuTextContainer}>
-                                    <Text style={[styles.menuText, { color: '#FF3B30' }]}>Выйти</Text>
-                                    <Text style={[styles.menuSubtext, { color: theme.subText }]}>Выход из аккаунта</Text>
-                                </View>
-                            </Pressable>
 
-                            {/* Delete Account */}
-                            <Pressable
-                                style={[styles.menuItem, styles.deleteItem, { backgroundColor: theme.cardBg }]}
-                                onPress={handleDeleteAccount}
-                            >
-                                <View style={[styles.iconContainer, { backgroundColor: 'rgba(255,59,48,0.1)' }]}>
-                                    <Ionicons name="trash-outline" size={24} color="#FF3B30" />
-                                </View>
-                                <View style={styles.menuTextContainer}>
-                                    <Text style={[styles.menuText, { color: "#FF3B30" }]}>Удалить аккаунт</Text>
-                                    <Text style={[styles.menuSubtext, { color: theme.subText }]}>Безвозвратно</Text>
-                                </View>
-                            </Pressable>
                         </ScrollView>
                     </ThemedBackground>
                 </Pressable>
