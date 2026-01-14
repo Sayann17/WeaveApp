@@ -167,8 +167,9 @@ async function getDiscovery(driver, requestHeaders, filters, responseHeaders) {
         const myCity = currentUserData.city ? currentUserData.city.toLowerCase().trim() : null;
 
         // Fetch users with filters
-        // 🔥 LIMIT 100 for safety (scaling protection)
-        let usersQuery = `SELECT * FROM users WHERE profile_completed = 1 LIMIT 100`;
+        // 🔥 FIX: Use RandomNumber() to shuffle results serverside so we don't get the same "swiped" 100 people every time.
+        // Limit 50 is enough for one page if they are random.
+        let usersQuery = `SELECT * FROM users WHERE profile_completed = 1 ORDER BY RandomNumber() LIMIT 50`;
         const params = {};
 
         if (filters) {
