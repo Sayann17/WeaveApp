@@ -2,6 +2,7 @@ const { getDriver } = require('./db');
 const jwt = require('jsonwebtoken');
 const { TypedValues, TypedData } = require('ydb-sdk');
 const { sendLikeNotification, sendMatchNotifications } = require('./telegram-helpers');
+const { calculateCulturalScore } = require('./scoring');
 
 const JWT_SECRET = process.env.JWT_SECRET || 'dev-secret-key-change-me';
 
@@ -14,10 +15,7 @@ module.exports.handler = async function (event, context) {
         'Content-Type': 'application/json',
         'Access-Control-Allow-Origin': '*',
         'Access-Control-Allow-Methods': 'POST, GET, OPTIONS',
-        'Access-Control-Allow-Headers': 'Content-Type, Authorization',
-        'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate',
-        'Pragma': 'no-cache',
-        'Expires': '0'
+        'Access-Control-Allow-Headers': 'Content-Type, Authorization'
     };
 
     try {
@@ -136,9 +134,22 @@ async function getUserProfile(driver, requestHeaders, userId, responseHeaders) {
     };
 }
 
-async function getDiscovery(driver, requestHeaders, filters, responseHeaders) {
+
+async function getDiscovery(driver, requestHeaders, queryParams, responseHeaders) {
     const userId = checkAuth(requestHeaders);
     if (!userId) return { statusCode: 401, headers: responseHeaders, body: JSON.stringify({ error: 'Unauthorized' }) };
+
+    let filters = {};
+    let offset = 0;
+
+    if (queryParams) {
+        if (queryParams.filters) {
+            try { filters = JSON.parse(queryParams.filters); } catch (e) { }
+        }
+        if (queryParams.offset) {
+            offset = parseInt(queryParams.offset) || 0;
+        }
+    }
 
     const tryParse = (val) => {
         if (!val) return [];
@@ -147,29 +158,32 @@ async function getDiscovery(driver, requestHeaders, filters, responseHeaders) {
     };
 
     let profiles = [];
-    console.log('[getDiscovery] Fetching discovery for userId:', userId);
-
     await driver.tableClient.withSession(async (session) => {
-        // Get current user's location & excluded IDs
+        // Get current user data including location
         const currentUserQuery = `
             DECLARE $userId AS Utf8;
             SELECT to_user_id FROM likes WHERE from_user_id = $userId;
-            SELECT latitude, longitude, city FROM users WHERE id = $userId;
+            SELECT * FROM users WHERE id = $userId;
         `;
         const { resultSets: resData } = await session.executeQuery(currentUserQuery, { '$userId': TypedValues.utf8(userId) });
 
-        const excludedIds = TypedData.createNativeObjects(resData[0]).map(r => r.to_user_id);
-        excludedIds.push(userId);
+        const excludedIds = resData[0] ? TypedData.createNativeObjects(resData[0]).map(r => r.to_user_id) : [];
+        excludedIds.push(userId); // Exclude self
 
-        const currentUserData = TypedData.createNativeObjects(resData[1])[0] || {};
-        const myLat = currentUserData.latitude;
-        const myLon = currentUserData.longitude;
-        const myCity = currentUserData.city ? currentUserData.city.toLowerCase().trim() : null;
+        const currentUserDataRaw = resData[1] ? TypedData.createNativeObjects(resData[1])[0] : null;
+        if (!currentUserDataRaw) return; // Should not happen if auth is valid
 
-        // Fetch users with filters
-        // 🔥 FIX: Use RandomNumber() to shuffle results serverside so we don't get the same "swiped" 100 people every time.
-        // Limit 50 is enough for one page if they are random.
-        let usersQuery = `SELECT * FROM users WHERE profile_completed = 1 ORDER BY RandomNumber() LIMIT 50`;
+        // Normalize current user data for scoring
+        const currentUser = {
+            ...currentUserDataRaw,
+            macroGroups: tryParse(currentUserDataRaw.macro_groups),
+            interests: tryParse(currentUserDataRaw.interests),
+            religions: tryParse(currentUserDataRaw.religion),
+            customEthnicity: currentUserDataRaw.ethnicity // Map field names if they differ
+        };
+
+        // Fetch CANDIDATES (Limit 1000 for performance safety)
+        let usersQuery = `SELECT * FROM users WHERE profile_completed = 1`;
         const params = {};
 
         if (filters) {
@@ -197,29 +211,26 @@ async function getDiscovery(driver, requestHeaders, filters, responseHeaders) {
             }
         }
 
+        // Fetch a large pool to sort from
+        usersQuery += ` LIMIT 1000`;
+
         const { resultSets: resUsers } = await session.executeQuery(usersQuery, params);
-        const allUsers = TypedData.createNativeObjects(resUsers[0]);
+        const allCandidates = TypedData.createNativeObjects(resUsers[0]);
 
-        // Haversine Distance
-        const getDistance = (lat1, lon1, lat2, lon2) => {
-            if (!lat1 || !lon1 || !lat2 || !lon2) return Infinity;
-            const R = 6371;
-            const dLat = (lat2 - lat1) * (Math.PI / 180);
-            const dLon = (lon2 - lon1) * (Math.PI / 180);
-            const a =
-                Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-                Math.cos(lat1 * (Math.PI / 180)) * Math.cos(lat2 * (Math.PI / 180)) *
-                Math.sin(dLon / 2) * Math.sin(dLon / 2);
-            const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-            return R * c;
-        };
-
-        profiles = allUsers
+        // Filter and Score Candidates
+        let scoredCandidates = allCandidates
             .filter(u => !excludedIds.includes(u.id))
             .map(u => {
-                const uCity = u.city ? u.city.toLowerCase().trim() : null;
-                const distance = getDistance(myLat, myLon, u.latitude, u.longitude);
-                const isCityMatch = myCity && uCity && myCity === uCity;
+                // Normalize candidate data
+                const candidateData = {
+                    ...u,
+                    macroGroups: tryParse(u.macro_groups),
+                    interests: tryParse(u.interests),
+                    religions: tryParse(u.religion),
+                    customEthnicity: u.ethnicity
+                };
+
+                const score = calculateCulturalScore(currentUser, candidateData);
 
                 return {
                     id: u.id,
@@ -230,31 +241,70 @@ async function getDiscovery(driver, requestHeaders, filters, responseHeaders) {
                     gender: u.gender,
                     ethnicity: u.ethnicity,
                     religion: u.religion,
-                    macroGroups: tryParse(u.macro_groups),
+                    macroGroups: candidateData.macroGroups,
                     zodiac: u.zodiac,
-                    religions: tryParse(u.religion),
-                    interests: tryParse(u.interests),
+                    religions: candidateData.religions,
+                    interests: candidateData.interests,
                     culture_pride: u.culture_pride,
                     love_language: u.love_language,
                     family_memory: u.family_memory,
                     stereotype_true: u.stereotype_true,
                     stereotype_false: u.stereotype_false,
                     profileCompleted: true,
-                    _distance: distance,
-                    _isCityMatch: isCityMatch,
-                    city: u.city
+                    score: score // Include score in response
                 };
             });
 
-        // Sort: City Match first, then Distance
-        profiles.sort((a, b) => {
-            if (a._isCityMatch && !b._isCityMatch) return -1;
-            if (!a._isCityMatch && b._isCityMatch) return 1;
+        // Loop Logic: If no candidates found (and we had excluding logic), try fetching without exclusions?
+        // Actually, for "Infinite Carousel", if we run out of NEW users, we should include OLD users.
+        // If scoredCandidates is empty and offset is 0 (or small), we should fetch previously seen users to restart loop.
 
-            const distA = a._distance === Infinity ? 99999999 : a._distance;
-            const distB = b._distance === Infinity ? 99999999 : b._distance;
-            return distA - distB;
-        });
+        let totalCount = scoredCandidates.length;
+
+        // If total count is 0 (filtered out everything), we should probably fetch the SEEN users to loop.
+        if (totalCount === 0 && allCandidates.length > 0) {
+            console.log('[getDiscovery] No new users found. Falling back to seen users (Looping).');
+            scoredCandidates = allCandidates
+                .filter(u => u.id !== userId) // Still exclude self
+                .map(u => {
+                    const candidateData = { ...u, macroGroups: tryParse(u.macro_groups), interests: tryParse(u.interests), religions: tryParse(u.religion), customEthnicity: u.ethnicity };
+                    return {
+                        id: u.id, name: u.name, age: u.age, photos: tryParse(u.photos), bio: u.about, gender: u.gender,
+                        ethnicity: u.ethnicity, religion: u.religion, macroGroups: candidateData.macroGroups, zodiac: u.zodiac,
+                        religions: candidateData.religions, interests: candidateData.interests,
+                        culture_pride: u.culture_pride, love_language: u.love_language,
+                        family_memory: u.family_memory, stereotype_true: u.stereotype_true,
+                        stereotype_false: u.stereotype_false, profileCompleted: true,
+                        score: calculateCulturalScore(currentUser, candidateData) // Re-score
+                    };
+                });
+            totalCount = scoredCandidates.length;
+        }
+
+        // Sort by Score DESC
+        scoredCandidates.sort((a, b) => b.score - a.score);
+
+        // Client-side Loop logic:
+        // If offset >= totalCount, we wrap around.
+        let effectiveOffset = offset;
+        if (totalCount > 0) {
+            effectiveOffset = offset % totalCount;
+        }
+
+        // Slice the page
+        const limit = 50;
+
+        if (effectiveOffset + limit <= totalCount) {
+            profiles = scoredCandidates.slice(effectiveOffset, effectiveOffset + limit);
+        } else {
+            // We need to wrap around
+            const firstPart = scoredCandidates.slice(effectiveOffset, totalCount);
+            const remaining = limit - firstPart.length;
+            const secondPart = scoredCandidates.slice(0, remaining);
+            profiles = [...firstPart, ...secondPart];
+        }
+
+        console.log(`[getDiscovery] Returning ${profiles.length} profiles. Offset: ${offset} (Effective: ${effectiveOffset}). Total Candidates: ${totalCount}`);
     });
 
     return {

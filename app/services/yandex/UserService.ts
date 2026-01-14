@@ -32,6 +32,7 @@ export class YandexUserService implements IUserService {
             if (filters.maxAge) queryParams.append('maxAge', filters.maxAge.toString());
             if (filters.ethnicity) queryParams.append('ethnicity', filters.ethnicity);
             if (filters.religion) queryParams.append('religion', filters.religion);
+            if (filters.offset) queryParams.append('offset', filters.offset.toString());
 
             const url = `https://d5dg37j92h7tg2f7sf87.o2p3jdjj.apigw.yandexcloud.net/discovery?${queryParams.toString()}`;
             console.log('[UserService] Fetching discovery:', url);

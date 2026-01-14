@@ -130,7 +130,7 @@ export default function ExploreScreen() {
         }
     };
 
-    const loadProfiles = async (currentUserData: any, currentFilters: Filters, mode: 'smart' | 'custom') => {
+    const loadProfiles = async (currentUserData: any, currentFilters: Filters, mode: 'smart' | 'custom', offset: number = 0) => {
         try {
             const currentUserId = yandexAuth.getCurrentUser()?.uid;
             if (!currentUserId) {
@@ -162,28 +162,26 @@ export default function ExploreScreen() {
             }
 
             // 🔥 USE SERVICE ABSTRACTION
+            // Now supports offset for pagination
             const matches = await userService.getPotentialMatches(currentUserId, {
                 minAge,
                 maxAge,
                 gender: targetGender,
                 ethnicity: targetEth,
-                religion: targetRel
+                religion: targetRel,
+                offset // Pass offset to backend
             });
 
-            // DEBUG: Log first profile to see what data we're getting
-            if (matches.length > 0) {
-                console.log('[Explore] First profile data:', {
-                    name: matches[0].name,
-                    hasInterests: !!matches[0].interests,
-                    interestsCount: matches[0].interests?.length || 0,
-                    interests: matches[0].interests
-                });
-            }
+            // DEBUG: Log
+            console.log(`[Explore] Loaded ${matches.length} profiles (Offset: ${offset})`);
 
-            // Cultural Sort
-            const ranked = enhancedMatchService.sortProfilesByCulturalScore(currentUserData, matches);
-            setProfiles(ranked);
-            setCurrentProfileIndex(0);
+            if (offset === 0) {
+                setProfiles(matches);
+                setCurrentProfileIndex(0);
+            } else {
+                // Append new batch
+                setProfiles(prev => [...prev, ...matches]);
+            }
 
         } catch (error) {
             console.error(error);
@@ -193,6 +191,12 @@ export default function ExploreScreen() {
     const handleAction = async (action: 'like' | 'pass') => {
         if (profiles.length === 0) return;
         const profile = profiles[currentProfileIndex];
+
+        // Pre-fetch next batch if we are near the end
+        if (currentProfileIndex === profiles.length - 5) {
+            console.log('[Explore] Near end of list, fetching next batch...');
+            await loadProfiles(currentUser, filters, 'custom', profiles.length);
+        }
 
         try {
             console.log(`[Explore] Action: ${action} for user:`, profile.id);
@@ -212,11 +216,14 @@ export default function ExploreScreen() {
                 }
             }
 
-            // Only move to next profile if action was successful
+            // Move to next profile
             if (currentProfileIndex < profiles.length - 1) {
                 setCurrentProfileIndex(prev => prev + 1);
             } else {
+                // If we ran out (should be rare with pre-fetching), try to reload
+                console.log('[Explore] Stack empty, reloading...');
                 setProfiles([]);
+                await loadProfiles(currentUser, filters, 'custom', 0);
             }
         } catch (error) {
             console.error('[Explore] Action failed:', error);

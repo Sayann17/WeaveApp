@@ -42,6 +42,7 @@ export interface SearchFilters {
     ethnicity?: string;
     religion?: string;
     macroGroups?: string[];
+    offset?: number;
 }
 
 export interface IUserService {
