@@ -352,7 +352,7 @@ export const ProfileView = ({ userData, isOwnProfile = false, isMatch = false }:
 
                 {/* ХУКИ */}
                 <View style={styles.hooksContainer}>
-                    {(userData?.bio || userData?.about) && <HookItem title="ОБ О МНЕ" text={userData.bio || userData.about} color={HOOK_COLORS.bio} icon="person" />}
+                    {(userData?.bio || userData?.about) && <HookItem title="ОБО МНЕ" text={userData.bio || userData.about} color={HOOK_COLORS.bio} icon="person" />}
                     {(userData?.loveLanguage || userData?.love_language) && <HookItem title="МОЙ ЯЗЫК ЛЮБВИ" text={userData.loveLanguage || userData.love_language} color={HOOK_COLORS.loveLanguage} icon="heart" />}
                     {(userData?.familyMemory || userData?.family_memory) && <HookItem title="МОЕ ЛЮБИМОЕ ВОСПОМИНАНИЕ" text={userData.familyMemory || userData.family_memory} color={HOOK_COLORS.familyMemory} icon="book" />}
                     {(userData?.culturePride || userData?.culture_pride) && <HookItem title="ЧЕМ Я ГОРЖУСЬ В СВОЕЙ КУЛЬТУРЕ" text={userData.culturePride || userData.culture_pride} color={HOOK_COLORS.culturePride} icon="ribbon" />}

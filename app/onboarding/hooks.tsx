@@ -155,10 +155,10 @@ export default function OnboardingHooksScreen() {
                     <View style={styles.formContent}>
                         <View style={styles.requiredContainer}>
                             <HookInputItem
-                                label="Об о себе (Био) *"
+                                label="Обо мне (Био) *"
                                 value={bio}
                                 onChange={(t) => { setBio(t); if (t) setBioError(false); }}
-                                placeholder="Кто вы? Чем живете? Что ищете?"
+                                placeholder="Кто вы? Что ищете?"
                                 multiline={true}
                                 icon="person-outline"
                                 hasError={bioError}

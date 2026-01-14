@@ -146,6 +146,14 @@ async function getDiscovery(driver, requestHeaders, queryParams, responseHeaders
         if (queryParams.filters) {
             try { filters = JSON.parse(queryParams.filters); } catch (e) { }
         }
+
+        // Fallback/Override: Read flattened params (from UserService.ts)
+        if (queryParams.gender) filters.gender = queryParams.gender;
+        if (queryParams.minAge) filters.minAge = queryParams.minAge;
+        if (queryParams.maxAge) filters.maxAge = queryParams.maxAge;
+        if (queryParams.ethnicity) filters.ethnicity = queryParams.ethnicity;
+        if (queryParams.religion) filters.religion = queryParams.religion;
+
         if (queryParams.offset) {
             offset = parseInt(queryParams.offset) || 0;
         }
