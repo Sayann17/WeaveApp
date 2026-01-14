@@ -11,7 +11,7 @@ export default function HomeScreen() {
 
   return (
     <ThemedBackground>
-      <View style={[styles.container, { paddingTop: insets.top + 20 }]}>
+      <View style={[styles.container, { paddingTop: 92 }]}>
         <View style={[styles.header, { borderBottomColor: theme.border }]}>
           <Text style={[styles.title, { color: theme.text }]}>Главная</Text>
         </View>
