@@ -210,12 +210,24 @@ export default function MatchesScreen() {
                                         </View>
                                     </Pressable>
 
-                                    <Pressable
-                                        style={[styles.iconBtn, { backgroundColor: isLight ? '#f5f5f5' : 'rgba(255,255,255,0.1)' }]}
-                                        onPress={() => router.push({ pathname: '/chat/[id]', params: { id: match.chatId, participantId: match.id } })}
-                                    >
-                                        <Ionicons name="chatbubble-outline" size={20} color={theme.text} />
-                                    </Pressable>
+                                    {/* New Action Buttons */}
+                                    <View style={styles.actionColumn}>
+                                        <Pressable
+                                            style={[styles.actionButton, styles.chatButton, { backgroundColor: isLight ? '#f0f0f0' : '#333' }]}
+                                            onPress={() => router.push({ pathname: '/chat/[id]', params: { id: match.chatId, participantId: match.id } })}
+                                        >
+                                            <Ionicons name="chatbubble-ellipses-outline" size={16} color={theme.text} style={{ marginRight: 4 }} />
+                                            <Text style={[styles.actionButtonText, { color: theme.text }]}>Чат</Text>
+                                        </Pressable>
+
+                                        <Pressable
+                                            style={[styles.actionButton, styles.blockButton]}
+                                        // onPress={() => handleBlock(match)} // Disabled for now
+                                        >
+                                            <Ionicons name="ban-outline" size={16} color="#ff4444" style={{ marginRight: 4 }} />
+                                            <Text style={[styles.actionButtonText, { color: '#ff4444' }]}>Блок</Text>
+                                        </Pressable>
+                                    </View>
                                 </View>
                             ))
                         ) : (
@@ -337,7 +349,31 @@ const styles = StyleSheet.create({
     iconBtn: { padding: 10, borderRadius: 20 },
 
     empty: { alignItems: 'center', marginTop: 50 },
-    emptyText: { fontSize: 16 }
+    emptyText: { fontSize: 16 },
+
+    actionColumn: {
+        alignItems: 'flex-end',
+        justifyContent: 'center',
+        gap: 8,
+        minWidth: 100
+    },
+    actionButton: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        paddingVertical: 8,
+        paddingHorizontal: 12,
+        borderRadius: 12,
+    },
+    chatButton: {
+        // backgroundColor handled dynamically
+    },
+    blockButton: {
+        backgroundColor: 'transparent',
+    },
+    actionButtonText: {
+        fontSize: 14,
+        fontWeight: '600'
+    }
 });
 
 

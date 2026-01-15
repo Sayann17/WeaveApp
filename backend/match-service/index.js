@@ -363,44 +363,80 @@ async function getMatches(driver, requestHeaders, responseHeaders) {
     console.log('[getMatches] Starting for userId:', userId);
 
     await driver.tableClient.withSession(async (session) => {
-        // 1. Find mutual likes (Matches)
-        // Find users who liked me
-        const likedByQuery = `
+        // 1. Fetch matches directly from 'matches' table
+        // We need to check both user1_id and user2_id columns
+        const matchesQuery = `
             DECLARE $userId AS Utf8;
-            SELECT from_user_id FROM likes WHERE to_user_id = $userId;
+            
+            SELECT user1_id, user2_id, created_at 
+            FROM matches 
+            WHERE user1_id = $userId OR user2_id = $userId;
         `;
-        const { resultSets: likedByResults } = await session.executeQuery(likedByQuery, {
+
+        const { resultSets: matchesRes } = await session.executeQuery(matchesQuery, {
             '$userId': TypedValues.utf8(userId)
         });
-        const likedByMeIds = likedByResults[0] ? TypedData.createNativeObjects(likedByResults[0]).map(r => r.from_user_id) : [];
 
-        if (likedByMeIds.length === 0) return;
+        const rawMatches = matchesRes[0] ? TypedData.createNativeObjects(matchesRes[0]) : [];
 
-        // Find users I liked
-        const myLikesQuery = `
-            DECLARE $userId AS Utf8;
-            SELECT to_user_id FROM likes WHERE from_user_id = $userId;
-        `;
-        const { resultSets: myLikesResults } = await session.executeQuery(myLikesQuery, {
-            '$userId': TypedValues.utf8(userId)
+        if (rawMatches.length === 0) return;
+
+        // 2. Identify the other person's ID and Chat ID
+        const activeMatches = rawMatches.map(m => {
+            const otherId = m.user1_id === userId ? m.user2_id : m.user1_id;
+            const chatId = [userId, otherId].sort().join('_');
+            return {
+                otherId,
+                chatId,
+                matchCreatedAt: m.created_at
+            };
         });
-        const myLikesIds = myLikesResults[0] ? TypedData.createNativeObjects(myLikesResults[0]).map(r => r.to_user_id) : [];
 
-        // Intersection = Matches
-        const matchIds = likedByMeIds.filter(id => myLikesIds.includes(id));
-        console.log(`[getMatches] Found ${matchIds.length} matches (robust)`);
+        // 3. Fetch Last Message Time from Chats
+        // We can do this efficiently? Or just iterate.
+        // Let's iterate for safety and simplicity as we have chatId. 
+        // A bulk IN query would be better but let's stick to safe logic first.
 
-        if (matchIds.length === 0) return;
+        const sortedMatches = [];
 
-        // 2. Fetch User Data
-        for (const matchId of matchIds) {
+        for (const m of activeMatches) {
+            const chatQuery = `
+                DECLARE $chatId AS Utf8;
+                SELECT last_message_time FROM chats WHERE id = $chatId;
+            `;
+            const { resultSets: chatRes } = await session.executeQuery(chatQuery, {
+                '$chatId': TypedValues.utf8(m.chatId)
+            });
+            const chatRow = chatRes[0] ? TypedData.createNativeObjects(chatRes[0])[0] : null;
+
+            let sortTime = m.matchCreatedAt;
+            if (chatRow && chatRow.last_message_time) {
+                // If last message is newer than match creation (it should be), use it
+                const lastMsg = new Date(chatRow.last_message_time);
+                const matchTime = new Date(m.matchCreatedAt);
+                if (lastMsg > matchTime) {
+                    sortTime = chatRow.last_message_time;
+                }
+            }
+
+            sortedMatches.push({
+                ...m,
+                sortTime
+            });
+        }
+
+        // 4. Sort by sortTime DESC
+        sortedMatches.sort((a, b) => new Date(b.sortTime) - new Date(a.sortTime));
+
+        // 5. Fetch User Profiles for these matches
+        for (const m of sortedMatches) {
             const userQuery = `
                 DECLARE $id AS Utf8;
                 SELECT id, name, age, photos, about, gender, ethnicity, macro_groups
                 FROM users WHERE id = $id;
             `;
             const { resultSets: userResults } = await session.executeQuery(userQuery, {
-                '$id': TypedValues.utf8(matchId)
+                '$id': TypedValues.utf8(m.otherId)
             });
             const users = userResults[0] ? TypedData.createNativeObjects(userResults[0]) : [];
 
@@ -408,14 +444,15 @@ async function getMatches(driver, requestHeaders, responseHeaders) {
                 const u = users[0];
                 matches.push({
                     id: u.id,
-                    chatId: [userId, u.id].sort().join('_'),
+                    chatId: m.chatId,
                     name: u.name,
                     age: u.age,
                     photos: tryParse(u.photos),
                     bio: u.about,
                     gender: u.gender,
                     ethnicity: u.ethnicity,
-                    macroGroups: tryParse(u.macro_groups)
+                    macroGroups: tryParse(u.macro_groups),
+                    sortTime: m.sortTime // Debug info potentially
                 });
             }
         }
@@ -759,13 +796,23 @@ async function getEvents(driver, requestHeaders, responseHeaders) {
         // Check participation
         let myEventIds = [];
         if (userId) {
-            const partQuery = `
+            const userQuery = `
                 DECLARE $userId AS Utf8;
-                SELECT event_id FROM event_participants WHERE user_id = $userId;
+                SELECT events FROM users WHERE id = $userId;
             `;
-            const { resultSets: partRes } = await session.executeQuery(partQuery, { '$userId': TypedValues.utf8(userId) });
-            if (partRes[0]) {
-                myEventIds = TypedData.createNativeObjects(partRes[0]).map(r => r.event_id);
+            const { resultSets: userRes } = await session.executeQuery(userQuery, { '$userId': TypedValues.utf8(userId) });
+            if (userRes[0]) {
+                const rows = TypedData.createNativeObjects(userRes[0]);
+                if (rows.length > 0 && rows[0].events) {
+                    try {
+                        const myEvents = JSON.parse(rows[0].events);
+                        if (Array.isArray(myEvents)) {
+                            myEventIds = myEvents.map(e => e.id);
+                        }
+                    } catch (e) {
+                        // ignore parse error
+                    }
+                }
             }
         }
 
@@ -849,28 +896,6 @@ async function attendEvent(driver, requestHeaders, body, responseHeaders) {
             UPDATE users SET events = $events WHERE id = $userId;
         `;
 
-        // Sync with event_participants table
-        if (isGoing) {
-            const addPartQuery = `
-                DECLARE $userId AS Utf8;
-                DECLARE $eventId AS Utf8;
-                UPSERT INTO event_participants (event_id, user_id) VALUES ($eventId, $userId);
-            `;
-            await session.executeQuery(addPartQuery, {
-                '$userId': TypedValues.utf8(userId),
-                '$eventId': TypedValues.utf8(eventId)
-            });
-        } else {
-            const removePartQuery = `
-                DECLARE $userId AS Utf8;
-                DECLARE $eventId AS Utf8;
-                DELETE FROM event_participants WHERE event_id = $eventId AND user_id = $userId;
-            `;
-            await session.executeQuery(removePartQuery, {
-                '$userId': TypedValues.utf8(userId),
-                '$eventId': TypedValues.utf8(eventId)
-            });
-        }
         await session.executeQuery(updateQuery, {
             '$userId': TypedValues.utf8(userId),
             '$events': TypedValues.utf8(JSON.stringify(currentEvents))

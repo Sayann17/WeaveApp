@@ -108,7 +108,7 @@ export const EventsFeed = () => {
 };
 
 const styles = StyleSheet.create({
-    container: { paddingBottom: 100, paddingTop: 20 },
+    container: { paddingBottom: 100 },
     center: { padding: 20, alignItems: 'center' },
     headerTitle: { fontSize: 34, fontWeight: '800', paddingHorizontal: 20, marginBottom: 20, letterSpacing: -1 },
 

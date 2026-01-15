@@ -550,7 +550,8 @@ async function telegramLogin(driver, data, headers) {
                 city: fullUser.city,
                 socialTelegram: fullUser.social_telegram,
                 socialVk: fullUser.social_vk,
-                socialInstagram: fullUser.social_instagram
+                socialInstagram: fullUser.social_instagram,
+                events: tryParse(fullUser.events)
             }
         })
     };
