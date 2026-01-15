@@ -35,27 +35,16 @@ export default function TabLayout() {
       {badgeCount !== undefined && badgeCount > 0 && (
         <View style={{
           position: 'absolute',
-          right: -6,
-          top: -3,
-          backgroundColor: '#e1306c',
-          borderRadius: 10,
-          minWidth: 16,
-          height: 16,
-          justifyContent: 'center',
-          alignItems: 'center',
+          right: -2,
+          top: -2,
+          backgroundColor: '#ff4444',
+          borderRadius: 5,
+          width: 10,
+          height: 10,
           borderWidth: 1.5,
           borderColor: theme.background,
           zIndex: 10,
-        }}>
-          <Text style={{
-            color: 'white',
-            fontSize: 9,
-            fontWeight: 'bold',
-            paddingHorizontal: 2
-          }}>
-            {badgeCount > 99 ? '99+' : badgeCount}
-          </Text>
-        </View>
+        }} />
       )}
     </View>
   );
@@ -112,7 +101,7 @@ export default function TabLayout() {
         options={{
           title: 'Мэтчи',
           tabBarIcon: ({ color }) => (
-            <TabIconWithBadge name="heart" size={28} color={color} badgeCount={newLikesCount} />
+            <TabIconWithBadge name="heart" size={28} color={color} badgeCount={newLikesCount + unreadMessagesCount} />
           ),
         }}
       />

@@ -402,12 +402,22 @@ async function getMatches(driver, requestHeaders, responseHeaders) {
         for (const m of activeMatches) {
             const chatQuery = `
                 DECLARE $chatId AS Utf8;
+                DECLARE $userId AS Utf8;
+
                 SELECT last_message_time FROM chats WHERE id = $chatId;
+                
+                SELECT COUNT(*) as unread_count 
+                FROM messages 
+                WHERE chat_id = $chatId 
+                AND is_read = false 
+                AND sender_id != $userId;
             `;
-            const { resultSets: chatRes } = await session.executeQuery(chatQuery, {
-                '$chatId': TypedValues.utf8(m.chatId)
+            const { resultSets: res } = await session.executeQuery(chatQuery, {
+                '$chatId': TypedValues.utf8(m.chatId),
+                '$userId': TypedValues.utf8(userId)
             });
-            const chatRow = chatRes[0] ? TypedData.createNativeObjects(chatRes[0])[0] : null;
+            const chatRow = res[0] ? TypedData.createNativeObjects(res[0])[0] : null;
+            const unreadRow = res[1] ? TypedData.createNativeObjects(res[1])[0] : null;
 
             let sortTime = m.matchCreatedAt;
             if (chatRow && chatRow.last_message_time) {
@@ -419,9 +429,14 @@ async function getMatches(driver, requestHeaders, responseHeaders) {
                 }
             }
 
+            const unreadCount = unreadRow ? (unreadRow.unread_count || unreadRow.count || 0) : 0;
+            // Handle different number types from YDB (uint64 vs int64)
+            const hasUnread = Number(unreadCount) > 0;
+
             sortedMatches.push({
                 ...m,
-                sortTime
+                sortTime,
+                hasUnread
             });
         }
 
@@ -452,7 +467,8 @@ async function getMatches(driver, requestHeaders, responseHeaders) {
                     gender: u.gender,
                     ethnicity: u.ethnicity,
                     macroGroups: tryParse(u.macro_groups),
-                    sortTime: m.sortTime // Debug info potentially
+                    sortTime: m.sortTime,
+                    hasUnread: m.hasUnread
                 });
             }
         }

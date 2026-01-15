@@ -216,7 +216,12 @@ export default function MatchesScreen() {
                                             style={[styles.actionButton, styles.chatButton, { backgroundColor: isLight ? '#f0f0f0' : '#333' }]}
                                             onPress={() => router.push({ pathname: '/chat/[id]', params: { id: match.chatId, participantId: match.id } })}
                                         >
-                                            <Ionicons name="chatbubble-ellipses-outline" size={16} color={theme.text} style={{ marginRight: 4 }} />
+                                            <View>
+                                                <Ionicons name="chatbubble-ellipses-outline" size={16} color={theme.text} style={{ marginRight: 4 }} />
+                                                {match.hasUnread && (
+                                                    <View style={[styles.unreadDot, { borderColor: theme.cardBg }]} />
+                                                )}
+                                            </View>
                                             <Text style={[styles.actionButtonText, { color: theme.text }]}>Чат</Text>
                                         </Pressable>
 
@@ -373,6 +378,16 @@ const styles = StyleSheet.create({
     actionButtonText: {
         fontSize: 14,
         fontWeight: '600'
+    },
+    unreadDot: {
+        position: 'absolute',
+        top: -2,
+        right: -2,
+        width: 8,
+        height: 8,
+        borderRadius: 4,
+        backgroundColor: '#ff4444',
+        borderWidth: 1.5,
     }
 });
 
