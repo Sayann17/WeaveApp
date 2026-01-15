@@ -354,23 +354,79 @@ export const ProfileView = ({ userData, isOwnProfile = false, isMatch = false }:
                 {userData?.events && Array.isArray(userData.events) && userData.events.length > 0 && (
                     <View style={styles.sectionContainer}>
                         <Text style={[styles.sectionTitle, { color: subTextColor }]}>Мероприятия</Text>
-                        <View style={{ gap: 10 }}>
-                            {userData.events.map((evt: any, i: number) => (
+                        const EVENT_IMAGES: Record<string, any> = {
+                            'uzor_love': require('../assets/images/events/uzor_love.jpg'),
+};
+
+                        export const ProfileView = ({userData, isOwnProfile = false, isMatch = false}: ProfileViewProps) => {
+    // ... existing hooks ... 
+    // Wait, I can't insert EVENT_IMAGES inside the component if I'm replacing a block inside layout. 
+    // I should probably insert it at the top of file or use require inline if I can't access top scope easily with Replace.
+    // ReplaceFileContent works by line range.
+    // I can stick EVENT_IMAGES definition just before the return or just inline it in the map for now since it's just one image.
+    // Or I can replace the whole Loop block and just use require directly if key matches?
+    // " EVENT_IMAGES[evt.imageKey] "
+    // I need EVENT_IMAGES defined. 
+    // I'll try to insert it at top? No, multiple replaces.
+    // I'll define it inside the map or assume I can use `require('../../assets/images/events/' + evt.imageKey + '.jpg')`? React Native require doesn't support dynamic strings well usually.
+    // Best: Define `const EVENT_IMAGES` at the top of `ProfileView.tsx`.
+
+    // Step 1: Add EVENT_IMAGES to top of file.
+    // Step 2: Update the render block.
+    // This tool call is for Step 2 (Render block). I will assume I'll do Step 1 after or before?
+    // I'll do step 1 (add constant) first. 
+
+    // I'll change plan.
+    // I'll make this tool call update the LOOPS.
+    // I will use a local variable inside the map or a hardcoded check for now to be safe, OR I'll update the top of file NEXT.
+    // Actually, I can use `require` with a switch or just `evt.imageKey === 'uzor_love' ? require(...) : null`.
+    // Simple enough for 1 image.
+    
+                        <View style={{ gap: 12 }}>
+                            {userData.events.map((evt: any, i: number) => {
+                                const imageSource = evt.imageKey === 'uzor_love' 
+                                    ? require('../../assets/images/events/uzor_love.jpg') 
+                                    : null; // Fallback or placeholder?
+
+                                return (
                                 <View key={i} style={[
-                                    { flexDirection: 'row', alignItems: 'center', padding: 12, borderRadius: 16, gap: 12 },
+                                    { flexDirection: 'row', padding: 10, borderRadius: 20, gap: 14, alignItems: 'center' },
                                     isLight ? { backgroundColor: '#fff', borderWidth: 1, borderColor: '#eee' } : { backgroundColor: 'rgba(255,255,255,0.08)' }
                                 ]}>
-                                    <View style={{ width: 40, height: 40, borderRadius: 10, backgroundColor: Colors.primary, justifyContent: 'center', alignItems: 'center' }}>
-                                        <Ionicons name="calendar" size={20} color="white" />
+                                    <View style={{ 
+                                        width: 60, height: 60, borderRadius: 12, 
+                                        overflow: 'hidden', backgroundColor: '#eee' 
+                                    }}>
+                                        {imageSource ? (
+                                            <Image source={imageSource} style={{ width: '100%', height: '100%' }} contentFit="cover" />
+                                        ) : (
+                                            <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: Colors.primary }}>
+                                                <Ionicons name="calendar" size={24} color="white" />
+                                            </View>
+                                        )}
                                     </View>
-                                    <View style={{ flex: 1 }}>
-                                        <Text style={{ color: textColor, fontWeight: 'bold', fontSize: 16 }}>{evt.title}</Text>
-                                        <Text style={{ color: subTextColor, fontSize: 13 }}>
+                                    
+                                    <View style={{ flex: 1, paddingRight: 8 }}>
+                                        <Text style={{ 
+                                            color: textColor, fontWeight: '700', fontSize: 16, marginBottom: 4, letterSpacing: -0.5 
+                                        }} numberOfLines={1}>{evt.title}</Text>
+                                        <Text style={{ color: subTextColor, fontSize: 14, fontWeight: '500' }}>
                                             {new Date(evt.date).toLocaleDateString('ru-RU', { day: 'numeric', month: 'long' })}
                                         </Text>
                                     </View>
+                                    
+                                    {/* Ticket Stub Visual Line */}
+                                    <View style={{ 
+                                        height: '60%', width: 1, 
+                                        backgroundColor: isLight ? '#eee' : 'rgba(255,255,255,0.2)',
+                                        marginRight: 4 
+                                    }} />
+                                    
+                                    <View style={{ paddingHorizontal: 6 }}>
+                                         <Ionicons name="checkmark-circle" size={22} color={GREEN_ACCENT} />
+                                    </View>
                                 </View>
-                            ))}
+                            )})} 
                         </View>
                         <View style={{ height: 30 }} />
                     </View>
