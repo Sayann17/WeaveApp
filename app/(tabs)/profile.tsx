@@ -43,6 +43,7 @@ export default function ProfileScreen() {
       const loadFullProfile = async () => {
         const currentUser = yandexAuth.getCurrentUser();
         if (currentUser) {
+          console.log('[ProfileScreen] currentUser.events:', (currentUser as any).events);
           setUserData(currentUser);
           setIsLoading(false);
         }

@@ -265,6 +265,7 @@ async function getDiscovery(driver, requestHeaders, queryParams, responseHeaders
                     family_memory: u.family_memory,
                     stereotype_true: u.stereotype_true,
                     stereotype_false: u.stereotype_false,
+                    events: tryParse(u.events),
                     profileCompleted: true,
                     score: score // Include score in response
                 };
@@ -477,7 +478,7 @@ async function getLikesYou(driver, requestHeaders, responseHeaders) {
         for (const likeId of newLikesIds) {
             const userQuery = `
                 DECLARE $likeId AS Utf8;
-                SELECT id, name, age, photos, about, gender, ethnicity, religion, macro_groups, zodiac, interests, culture_pride, love_language, family_memory, stereotype_true, stereotype_false
+                SELECT id, name, age, photos, about, gender, ethnicity, religion, macro_groups, zodiac, interests, culture_pride, love_language, family_memory, stereotype_true, stereotype_false, events
                 FROM users
                 WHERE id = $likeId;
             `;
@@ -507,7 +508,8 @@ async function getLikesYou(driver, requestHeaders, responseHeaders) {
                 love_language: u.love_language,
                 family_memory: u.family_memory,
                 stereotype_true: u.stereotype_true,
-                stereotype_false: u.stereotype_false
+                stereotype_false: u.stereotype_false,
+                events: tryParse(u.events)
             });
         }
     });
@@ -570,7 +572,7 @@ async function getYourLikes(driver, requestHeaders, responseHeaders) {
         for (const likeId of oneSidedLikes) {
             const userQuery = `
                 DECLARE $likeId AS Utf8;
-                SELECT id, name, age, photos, about, gender, ethnicity, religion, macro_groups, zodiac, interests, culture_pride, love_language, family_memory, stereotype_true, stereotype_false
+                SELECT id, name, age, photos, about, gender, ethnicity, religion, macro_groups, zodiac, interests, culture_pride, love_language, family_memory, stereotype_true, stereotype_false, events
                 FROM users
                 WHERE id = $likeId;
             `;
@@ -600,7 +602,8 @@ async function getYourLikes(driver, requestHeaders, responseHeaders) {
                 love_language: u.love_language,
                 family_memory: u.family_memory,
                 stereotype_true: u.stereotype_true,
-                stereotype_false: u.stereotype_false
+                stereotype_false: u.stereotype_false,
+                events: tryParse(u.events)
             });
         }
     });
