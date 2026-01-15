@@ -306,21 +306,23 @@ class YandexChatService {
         }));
     }
 
-    async getNotificationsStats(): Promise<{ unreadMessages: number, newLikes: number }> {
+    async getUnreadMessagesCount(): Promise<number> {
         const token = await AsyncStorage.getItem('auth_token');
-        if (!token) return { unreadMessages: 0, newLikes: 0 };
-
+        if (!token) return 0;
         try {
-            const response = await fetch(`${API_URL}/notifications/stats`, {
+            const response = await fetch(`${API_URL}/notifications/messages`, {
                 headers: { 'Authorization': `Bearer ${token}` }
             });
-            if (!response.ok) return { unreadMessages: 0, newLikes: 0 };
-            return await response.json();
+            if (!response.ok) return 0;
+            const data = await response.json();
+            return data.unreadMessages || 0;
         } catch (e) {
-            console.error('Failed to fetch notification stats', e);
-            return { unreadMessages: 0, newLikes: 0 };
+            console.error('Failed to fetch unread messages count', e);
+            return 0;
         }
     }
+
+
 
     async markAsRead(chatId: string): Promise<void> {
         const token = await AsyncStorage.getItem('auth_token');

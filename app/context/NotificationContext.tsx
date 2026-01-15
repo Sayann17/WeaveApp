@@ -4,6 +4,7 @@ import { AppState, AppStateStatus } from 'react-native';
 import { User } from '../services/interfaces/IAuthService';
 import { yandexAuth } from '../services/yandex/AuthService';
 import { yandexChat } from '../services/yandex/ChatService';
+import { yandexMatch } from '../services/yandex/MatchService';
 
 interface NotificationContextType {
     unreadMessagesCount: number;
@@ -45,9 +46,12 @@ export const NotificationProvider = ({ children }: { children: React.ReactNode }
     const fetchStats = async () => {
         if (!user) return;
         try {
-            const stats = await yandexChat.getNotificationsStats();
-            setUnreadMessagesCount(stats.unreadMessages);
-            setNewLikesCount(stats.newLikes);
+            const [unreadMsg, newLikes] = await Promise.all([
+                yandexChat.getUnreadMessagesCount(),
+                yandexMatch.getNewLikesCount()
+            ]);
+            setUnreadMessagesCount(unreadMsg);
+            setNewLikesCount(newLikes);
         } catch (e) {
             console.error('[NotificationContext] Failed to fetch stats:', e);
         }

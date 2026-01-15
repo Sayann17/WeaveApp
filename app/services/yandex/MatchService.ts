@@ -103,6 +103,22 @@ class YandexMatchService {
         const data = await response.json();
         return data.profiles || [];
     }
+
+    async getNewLikesCount(): Promise<number> {
+        const token = await AsyncStorage.getItem('auth_token');
+        if (!token) return 0;
+        try {
+            const response = await fetch(`${API_URL}/notifications/likes`, {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            if (!response.ok) return 0;
+            const data = await response.json();
+            return data.newLikes || 0;
+        } catch (e) {
+            console.error('Failed to fetch new likes count', e);
+            return 0;
+        }
+    }
 }
 
 export const yandexMatch = new YandexMatchService();
