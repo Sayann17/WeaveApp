@@ -85,30 +85,22 @@ export default function TabLayout() {
       <Tabs.Screen
         name="index"
         options={{
-          title: 'Главная',
-          tabBarIcon: ({ color }) => (
-            <TabIconWithBadge name="home" size={28} color={color} />
-          ),
-        }}
-      />
-      <Tabs.Screen
-        name="explore"
-        options={{
-          title: 'Поиск',
+          title: 'Поиск', // Now index will be Search
           tabBarIcon: ({ color }) => (
             <TabIconWithBadge name="search" size={28} color={color} />
           ),
         }}
       />
       <Tabs.Screen
-        name="chats"
+        name="events" // Renamed from explore or added new
         options={{
-          title: 'Чаты',
+          title: 'События',
           tabBarIcon: ({ color }) => (
-            <TabIconWithBadge name="chatbubble-ellipses" size={28} color={color} badgeCount={unreadMessagesCount} />
+            <TabIconWithBadge name="calendar" size={28} color={color} />
           ),
         }}
       />
+      {/* Chats screen removed from tabs */}
       <Tabs.Screen
         name="matches"
         options={{
