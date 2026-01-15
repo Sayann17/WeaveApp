@@ -100,7 +100,13 @@ export default function TabLayout() {
           ),
         }}
       />
-      {/* Chats screen removed from tabs */}
+
+      <Tabs.Screen
+        name="chats"
+        options={{
+          href: null, // This hides the tab
+        }}
+      />
       <Tabs.Screen
         name="matches"
         options={{
