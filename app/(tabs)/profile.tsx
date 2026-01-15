@@ -44,10 +44,9 @@ export default function ProfileScreen() {
         const currentUser = yandexAuth.getCurrentUser();
         if (currentUser) {
           // Use events directly from user object (loaded via /me)
-          // Backend /me endpoint now includes 'events' with isGoing status
+          // Backend /me endpoint returns events logic from event_participants, so these ARE the events user is going to.
           const allEvents = (currentUser as any).events || [];
           const myEvents = allEvents
-            .filter((e: any) => e.isGoing)
             .map((e: any) => ({
               id: e.id,
               title: e.title,

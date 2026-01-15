@@ -383,7 +383,7 @@ export const ProfileView = ({ userData, isOwnProfile = false, isMatch = false }:
                                                 color: textColor, fontWeight: '700', fontSize: 16, marginBottom: 4, letterSpacing: -0.5
                                             }} numberOfLines={1}>{evt.title}</Text>
                                             <Text style={{ color: subTextColor, fontSize: 14, fontWeight: '500' }}>
-                                                {new Date(evt.date).toLocaleDateString('ru-RU', { day: 'numeric', month: 'long' })}
+                                                {evt.date ? new Date(evt.date).toLocaleDateString('ru-RU', { day: 'numeric', month: 'long' }) : 'Дата уточняется'}
                                             </Text>
                                         </View>
 
