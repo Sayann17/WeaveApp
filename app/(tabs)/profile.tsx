@@ -43,18 +43,7 @@ export default function ProfileScreen() {
       const loadFullProfile = async () => {
         const currentUser = yandexAuth.getCurrentUser();
         if (currentUser) {
-          // Use events directly from user object (loaded via /me)
-          // Backend /me endpoint returns events logic from event_participants, so these ARE the events user is going to.
-          const allEvents = (currentUser as any).events || [];
-          const myEvents = allEvents
-            .map((e: any) => ({
-              id: e.id,
-              title: e.title,
-              date: e.date,
-              imageKey: e.imageKey
-            }));
-
-          setUserData({ ...currentUser, events: myEvents });
+          setUserData(currentUser);
           setIsLoading(false);
         }
       };

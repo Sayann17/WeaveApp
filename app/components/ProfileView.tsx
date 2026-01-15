@@ -348,17 +348,15 @@ export const ProfileView = ({ userData, isOwnProfile = false, isMatch = false }:
                     )}
                 </View>
 
-                <View style={[styles.divider, { backgroundColor: isLight ? 'rgba(0,0,0,0.1)' : 'rgba(255,255,255,0.1)' }]} />
-
                 {/* EVENTS */}
                 {userData?.events && Array.isArray(userData.events) && userData.events.length > 0 && (
                     <View style={styles.sectionContainer}>
-                        <Text style={[styles.sectionTitle, { color: subTextColor, marginBottom: 15 }]}>События, на которые я пойду</Text>
+                        <Text style={[styles.sectionTitle, { color: subTextColor, marginBottom: 15 }]}>Бал "Узор Любви"</Text>
                         <View style={{ gap: 10 }}>
                             {userData.events.map((evt: any, i: number) => {
                                 const imageSource = evt.imageKey === 'uzor_love'
                                     ? require('../../assets/images/events/uzor_love.jpg')
-                                    : null; // Fallback or placeholder?
+                                    : null;
 
                                 return (
                                     <View key={i} style={[
@@ -387,7 +385,6 @@ export const ProfileView = ({ userData, isOwnProfile = false, isMatch = false }:
                                             </Text>
                                         </View>
 
-                                        {/* Ticket Stub Visual Line */}
                                         <View style={{
                                             height: '60%', width: 1,
                                             backgroundColor: isLight ? '#eee' : 'rgba(255,255,255,0.2)',
@@ -404,6 +401,10 @@ export const ProfileView = ({ userData, isOwnProfile = false, isMatch = false }:
                         <View style={{ height: 10 }} />
                     </View>
                 )}
+
+                <View style={[styles.divider, { backgroundColor: isLight ? 'rgba(0,0,0,0.1)' : 'rgba(255,255,255,0.1)' }]} />
+
+
 
                 {/* ХУКИ */}
                 <View style={styles.hooksContainer}>

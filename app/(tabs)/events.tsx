@@ -12,12 +12,8 @@ export default function HomeScreen() {
 
   return (
     <ThemedBackground>
-      <View style={[styles.container, { paddingTop: 92 }]}>
-        <View style={[styles.header, { borderBottomColor: theme.border }]}>
-          <Text style={[styles.title, { color: theme.text }]}>События</Text>
-        </View>
-
-        <ScrollView style={styles.content} contentContainerStyle={{ paddingBottom: 100 }}>
+      <View style={styles.container}>
+        <ScrollView style={styles.content} contentContainerStyle={{ paddingBottom: 100, paddingTop: 20 }}>
           <EventsFeed />
         </ScrollView>
       </View>

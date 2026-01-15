@@ -49,8 +49,6 @@ export const EventsFeed = () => {
 
     return (
         <View style={styles.container}>
-            <Text style={[styles.headerTitle, { color: theme.text }]}>События</Text>
-
             {events.map((event) => (
                 <View key={event.id} style={styles.cardContainer}>
                     {/* Visual Layer */}
