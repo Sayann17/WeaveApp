@@ -848,6 +848,29 @@ async function attendEvent(driver, requestHeaders, body, responseHeaders) {
             DECLARE $events AS Utf8;
             UPDATE users SET events = $events WHERE id = $userId;
         `;
+
+        // Sync with event_participants table
+        if (isGoing) {
+            const addPartQuery = `
+                DECLARE $userId AS Utf8;
+                DECLARE $eventId AS Utf8;
+                UPSERT INTO event_participants (event_id, user_id) VALUES ($eventId, $userId);
+            `;
+            await session.executeQuery(addPartQuery, {
+                '$userId': TypedValues.utf8(userId),
+                '$eventId': TypedValues.utf8(eventId)
+            });
+        } else {
+            const removePartQuery = `
+                DECLARE $userId AS Utf8;
+                DECLARE $eventId AS Utf8;
+                DELETE FROM event_participants WHERE event_id = $eventId AND user_id = $userId;
+            `;
+            await session.executeQuery(removePartQuery, {
+                '$userId': TypedValues.utf8(userId),
+                '$eventId': TypedValues.utf8(eventId)
+            });
+        }
         await session.executeQuery(updateQuery, {
             '$userId': TypedValues.utf8(userId),
             '$events': TypedValues.utf8(JSON.stringify(currentEvents))

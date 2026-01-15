@@ -229,7 +229,8 @@ class YandexAuthService implements IAuthService {
             city: user.city,
             socialTelegram: user.socialTelegram || user.social_telegram,
             socialVk: user.socialVk || user.social_vk,
-            socialInstagram: user.socialInstagram || user.social_instagram
+            socialInstagram: user.socialInstagram || user.social_instagram,
+            events: tryParse(user.events)
         };
     }
 }
