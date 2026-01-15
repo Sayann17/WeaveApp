@@ -90,7 +90,6 @@ async function getUserProfile(driver, requestHeaders, userId, responseHeaders) {
     if (!requesterId) return { statusCode: 401, headers: responseHeaders, body: JSON.stringify({ error: 'Unauthorized' }) };
 
     let user = null;
-    let userEvents = []; // [NEW]
     await driver.tableClient.withSession(async (session) => {
         const query = `
             DECLARE $userId AS Utf8;
@@ -101,26 +100,6 @@ async function getUserProfile(driver, requestHeaders, userId, responseHeaders) {
         });
         const rows = TypedData.createNativeObjects(resultSets[0]);
         if (rows.length > 0) user = rows[0];
-
-        // [NEW] Fetch events
-        if (user) {
-            const eventQuery = `
-                DECLARE $userId AS Utf8;
-                SELECT e.id, e.title, e.image_key, e.event_date
-                FROM event_participants ep
-                JOIN events e ON e.id = ep.event_id
-                WHERE ep.user_id = $userId;
-            `;
-            const { resultSets: eventRes } = await session.executeQuery(eventQuery, {
-                '$userId': TypedValues.utf8(userId)
-            });
-            userEvents = TypedData.createNativeObjects(eventRes[0]).map(e => ({
-                id: e.id,
-                title: e.title,
-                imageKey: e.image_key,
-                date: e.event_date
-            }));
-        }
     });
 
     if (!user) return { statusCode: 404, headers: responseHeaders, body: JSON.stringify({ error: 'User not found' }) };
@@ -157,7 +136,7 @@ async function getUserProfile(driver, requestHeaders, userId, responseHeaders) {
             social_vk: user.social_vk,
             social_instagram: user.social_instagram,
             longitude: user.longitude,
-            events: userEvents // [NEW] Attach events
+            events: tryParse(user.events)
         })
     };
 }
@@ -324,12 +303,6 @@ async function getDiscovery(driver, requestHeaders, queryParams, responseHeaders
             const remaining = limit - firstPart.length;
             const secondPart = scoredCandidates.slice(0, remaining);
             profiles = [...firstPart, ...secondPart];
-        }
-
-        // Attach events to profiles
-        for (let i = 0; i < profiles.length; i++) {
-            const evts = await fetchUserEvents(session, profiles[i].id);
-            profiles[i].events = evts;
         }
 
         console.log(`[getDiscovery] Returning ${profiles.length} profiles. Offset: ${offset} (Effective: ${effectiveOffset}). Total Candidates: ${totalCount}`);
@@ -818,21 +791,55 @@ async function attendEvent(driver, requestHeaders, body, responseHeaders) {
     if (!eventId) return { statusCode: 400, headers: responseHeaders, body: JSON.stringify({ error: 'Missing eventId' }) };
 
     await driver.tableClient.withSession(async (session) => {
-        const query = `
-            DECLARE $userId AS Utf8;
+        // Get event details
+        const eventQuery = `
             DECLARE $eventId AS Utf8;
-            DECLARE $status AS Utf8;
-            DECLARE $createdAt AS Timestamp;
-            
-            UPSERT INTO event_participants (user_id, event_id, status, created_at)
-            VALUES ($userId, $eventId, $status, $createdAt);
+            SELECT id, title, image_key, event_date FROM events WHERE id = $eventId LIMIT 1;
         `;
+        const { resultSets: eventRes } = await session.executeQuery(eventQuery, {
+            '$eventId': TypedValues.utf8(eventId)
+        });
+        const events = TypedData.createNativeObjects(eventRes[0]);
+        if (events.length === 0) return;
+        const event = events[0];
 
-        await session.executeQuery(query, {
+        // Get current user events
+        const userQuery = `
+            DECLARE $userId AS Utf8;
+            SELECT events FROM users WHERE id = $userId LIMIT 1;
+        `;
+        const { resultSets: userRes } = await session.executeQuery(userQuery, {
+            '$userId': TypedValues.utf8(userId)
+        });
+        const users = TypedData.createNativeObjects(userRes[0]);
+        let currentEvents = [];
+        if (users.length > 0 && users[0].events) {
+            try {
+                currentEvents = JSON.parse(users[0].events);
+            } catch (e) {
+                currentEvents = [];
+            }
+        }
+
+        // Add new event if not already there
+        if (!currentEvents.find(e => e.id === eventId)) {
+            currentEvents.push({
+                id: event.id,
+                title: event.title,
+                imageKey: event.image_key,
+                date: event.event_date
+            });
+        }
+
+        // Update user
+        const updateQuery = `
+            DECLARE $userId AS Utf8;
+            DECLARE $events AS Utf8;
+            UPDATE users SET events = $events WHERE id = $userId;
+        `;
+        await session.executeQuery(updateQuery, {
             '$userId': TypedValues.utf8(userId),
-            '$eventId': TypedValues.utf8(eventId),
-            '$status': TypedValues.utf8('going'),
-            '$createdAt': TypedValues.timestamp(new Date())
+            '$events': TypedValues.utf8(JSON.stringify(currentEvents))
         }, { commitTx: true, beginTx: { serializableReadWrite: {} } });
 
         console.log(`[attendEvent] User ${userId} is going to event ${eventId}`);
@@ -843,23 +850,4 @@ async function attendEvent(driver, requestHeaders, body, responseHeaders) {
         headers: responseHeaders,
         body: JSON.stringify({ success: true })
     };
-}
-
-
-async function fetchUserEvents(session, userId) {
-    const query = `
-        DECLARE $userId AS Utf8;
-        SELECT e.id, e.title, e.event_date, e.image_key
-        FROM event_participants ep
-        JOIN events e ON ep.event_id = e.id
-        WHERE ep.user_id = $userId;
-    `;
-    const { resultSets } = await session.executeQuery(query, { '$userId': TypedValues.utf8(userId) });
-    return resultSets[0] ? TypedData.createNativeObjects(resultSets[0]).map(e => ({
-        id: e.id,
-        title: e.title,
-        date: e.event_date,
-        imageKey: e.image_key,
-        isGoing: true
-    })) : [];
 }

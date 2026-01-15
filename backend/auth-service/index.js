@@ -359,7 +359,8 @@ async function me(driver, requestHeaders, headers) {
             city: user.city,
             socialTelegram: user.social_telegram,
             socialVk: user.social_vk,
-            socialInstagram: user.social_instagram
+            socialInstagram: user.social_instagram,
+            events: tryParse(user.events)
         };
 
         console.log('[/me] Returning user:', {
