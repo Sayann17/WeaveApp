@@ -326,6 +326,12 @@ async function getDiscovery(driver, requestHeaders, queryParams, responseHeaders
             profiles = [...firstPart, ...secondPart];
         }
 
+        // Attach events to profiles
+        for (let i = 0; i < profiles.length; i++) {
+            const evts = await fetchUserEvents(session, profiles[i].id);
+            profiles[i].events = evts;
+        }
+
         console.log(`[getDiscovery] Returning ${profiles.length} profiles. Offset: ${offset} (Effective: ${effectiveOffset}). Total Candidates: ${totalCount}`);
     });
 
@@ -839,3 +845,21 @@ async function attendEvent(driver, requestHeaders, body, responseHeaders) {
     };
 }
 
+
+async function fetchUserEvents(session, userId) {
+    const query = `
+        DECLARE $userId AS Utf8;
+        SELECT e.id, e.title, e.event_date, e.image_key
+        FROM event_participants ep
+        JOIN events e ON ep.event_id = e.id
+        WHERE ep.user_id = $userId;
+    `;
+    const { resultSets } = await session.executeQuery(query, { '$userId': TypedValues.utf8(userId) });
+    return resultSets[0] ? TypedData.createNativeObjects(resultSets[0]).map(e => ({
+        id: e.id,
+        title: e.title,
+        date: e.event_date,
+        imageKey: e.image_key,
+        isGoing: true
+    })) : [];
+}
