@@ -43,22 +43,19 @@ export default function ProfileScreen() {
       const loadFullProfile = async () => {
         const currentUser = yandexAuth.getCurrentUser();
         if (currentUser) {
-          // Fetch events to show participation
-          try {
-            const events = await eventService.getEvents();
-            // Merge relevant events
-            const myEvents = events.filter((e: any) => e.isGoing).map((e: any) => ({
+          // Use events directly from user object (loaded via /me)
+          // Backend /me endpoint now includes 'events' with isGoing status
+          const allEvents = (currentUser as any).events || [];
+          const myEvents = allEvents
+            .filter((e: any) => e.isGoing)
+            .map((e: any) => ({
               id: e.id,
               title: e.title,
               date: e.date,
               imageKey: e.imageKey
             }));
 
-            setUserData({ ...currentUser, events: myEvents });
-          } catch (e) {
-            console.log('[ProfileScreen] Failed to load events', e);
-            setUserData(currentUser);
-          }
+          setUserData({ ...currentUser, events: myEvents });
           setIsLoading(false);
         }
       };

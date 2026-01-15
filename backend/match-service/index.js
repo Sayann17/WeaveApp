@@ -295,17 +295,40 @@ async function getDiscovery(driver, requestHeaders, queryParams, responseHeaders
         // Actually, for "Infinite Carousel", if we run out of NEW users, we should include OLD users.
         // If scoredCandidates is empty and offset is 0 (or small), we should fetch previously seen users to restart loop.
 
-        let totalCount = scoredCandidates.length;
+        // Sort by Score DESC
+        scoredCandidates.sort((a, b) => b.score - a.score);
 
-        // Fetch events for the final list of profiles
-        const finalProfiles = scoredCandidates
-            .slice(offset, offset + 10);
+        let totalCount = scoredCandidates.length;
+        let effectiveOffset = offset;
+
+        // Circular / Wrapping Logic
+        if (totalCount > 0) {
+            effectiveOffset = offset % totalCount;
+        }
+
+        // Slice the page (Limit 10)
+        let finalProfiles = [];
+        const limit = 10;
+
+        if (totalCount === 0) {
+            finalProfiles = [];
+        } else if (effectiveOffset + limit <= totalCount) {
+            finalProfiles = scoredCandidates.slice(effectiveOffset, effectiveOffset + limit);
+        } else {
+            // we need to wrap around
+            const firstPart = scoredCandidates.slice(effectiveOffset, totalCount);
+            const remaining = limit - firstPart.length;
+            const secondPart = scoredCandidates.slice(0, remaining);
+            finalProfiles = [...firstPart, ...secondPart];
+        }
 
         // Enhance with events
         const profilesWithEvents = await Promise.all(finalProfiles.map(async (candidate) => {
             const evts = await getEvents(candidate.id);
             return { ...candidate, events: evts };
         }));
+
+        console.log(`[getDiscovery] Returning ${profilesWithEvents.length} profiles. Offset: ${offset} (Effective: ${effectiveOffset}). Total Candidates: ${totalCount}`);
 
         return {
             statusCode: 200,
