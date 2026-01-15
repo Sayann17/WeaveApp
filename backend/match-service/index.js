@@ -194,7 +194,7 @@ async function getDiscovery(driver, requestHeaders, queryParams, responseHeaders
     };
 
     let profiles = [];
-    await driver.tableClient.withSession(async (session) => {
+    return await driver.tableClient.withSession(async (session) => {
         // Get current user data including location
         const currentUserQuery = `
             DECLARE $userId AS Utf8;
@@ -297,44 +297,24 @@ async function getDiscovery(driver, requestHeaders, queryParams, responseHeaders
 
         let totalCount = scoredCandidates.length;
 
-        // If total count is 0 (filtered out everything), we should probably fetch the SEEN users to loop.
-        // If total count is 0, we simply return empty (or whatever is left). 
-        // We DO NOT fall back to showing liked users again. 
-        // Disliked users are not tracked in DB, so they remain in 'scoredCandidates' naturally and will loop if pagination wraps.
+        // Fetch events for the final list of profiles
+        const finalProfiles = scoredCandidates
+            .slice(offset, offset + 10);
 
+        // Enhance with events
+        const profilesWithEvents = await Promise.all(finalProfiles.map(async (candidate) => {
+            const evts = await getEvents(candidate.id);
+            return { ...candidate, events: evts };
+        }));
 
-        // Sort by Score DESC
-        scoredCandidates.sort((a, b) => b.score - a.score);
-
-        // Client-side Loop logic:
-        // If offset >= totalCount, we wrap around.
-        let effectiveOffset = offset;
-        if (totalCount > 0) {
-            effectiveOffset = offset % totalCount;
-        }
-
-        // Slice the page
-        const limit = 50;
-
-        if (effectiveOffset + limit <= totalCount) {
-            profiles = scoredCandidates.slice(effectiveOffset, effectiveOffset + limit);
-        } else {
-            // We need to wrap around
-            const firstPart = scoredCandidates.slice(effectiveOffset, totalCount);
-            const remaining = limit - firstPart.length;
-            const secondPart = scoredCandidates.slice(0, remaining);
-            profiles = [...firstPart, ...secondPart];
-        }
-
-        console.log(`[getDiscovery] Returning ${profiles.length} profiles. Offset: ${offset} (Effective: ${effectiveOffset}). Total Candidates: ${totalCount}`);
+        return {
+            statusCode: 200,
+            headers: responseHeaders,
+            body: JSON.stringify(profilesWithEvents)
+        };
     });
-
-    return {
-        statusCode: 200,
-        headers: responseHeaders,
-        body: JSON.stringify({ profiles })
-    };
 }
+
 
 async function getNewLikes(driver, requestHeaders, responseHeaders) {
     const userId = checkAuth(requestHeaders);

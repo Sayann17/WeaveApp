@@ -44,7 +44,7 @@ export const EventsFeed = () => {
 
     return (
         <View style={styles.container}>
-            <Text style={[styles.headerTitle, { color: theme.text }]}>Афиша</Text>
+            <Text style={[styles.headerTitle, { color: theme.text }]}>События</Text>
 
             {events.map((event) => (
                 <View key={event.id} style={styles.cardContainer}>
@@ -57,13 +57,6 @@ export const EventsFeed = () => {
                         />
                         {/* Overlay Gradientish View */}
                         <View style={styles.overlay} />
-
-                        {/* Top Badge */}
-                        <View style={styles.badgeContainer}>
-                            <View style={styles.glassBadge}>
-                                <Text style={styles.badgeText}>THIS WEEKEND</Text>
-                            </View>
-                        </View>
                     </View>
 
                     {/* Content Layer - Overlapping */}
@@ -139,14 +132,9 @@ const styles = StyleSheet.create({
     badgeText: { fontSize: 11, fontWeight: '800', color: '#000', letterSpacing: 0.5 },
 
     contentContainer: {
-        marginTop: -60, // Overlap effect
+        marginTop: 20,
         marginHorizontal: 20,
         backgroundColor: 'transparent',
-        // We actually want the content BELOW the image for this style? 
-        // Or floating card?
-        // Let's do: Image is background, Content is below but clean. 
-        // Actually, user wants premium. Let's reset overlap.
-        marginTop: 20,
     },
 
     metaRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 8 },

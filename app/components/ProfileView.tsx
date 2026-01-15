@@ -353,7 +353,7 @@ export const ProfileView = ({ userData, isOwnProfile = false, isMatch = false }:
                 {/* EVENTS */}
                 {userData?.events && Array.isArray(userData.events) && userData.events.length > 0 && (
                     <View style={styles.sectionContainer}>
-                        <Text style={[styles.sectionTitle, { color: subTextColor }]}>Мероприятия</Text>
+                        <Text style={[styles.sectionTitle, { color: subTextColor, marginBottom: 15 }]}>События, на которые я пойду</Text>
                         <View style={{ gap: 10 }}>
                             {userData.events.map((evt: any, i: number) => {
                                 const imageSource = evt.imageKey === 'uzor_love'
@@ -401,7 +401,7 @@ export const ProfileView = ({ userData, isOwnProfile = false, isMatch = false }:
                                 )
                             })}
                         </View>
-                        <View style={{ height: 30 }} />
+                        <View style={{ height: 10 }} />
                     </View>
                 )}
 
