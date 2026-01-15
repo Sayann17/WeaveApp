@@ -194,7 +194,7 @@ async function getDiscovery(driver, requestHeaders, queryParams, responseHeaders
     };
 
     let profiles = [];
-    return await driver.tableClient.withSession(async (session) => {
+    await driver.tableClient.withSession(async (session) => {
         // Get current user data including location
         const currentUserQuery = `
             DECLARE $userId AS Utf8;
@@ -295,49 +295,46 @@ async function getDiscovery(driver, requestHeaders, queryParams, responseHeaders
         // Actually, for "Infinite Carousel", if we run out of NEW users, we should include OLD users.
         // If scoredCandidates is empty and offset is 0 (or small), we should fetch previously seen users to restart loop.
 
+        let totalCount = scoredCandidates.length;
+
+        // If total count is 0 (filtered out everything), we should probably fetch the SEEN users to loop.
+        // If total count is 0, we simply return empty (or whatever is left). 
+        // We DO NOT fall back to showing liked users again. 
+        // Disliked users are not tracked in DB, so they remain in 'scoredCandidates' naturally and will loop if pagination wraps.
+
+
         // Sort by Score DESC
         scoredCandidates.sort((a, b) => b.score - a.score);
 
-        let totalCount = scoredCandidates.length;
+        // Client-side Loop logic:
+        // If offset >= totalCount, we wrap around.
         let effectiveOffset = offset;
-
-        // Circular / Wrapping Logic
         if (totalCount > 0) {
             effectiveOffset = offset % totalCount;
         }
 
-        // Slice the page (Limit 10)
-        let finalProfiles = [];
-        const limit = 10;
+        // Slice the page
+        const limit = 50;
 
-        if (totalCount === 0) {
-            finalProfiles = [];
-        } else if (effectiveOffset + limit <= totalCount) {
-            finalProfiles = scoredCandidates.slice(effectiveOffset, effectiveOffset + limit);
+        if (effectiveOffset + limit <= totalCount) {
+            profiles = scoredCandidates.slice(effectiveOffset, effectiveOffset + limit);
         } else {
-            // we need to wrap around
+            // We need to wrap around
             const firstPart = scoredCandidates.slice(effectiveOffset, totalCount);
             const remaining = limit - firstPart.length;
             const secondPart = scoredCandidates.slice(0, remaining);
-            finalProfiles = [...firstPart, ...secondPart];
+            profiles = [...firstPart, ...secondPart];
         }
 
-        // Enhance with events
-        const profilesWithEvents = await Promise.all(finalProfiles.map(async (candidate) => {
-            const evts = await getEvents(candidate.id);
-            return { ...candidate, events: evts };
-        }));
-
-        console.log(`[getDiscovery] Returning ${profilesWithEvents.length} profiles. Offset: ${offset} (Effective: ${effectiveOffset}). Total Candidates: ${totalCount}`);
-
-        return {
-            statusCode: 200,
-            headers: responseHeaders,
-            body: JSON.stringify(profilesWithEvents)
-        };
+        console.log(`[getDiscovery] Returning ${profiles.length} profiles. Offset: ${offset} (Effective: ${effectiveOffset}). Total Candidates: ${totalCount}`);
     });
-}
 
+    return {
+        statusCode: 200,
+        headers: responseHeaders,
+        body: JSON.stringify({ profiles })
+    };
+}
 
 async function getNewLikes(driver, requestHeaders, responseHeaders) {
     const userId = checkAuth(requestHeaders);
