@@ -31,11 +31,16 @@ export const EventsFeed = () => {
     };
 
     const handleAttend = async (eventId: string) => {
+        const currentEvent = events.find(e => e.id === eventId);
+        const newIsGoing = !currentEvent?.isGoing;
+
         // Optimistic update
-        setEvents(prev => prev.map(e => e.id === eventId ? { ...e, isGoing: true } : e));
+        setEvents(prev => prev.map(e => e.id === eventId ? { ...e, isGoing: newIsGoing } : e));
+
         const success = await eventService.attendEvent(eventId);
         if (!success) {
-            setEvents(prev => prev.map(e => e.id === eventId ? { ...e, isGoing: false } : e));
+            // Revert on failure
+            setEvents(prev => prev.map(e => e.id === eventId ? { ...e, isGoing: !newIsGoing } : e));
         }
     };
 
@@ -83,7 +88,7 @@ export const EventsFeed = () => {
                             </View>
 
                             <TouchableOpacity
-                                onPress={() => !event.isGoing && handleAttend(event.id)}
+                                onPress={() => handleAttend(event.id)}
                                 activeOpacity={0.8}
                                 style={[
                                     styles.attendButton,

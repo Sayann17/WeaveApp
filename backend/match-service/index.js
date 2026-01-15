@@ -790,6 +790,7 @@ async function attendEvent(driver, requestHeaders, body, responseHeaders) {
     const { eventId } = body;
     if (!eventId) return { statusCode: 400, headers: responseHeaders, body: JSON.stringify({ error: 'Missing eventId' }) };
 
+    let isGoing = false;
     await driver.tableClient.withSession(async (session) => {
         // Get event details
         const eventQuery = `
@@ -821,14 +822,21 @@ async function attendEvent(driver, requestHeaders, body, responseHeaders) {
             }
         }
 
-        // Add new event if not already there
-        if (!currentEvents.find(e => e.id === eventId)) {
+        // Toggle: if already going, remove; if not going, add
+        const existingIndex = currentEvents.findIndex(e => e.id === eventId);
+        if (existingIndex !== -1) {
+            // Already going - remove (unsubscribe)
+            currentEvents.splice(existingIndex, 1);
+            isGoing = false;
+        } else {
+            // Not going - add (subscribe)
             currentEvents.push({
                 id: event.id,
                 title: event.title,
                 imageKey: event.image_key,
                 date: event.event_date
             });
+            isGoing = true;
         }
 
         // Update user
@@ -842,12 +850,12 @@ async function attendEvent(driver, requestHeaders, body, responseHeaders) {
             '$events': TypedValues.utf8(JSON.stringify(currentEvents))
         }, { commitTx: true, beginTx: { serializableReadWrite: {} } });
 
-        console.log(`[attendEvent] User ${userId} is going to event ${eventId}`);
+        console.log(`[attendEvent] User ${userId} ${isGoing ? 'subscribed to' : 'unsubscribed from'} event ${eventId}`);
     });
 
     return {
         statusCode: 200,
         headers: responseHeaders,
-        body: JSON.stringify({ success: true })
+        body: JSON.stringify({ success: true, isGoing })
     };
 }
