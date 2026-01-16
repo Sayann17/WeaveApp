@@ -56,7 +56,7 @@ const { width } = Dimensions.get('window');
 
 export default function ExploreScreen() {
     const router = useRouter();
-    const { theme, isLight } = useTheme();
+    const { theme, isLight, themeType } = useTheme();
     const insets = useSafeAreaInsets();
     const { isMobile, hideBackButton } = useTelegram();
 
