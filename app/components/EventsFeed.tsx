@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, Image, TouchableOpacity, ActivityIndicator, Dimensions } from 'react-native';
+import { View, Text, StyleSheet, Image, TouchableOpacity, ActivityIndicator, Dimensions, Linking } from 'react-native';
 import { useTheme } from '../context/ThemeContext';
 import { eventService, WeaveEvent } from '../services/EventService';
 import { Colors } from '../constants/colors';
@@ -78,12 +78,12 @@ export const EventsFeed = () => {
                         {/* Action Row */}
                         <View style={styles.actionRow}>
                             {/* Facepile Mockup */}
-                            <View style={styles.facepile}>
-                                {[1, 2, 3].map(i => (
-                                    <View key={i} style={[styles.faceAvatar, { backgroundColor: isLight ? '#ddd' : '#333', borderColor: theme.cardBg, marginLeft: i > 1 ? -10 : 0 }]} />
-                                ))}
-                                <Text style={[styles.attendeeText, { color: theme.subText }]}>+14 идут</Text>
-                            </View>
+                            <TouchableOpacity
+                                onPress={() => Linking.openURL('https://t.me/uzor_of_love')}
+                                style={styles.detailsButton}
+                            >
+                                <Text style={[styles.detailsText, { color: theme.text }]}>Подробнее</Text>
+                            </TouchableOpacity>
 
                             <TouchableOpacity
                                 onPress={() => handleAttend(event.id)}
@@ -162,5 +162,14 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         justifyContent: 'center',
     },
-    buttonText: { fontSize: 16, fontWeight: '700' }
+    buttonText: { fontSize: 16, fontWeight: '700' },
+
+    detailsButton: {
+        paddingVertical: 8,
+    },
+    detailsText: {
+        fontSize: 16,
+        fontWeight: '600',
+        textDecorationLine: 'underline'
+    }
 });
