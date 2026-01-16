@@ -407,12 +407,12 @@ export const ProfileView = ({ userData, isOwnProfile = false, isMatch = false }:
 
                 {/* ХУКИ */}
                 <View style={styles.hooksContainer}>
-                    {(userData?.bio || userData?.about) && <HookItem title="ОБО МНЕ" text={userData.bio || userData.about} color={themeType === 'wine' ? '#F4D35E' : HOOK_COLORS.bio} icon="person" />}
-                    {(userData?.loveLanguage || userData?.love_language) && <HookItem title="МОЙ ЯЗЫК ЛЮБВИ" text={userData.loveLanguage || userData.love_language} color={themeType === 'wine' ? '#F4D35E' : HOOK_COLORS.loveLanguage} icon="heart" />}
-                    {(userData?.familyMemory || userData?.family_memory) && <HookItem title="МОЕ ЛЮБИМОЕ ВОСПОМИНАНИЕ" text={userData.familyMemory || userData.family_memory} color={themeType === 'wine' ? '#F4D35E' : HOOK_COLORS.familyMemory} icon="book" />}
-                    {(userData?.culturePride || userData?.culture_pride) && <HookItem title="ЧЕМ Я ГОРЖУСЬ В СВОЕЙ КУЛЬТУРЕ" text={userData.culturePride || userData.culture_pride} color={themeType === 'wine' ? '#F4D35E' : HOOK_COLORS.culturePride} icon="ribbon" />}
-                    {(userData?.stereotypeTrue || userData?.stereotype_true) && <HookItem title="ЧТО ДЛЯ МЕНЯ ЗНАЧИТ НАСТОЯЩАЯ БЛИЗОСТЬ" text={userData.stereotypeTrue || userData.stereotype_true} color={themeType === 'wine' ? '#F4D35E' : HOOK_COLORS.stereotypeTrue} icon="heart" />}
-                    {(userData?.stereotypeFalse || userData?.stereotype_false) && <HookItem title="ЧЕМ Я ЗАНИМАЮСЬ, КОГДА ХОЧУ ПЕРЕЗАГРУЗИТЬСЯ" text={userData.stereotypeFalse || userData.stereotype_false} color={themeType === 'wine' ? '#F4D35E' : HOOK_COLORS.stereotypeFalse} icon="refresh" />}
+                    {(userData?.bio || userData?.about) && <HookItem title="ОБО МНЕ" text={userData.bio || userData.about} color={themeType === 'wine' ? '#efc2a3' : HOOK_COLORS.bio} icon="person" />}
+                    {(userData?.loveLanguage || userData?.love_language) && <HookItem title="МОЙ ЯЗЫК ЛЮБВИ" text={userData.loveLanguage || userData.love_language} color={themeType === 'wine' ? '#efc2a3' : HOOK_COLORS.loveLanguage} icon="heart" />}
+                    {(userData?.familyMemory || userData?.family_memory) && <HookItem title="МОЕ ЛЮБИМОЕ ВОСПОМИНАНИЕ" text={userData.familyMemory || userData.family_memory} color={themeType === 'wine' ? '#efc2a3' : HOOK_COLORS.familyMemory} icon="book" />}
+                    {(userData?.culturePride || userData?.culture_pride) && <HookItem title="ЧЕМ Я ГОРЖУСЬ В СВОЕЙ КУЛЬТУРЕ" text={userData.culturePride || userData.culture_pride} color={themeType === 'wine' ? '#efc2a3' : HOOK_COLORS.culturePride} icon="ribbon" />}
+                    {(userData?.stereotypeTrue || userData?.stereotype_true) && <HookItem title="ЧТО ДЛЯ МЕНЯ ЗНАЧИТ НАСТОЯЩАЯ БЛИЗОСТЬ" text={userData.stereotypeTrue || userData.stereotype_true} color={themeType === 'wine' ? '#efc2a3' : HOOK_COLORS.stereotypeTrue} icon="heart" />}
+                    {(userData?.stereotypeFalse || userData?.stereotype_false) && <HookItem title="ЧЕМ Я ЗАНИМАЮСЬ, КОГДА ХОЧУ ПЕРЕЗАГРУЗИТЬСЯ" text={userData.stereotypeFalse || userData.stereotype_false} color={themeType === 'wine' ? '#efc2a3' : HOOK_COLORS.stereotypeFalse} icon="refresh" />}
 
                     {/* Остальные хуки */}
                 </View>
