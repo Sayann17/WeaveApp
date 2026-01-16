@@ -146,7 +146,7 @@ export default function ProfileScreen() {
               <View style={[styles.menuContainer, { backgroundColor: theme.cardBg, paddingBottom: 50 }]}>
 
                 <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 25 }}>
-                  <Text style={{ fontSize: 24, fontWeight: 'bold', color: theme.text }}>Тема приложения</Text>
+                  <Text style={{ fontSize: 24, fontWeight: 'bold', color: theme.text }}>Тема приложения (v2)</Text>
                   <TouchableOpacity onPress={() => setSettingsVisible(false)} style={{ padding: 5 }}>
                     <Ionicons name="close" size={28} color={theme.text} />
                   </TouchableOpacity>
