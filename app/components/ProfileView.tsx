@@ -288,17 +288,17 @@ export const ProfileView = ({ userData, isOwnProfile = false, isMatch = false }:
                     )}
 
                     <View style={styles.statusRow}>
-                        <Text style={[styles.statusText, { color: subTextColor }]}>
+                        <Text style={[styles.statusText, { color: '#E2E8F0' }]}>
                             {userData?.gender === 'female' ? 'Женщина' : 'Мужчина'}
                         </Text>
-                        <View style={[styles.statusDot, { backgroundColor: subTextColor }]} />
-                        <Text style={[styles.statusText, { color: subTextColor }]}>
+                        <View style={[styles.statusDot, { backgroundColor: '#E2E8F0' }]} />
+                        <Text style={[styles.statusText, { color: '#E2E8F0' }]}>
                             {getZodiacName(userData?.zodiac || '')}
                         </Text>
                         {getAllReligions() && (
                             <>
-                                <View style={[styles.statusDot, { backgroundColor: subTextColor }]} />
-                                <Text style={[styles.statusText, { color: subTextColor }]}>
+                                <View style={[styles.statusDot, { backgroundColor: '#E2E8F0' }]} />
+                                <Text style={[styles.statusText, { color: '#E2E8F0' }]}>
                                     {getAllReligions()}
                                 </Text>
                             </>
@@ -306,8 +306,8 @@ export const ProfileView = ({ userData, isOwnProfile = false, isMatch = false }:
                         {/* 4. ГОРОД */}
                         {userData?.city && (
                             <>
-                                <View style={[styles.statusDot, { backgroundColor: subTextColor }]} />
-                                <Text style={[styles.statusText, { color: subTextColor }]}>
+                                <View style={[styles.statusDot, { backgroundColor: '#E2E8F0' }]} />
+                                <Text style={[styles.statusText, { color: '#E2E8F0' }]}>
                                     {userData.city}
                                 </Text>
                             </>
