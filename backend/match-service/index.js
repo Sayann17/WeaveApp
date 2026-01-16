@@ -447,7 +447,7 @@ async function getMatches(driver, requestHeaders, responseHeaders) {
                 DECLARE $chatId AS Utf8;
                 DECLARE $userId AS Utf8;
 
-                SELECT last_message_time FROM chats WHERE id = $chatId;
+                SELECT last_message_time, last_message FROM chats WHERE id = $chatId;
                 
                 SELECT COUNT(*) as unread_count 
                 FROM messages 
@@ -463,13 +463,18 @@ async function getMatches(driver, requestHeaders, responseHeaders) {
             const unreadRow = res[1] ? TypedData.createNativeObjects(res[1])[0] : null;
 
             let sortTime = m.matchCreatedAt;
-            if (chatRow && chatRow.last_message_time) {
-                // If last message is newer than match creation (it should be), use it
-                const lastMsg = new Date(chatRow.last_message_time);
-                const matchTime = new Date(m.matchCreatedAt);
-                if (lastMsg > matchTime) {
-                    sortTime = chatRow.last_message_time;
+            let lastMessage = null;
+
+            if (chatRow) {
+                if (chatRow.last_message_time) {
+                    // If last message is newer than match creation (it should be), use it
+                    const lastMsg = new Date(chatRow.last_message_time);
+                    const matchTime = new Date(m.matchCreatedAt);
+                    if (lastMsg > matchTime) {
+                        sortTime = chatRow.last_message_time;
+                    }
                 }
+                lastMessage = chatRow.last_message;
             }
 
             const unreadCount = unreadRow ? (unreadRow.unread_count || unreadRow.count || 0) : 0;
@@ -479,7 +484,8 @@ async function getMatches(driver, requestHeaders, responseHeaders) {
             sortedMatches.push({
                 ...m,
                 sortTime,
-                hasUnread
+                hasUnread,
+                lastMessage
             });
         }
 
@@ -511,7 +517,8 @@ async function getMatches(driver, requestHeaders, responseHeaders) {
                     ethnicity: u.ethnicity,
                     macroGroups: tryParse(u.macro_groups),
                     sortTime: m.sortTime,
-                    hasUnread: m.hasUnread
+                    hasUnread: m.hasUnread,
+                    lastMessage: m.lastMessage
                 });
             }
         }

@@ -191,8 +191,8 @@ export default function MatchesScreen() {
                                     style={[styles.card, { backgroundColor: theme.cardBg }]}
                                 >
                                     <Pressable
-                                        style={{ flexDirection: 'row', alignItems: 'center', flex: 1 }}
-                                        onPress={() => router.push(`/users/${match.id}` as any)}
+                                        style={{ flexDirection: 'row', alignItems: 'center', flex: 1, paddingRight: 10 }}
+                                        onPress={() => router.push({ pathname: '/chat/[id]', params: { id: match.chatId, participantId: match.id } })}
                                     >
                                         <Image
                                             source={{ uri: Array.isArray(match.photos) ? match.photos[0] : (match.photo || match.photos) }}
@@ -201,36 +201,35 @@ export default function MatchesScreen() {
                                             transition={200}
                                         />
                                         <View style={styles.info}>
-                                            <Text style={[styles.name, { color: theme.text }]} numberOfLines={1}>
-                                                {(match.name || 'Пользователь')}{match.age ? `, ${match.age}` : ''}
-                                            </Text>
-                                            <Text style={[styles.details, { color: '#4ade80' }]} numberOfLines={1}>
-                                                {getHeritageString(match)}
+                                            <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+                                                <Text style={[styles.name, { color: theme.text }]} numberOfLines={1}>
+                                                    {(match.name || 'Пользователь')}{match.age ? `, ${match.age}` : ''}
+                                                </Text>
+                                            </View>
+
+                                            <Text
+                                                style={{
+                                                    marginTop: 2,
+                                                    fontSize: 14,
+                                                    color: match.hasUnread ? theme.text : (match.lastMessage ? theme.subText : theme.subText),
+                                                    fontWeight: match.hasUnread ? '700' : '400',
+                                                    fontStyle: !match.lastMessage ? 'italic' : 'normal'
+                                                }}
+                                                numberOfLines={1}
+                                            >
+                                                {match.lastMessage || 'Сделай первый шаг! 💬'}
                                             </Text>
                                         </View>
                                     </Pressable>
 
-                                    {/* New Action Buttons */}
+                                    {/* Action Buttons */}
                                     <View style={styles.actionColumn}>
                                         <Pressable
-                                            style={[styles.actionButton, styles.chatButton, { backgroundColor: isLight ? '#f0f0f0' : '#333' }]}
-                                            onPress={() => router.push({ pathname: '/chat/[id]', params: { id: match.chatId, participantId: match.id } })}
-                                        >
-                                            <View>
-                                                <Ionicons name="chatbubble-ellipses-outline" size={16} color={theme.text} style={{ marginRight: 4 }} />
-                                                {match.hasUnread && (
-                                                    <View style={[styles.unreadDot, { borderColor: theme.cardBg }]} />
-                                                )}
-                                            </View>
-                                            <Text style={[styles.actionButtonText, { color: theme.text }]}>Чат</Text>
-                                        </Pressable>
-
-                                        <Pressable
                                             style={[styles.actionButton, styles.blockButton]}
-                                        // onPress={() => handleBlock(match)} // Disabled for now
+                                            onPress={() => { }}
                                         >
                                             <Ionicons name="ban-outline" size={16} color="#ff4444" style={{ marginRight: 4 }} />
-                                            <Text style={[styles.actionButtonText, { color: '#ff4444' }]}>Блок</Text>
+                                            {/* <Text style={[styles.actionButtonText, { color: '#ff4444' }]}></Text> */}
                                         </Pressable>
                                     </View>
                                 </View>
@@ -324,8 +323,8 @@ export default function MatchesScreen() {
                         )
                     )}
                 </ScrollView>
-            </View>
-        </ThemedBackground>
+            </View >
+        </ThemedBackground >
     );
 }
 
