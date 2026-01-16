@@ -188,50 +188,55 @@ export default function MatchesScreen() {
                             matches.map((match) => (
                                 <View
                                     key={match.id}
-                                    style={[styles.card, { backgroundColor: theme.cardBg }]}
+                                    style={[styles.card, { backgroundColor: theme.cardBg, flexDirection: 'column', alignItems: 'flex-start' }]}
                                 >
-                                    <Pressable
-                                        style={{ flexDirection: 'row', alignItems: 'center', flex: 1, paddingRight: 10 }}
-                                        onPress={() => router.push({ pathname: '/chat/[id]', params: { id: match.chatId, participantId: match.id } })}
-                                    >
-                                        <Image
-                                            source={{ uri: Array.isArray(match.photos) ? match.photos[0] : (match.photo || match.photos) }}
-                                            style={styles.avatar}
-                                            contentFit="cover"
-                                            transition={200}
-                                        />
-                                        <View style={styles.info}>
-                                            <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+                                    {/* Top Row: Avatar, Name, Block Button */}
+                                    <View style={{ flexDirection: 'row', alignItems: 'center', width: '100%' }}>
+                                        <Pressable
+                                            style={{ flexDirection: 'row', alignItems: 'center', flex: 1 }}
+                                            onPress={() => router.push({ pathname: '/chat/[id]', params: { id: match.chatId, participantId: match.id } })}
+                                        >
+                                            <Image
+                                                source={{ uri: Array.isArray(match.photos) ? match.photos[0] : (match.photo || match.photos) }}
+                                                style={styles.avatar}
+                                                contentFit="cover"
+                                                transition={200}
+                                            />
+                                            <View style={styles.info}>
                                                 <Text style={[styles.name, { color: theme.text }]} numberOfLines={1}>
                                                     {(match.name || 'Пользователь')}{match.age ? `, ${match.age}` : ''}
                                                 </Text>
                                             </View>
+                                        </Pressable>
 
-                                            <Text
-                                                style={{
-                                                    marginTop: 2,
-                                                    fontSize: 14,
-                                                    color: match.hasUnread ? theme.text : (match.lastMessage ? theme.subText : theme.subText),
-                                                    fontWeight: match.hasUnread ? '700' : '400',
-                                                    fontStyle: !match.lastMessage ? 'italic' : 'normal'
-                                                }}
-                                                numberOfLines={1}
-                                            >
-                                                {match.lastMessage || 'Сделай первый шаг! 💬'}
-                                            </Text>
-                                        </View>
-                                    </Pressable>
-
-                                    {/* Action Buttons */}
-                                    <View style={styles.actionColumn}>
+                                        {/* Block Button */}
                                         <Pressable
                                             style={[styles.actionButton, styles.blockButton]}
                                             onPress={() => { }}
                                         >
                                             <Ionicons name="ban-outline" size={16} color="#ff4444" style={{ marginRight: 4 }} />
-                                            {/* <Text style={[styles.actionButtonText, { color: '#ff4444' }]}></Text> */}
+                                            <Text style={[styles.actionButtonText, { color: '#ff4444' }]}>Блок</Text>
                                         </Pressable>
                                     </View>
+
+                                    {/* Bottom Row: Message / Hook */}
+                                    <Pressable
+                                        style={{ width: '100%', marginTop: 10 }}
+                                        onPress={() => router.push({ pathname: '/chat/[id]', params: { id: match.chatId, participantId: match.id } })}
+                                    >
+                                        <Text
+                                            style={{
+                                                fontSize: 14,
+                                                color: match.hasUnread ? theme.text : (match.lastMessage ? theme.subText : theme.subText),
+                                                fontWeight: match.hasUnread ? '700' : '400',
+                                                fontStyle: !match.lastMessage ? 'italic' : 'normal',
+                                                lineHeight: 20
+                                            }}
+                                            numberOfLines={1}
+                                        >
+                                            {match.lastMessage || 'Сделай первый шаг! 💬'}
+                                        </Text>
+                                    </Pressable>
                                 </View>
                             ))
                         ) : (
