@@ -287,32 +287,38 @@ export const ProfileView = ({ userData, isOwnProfile = false, isMatch = false }:
                         </Text>
                     )}
 
-                    <View style={styles.statusRow}>
-                        <Text style={[styles.statusText, { color: '#E2E8F0' }]}>
-                            {userData?.gender === 'female' ? 'Женщина' : 'Мужчина'}
-                        </Text>
-                        <View style={[styles.statusDot, { backgroundColor: '#E2E8F0' }]} />
-                        <Text style={[styles.statusText, { color: '#E2E8F0' }]}>
-                            {getZodiacName(userData?.zodiac || '')}
-                        </Text>
-                        {getAllReligions() && (
-                            <>
-                                <View style={[styles.statusDot, { backgroundColor: '#E2E8F0' }]} />
-                                <Text style={[styles.statusText, { color: '#E2E8F0' }]}>
-                                    {getAllReligions()}
+                    {/* Vitals Color Logic */}
+                    {(() => {
+                        const vitalsColor = isLight ? subTextColor : '#E2E8F0';
+                        return (
+                            <View style={styles.statusRow}>
+                                <Text style={[styles.statusText, { color: vitalsColor }]}>
+                                    {userData?.gender === 'female' ? 'Женщина' : 'Мужчина'}
                                 </Text>
-                            </>
-                        )}
-                        {/* 4. ГОРОД */}
-                        {userData?.city && (
-                            <>
-                                <View style={[styles.statusDot, { backgroundColor: '#E2E8F0' }]} />
-                                <Text style={[styles.statusText, { color: '#E2E8F0' }]}>
-                                    {userData.city}
+                                <View style={[styles.statusDot, { backgroundColor: vitalsColor }]} />
+                                <Text style={[styles.statusText, { color: vitalsColor }]}>
+                                    {getZodiacName(userData?.zodiac || '')}
                                 </Text>
-                            </>
-                        )}
-                    </View>
+                                {getAllReligions() && (
+                                    <>
+                                        <View style={[styles.statusDot, { backgroundColor: vitalsColor }]} />
+                                        <Text style={[styles.statusText, { color: vitalsColor }]}>
+                                            {getAllReligions()}
+                                        </Text>
+                                    </>
+                                )}
+                                {/* 4. ГОРОД */}
+                                {userData?.city && (
+                                    <>
+                                        <View style={[styles.statusDot, { backgroundColor: vitalsColor }]} />
+                                        <Text style={[styles.statusText, { color: vitalsColor }]}>
+                                            {userData.city}
+                                        </Text>
+                                    </>
+                                )}
+                            </View>
+                        );
+                    })()}
 
                     {/* СОЦСЕТИ - только для матчей или своего профиля */}
                     {(isOwnProfile || isMatch) && (userData?.socialTelegram || userData?.socialVk || userData?.socialInstagram) && (
