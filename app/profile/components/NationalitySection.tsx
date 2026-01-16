@@ -8,7 +8,8 @@ import {
   Text,
   View
 } from 'react-native';
-import { getNationalityIcon, getNationalityName, nationalities } from '../../utils/basic_info';
+import { useTheme } from '../../context/ThemeContext';
+import { getNationalityFlag, getNationalityName, nationalities } from '../../utils/nationalities';
 
 const { width: screenWidth } = Dimensions.get('window');
 
@@ -19,32 +20,38 @@ interface NationalitySectionProps {
   isFirstEdit: boolean;
 }
 
-export default function NationalitySection({ 
-  gender, 
-  nationality, 
-  setNationality, 
-  isFirstEdit 
+export default function NationalitySection({
+  gender,
+  nationality,
+  setNationality,
+  isFirstEdit
 }: NationalitySectionProps) {
+  const { theme, themeType } = useTheme();
 
   const renderNationalityItem = ({ item }: { item: any }) => (
     <Pressable
       style={[
         styles.nationalityCard,
+        {
+          backgroundColor: themeType === 'space' ? '#1a1a1a' : theme.cardBg, // Keep dark for space, use theme for others
+          borderColor: theme.border
+        },
         nationality === item.id && styles.nationalityCardSelected,
         isFirstEdit && !nationality && styles.requiredField
       ]}
       onPress={() => setNationality(item.id)}
     >
       <Text style={styles.nationalityFlag}>
-        {getNationalityIcon(item.id, gender || 'male')}
+        {getNationalityFlag(item.id)}
       </Text>
       <Text style={[
         styles.nationalityName,
+        { color: theme.text },
         nationality === item.id && styles.nationalityNameSelected
       ]}>
         {getNationalityName(item, gender || 'male')}
       </Text>
-      <Text style={styles.nationalityHint}>
+      <Text style={[styles.nationalityHint, { color: theme.subText }]}>
         {gender === 'female' ? item.femaleName : item.name}
       </Text>
     </Pressable>
@@ -52,10 +59,10 @@ export default function NationalitySection({
 
   return (
     <View style={styles.section}>
-      <Text style={styles.sectionTitle}>
+      <Text style={[styles.sectionTitle, { color: theme.text }]}>
         Национальность {isFirstEdit && <Text style={styles.requiredStar}>*</Text>}
       </Text>
-      
+
       {gender ? (
         <View style={styles.nationalityScrollContainer}>
           <FlatList
@@ -69,16 +76,16 @@ export default function NationalitySection({
             decelerationRate="fast"
             bounces={false}
           />
-          
+
           {/* Индикатор прокрутки */}
           <View style={styles.scrollIndicator}>
-            <Ionicons name="chevron-back" size={20} color="#666" />
-            <Text style={styles.scrollIndicatorText}>прокрутите вбок</Text>
-            <Ionicons name="chevron-forward" size={20} color="#666" />
+            <Ionicons name="chevron-back" size={20} color={theme.subText} />
+            <Text style={[styles.scrollIndicatorText, { color: theme.subText }]}>прокрутите вбок</Text>
+            <Ionicons name="chevron-forward" size={20} color={theme.subText} />
           </View>
         </View>
       ) : (
-        <Text style={styles.sectionSubtitle}>Сначала выберите пол</Text>
+        <Text style={[styles.sectionSubtitle, { color: theme.subText }]}>Сначала выберите пол</Text>
       )}
     </View>
   );
@@ -91,12 +98,10 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: 18,
     fontWeight: 'bold',
-    color: '#ffffff',
     marginBottom: 15,
   },
   sectionSubtitle: {
     fontSize: 14,
-    color: '#cccccc',
     marginBottom: 15,
   },
   requiredStar: {
@@ -111,9 +116,7 @@ const styles = StyleSheet.create({
   },
   nationalityCard: {
     width: screenWidth * 0.7,
-    backgroundColor: '#1a1a1a',
     borderWidth: 2,
-    borderColor: '#333',
     borderRadius: 16,
     padding: 25,
     alignItems: 'center',

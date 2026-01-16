@@ -38,12 +38,12 @@ export const THEMES = {
     background: '#4a0e1c', // Темно-бордовый
     text: '#ffffff',
     subText: 'rgba(255,255,255,0.7)',
-    cardBg: 'rgba(74, 14, 28, 0.7)', // Полупрозрачный бордовый
-    border: 'rgba(255,255,255,0.15)',
+    cardBg: 'rgba(74, 14, 28, 0.3)', // Более прозрачный для эффекта стекла
+    border: 'rgba(255,255,255,0.3)', // Более заметная граница
     accent: '#ffffff',
     accentText: '#000000',
     icon: '#ffffff',
-    tint: 'rgba(255,255,255,0.15)'
+    tint: 'rgba(255,255,255,0.3)'
   }
 };
 

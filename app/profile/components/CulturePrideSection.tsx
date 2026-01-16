@@ -2,7 +2,7 @@
 import { Ionicons } from '@expo/vector-icons';
 import React from 'react';
 import { StyleSheet, Text, TextInput, View } from 'react-native';
-import { Colors } from '../../constants/colors';
+import { useTheme } from '../../context/ThemeContext';
 
 interface CulturePrideSectionProps {
   text: string;
@@ -10,25 +10,35 @@ interface CulturePrideSectionProps {
 }
 
 export default function CulturePrideSection({ text, setText }: CulturePrideSectionProps) {
+  const { theme, themeType } = useTheme();
+
   return (
     <View style={styles.container}>
       <View style={styles.headerRow}>
-        <Ionicons name="heart-outline" size={20} color={Colors.primary} />
-        <Text style={styles.label}>Чем ты гордишься в своей культуре?</Text>
+        <Ionicons name="heart-outline" size={20} color={themeType === 'light' ? theme.accent : theme.icon} />
+        <Text style={[styles.label, { color: theme.text }]}>Чем ты гордишься в своей культуре?</Text>
       </View>
 
       <TextInput
-        style={styles.input}
+        style={[
+          styles.input,
+          {
+            backgroundColor: theme.cardBg,
+            borderColor: theme.border,
+            color: theme.text
+          }
+        ]}
         value={text}
         onChangeText={setText}
         placeholder="Например: Гостеприимство, музыка, уважение к старшим..."
-        placeholderTextColor={Colors.textMuted}
+        placeholderTextColor={theme.subText}
         multiline
         numberOfLines={3}
         maxLength={300}
         autoCapitalize="sentences"
+        selectionColor={themeType === 'light' ? '#000000' : '#FFFFFF'}
       />
-      <Text style={styles.hint}>
+      <Text style={[styles.hint, { color: theme.subText }]}>
         Это поможет найти людей со схожими ценностями.
       </Text>
     </View>
@@ -46,24 +56,19 @@ const styles = StyleSheet.create({
     marginBottom: 10,
   },
   label: {
-    color: Colors.text,
     fontSize: 16,
     fontWeight: '600',
   },
   input: {
-    backgroundColor: Colors.card, // Полупрозрачный фон
     borderWidth: 1,
-    borderColor: Colors.border,
     borderRadius: 12,
     padding: 15,
-    color: Colors.text,
     fontSize: 15,
     lineHeight: 22,
     minHeight: 80,
     textAlignVertical: 'top',
   },
   hint: {
-    color: Colors.textMuted,
     fontSize: 12,
     marginTop: 6,
     marginLeft: 4,
