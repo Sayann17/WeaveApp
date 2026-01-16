@@ -601,9 +601,10 @@ const styles = StyleSheet.create({
   textInput: {
     flex: 1,
     paddingHorizontal: 15,
-    paddingVertical: 10,
+    paddingVertical: 8,
     fontSize: 16,
-    maxHeight: 100,
+    lineHeight: 22,
+    maxHeight: 160,
   },
   sendButton: {
     width: 40,

@@ -237,7 +237,7 @@ export default function MatchesScreen() {
                                             }}
                                             numberOfLines={1}
                                         >
-                                            {match.lastMessage || 'Этот диалог пуст. Исправим?...'}
+                                            {match.lastMessage || 'Вы еще не начали плести ваш Узор... Исправим?'}
                                         </Text>
                                     </Pressable>
                                 </View>
