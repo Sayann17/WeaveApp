@@ -82,7 +82,7 @@ export const EventsFeed = () => {
                                 onPress={() => Linking.openURL('https://t.me/uzor_of_love')}
                                 style={styles.detailsButton}
                             >
-                                <Text style={[styles.detailsText, { color: theme.text }]}>Подробнее</Text>
+                                <Text style={[styles.detailsText, { color: Colors.primary }]}>Подробнее</Text>
                             </TouchableOpacity>
 
                             <TouchableOpacity
@@ -165,11 +165,16 @@ const styles = StyleSheet.create({
     buttonText: { fontSize: 16, fontWeight: '700' },
 
     detailsButton: {
-        paddingVertical: 8,
+        paddingVertical: 10,
+        paddingHorizontal: 20,
+        borderRadius: 30,
+        borderWidth: 1.5,
+        borderColor: Colors.primary,
+        justifyContent: 'center',
+        alignItems: 'center',
     },
     detailsText: {
-        fontSize: 16,
-        fontWeight: '600',
-        textDecorationLine: 'underline'
+        fontSize: 15,
+        fontWeight: '700',
     }
 });
