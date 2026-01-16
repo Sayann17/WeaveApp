@@ -282,7 +282,7 @@ export const ProfileView = ({ userData, isOwnProfile = false, isMatch = false }:
                     </View>
 
                     {getFullHeritageString() && (
-                        <Text style={[styles.rootsText, { color: themeType === 'wine' ? '#FFD1DC' : GREEN_ACCENT }]}>
+                        <Text style={[styles.rootsText, { color: themeType === 'wine' ? '#C1D7C0' : GREEN_ACCENT }]}>
                             {getFullHeritageString()}
                         </Text>
                     )}
