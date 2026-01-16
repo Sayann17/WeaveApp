@@ -9,13 +9,13 @@ import {
     Modal,
     NativeScrollEvent,
     NativeSyntheticEvent,
+    Platform,
     Pressable,
     ScrollView,
     StyleSheet,
     Text,
     TouchableOpacity,
-    View,
-    Platform
+    View
 } from 'react-native';
 import { Colors } from '../constants/colors';
 import { useTelegram } from '../context/TelegramProvider';
@@ -68,12 +68,9 @@ interface ProfileViewProps {
 }
 
 export const ProfileView = ({ userData, isOwnProfile = false, isMatch = false }: ProfileViewProps) => {
-    const { themeType } = useTheme();
+    const { theme, themeType } = useTheme();
     const { showBackButton, hideBackButton, setBackButtonHandler, isMobile, isDesktop, isWeb } = useTelegram();
     const [currentCarouselIndex, setCurrentCarouselIndex] = useState(0);
-
-    // ...
-
 
     const [activePhotoIndex, setActivePhotoIndex] = useState(0);
     const [isFullScreenPhoto, setIsFullScreenPhoto] = useState(false);
@@ -194,9 +191,9 @@ export const ProfileView = ({ userData, isOwnProfile = false, isMatch = false }:
         const containerStyle = isLight
             ? { backgroundColor: '#fff', borderWidth: 1, borderColor: '#e5e5e5' }
             : {
-                backgroundColor: themeType === 'space' ? 'rgba(18, 22, 40, 0.9)' : 'rgba(20, 20, 20, 0.7)',
+                backgroundColor: themeType === 'space' ? 'rgba(18, 22, 40, 0.9)' : theme.cardBg,
                 borderWidth: 1,
-                borderColor: 'rgba(255,255,255,0.08)'
+                borderColor: themeType === 'space' ? 'rgba(255,255,255,0.08)' : theme.border
             };
 
         const titleColor = isLight ? '#222' : color;
@@ -358,10 +355,18 @@ export const ProfileView = ({ userData, isOwnProfile = false, isMatch = false }:
                                     ? require('../../assets/images/events/uzor_love.jpg')
                                     : null;
 
+                                const eventContainerStyle = isLight
+                                    ? { backgroundColor: '#fff', borderWidth: 1, borderColor: '#eee' }
+                                    : {
+                                        backgroundColor: themeType === 'space' ? 'rgba(255,255,255,0.08)' : theme.cardBg,
+                                        borderWidth: 1,
+                                        borderColor: themeType === 'space' ? 'transparent' : theme.border
+                                    };
+
                                 return (
                                     <View key={i} style={[
                                         { flexDirection: 'row', padding: 10, borderRadius: 20, gap: 14, alignItems: 'center' },
-                                        isLight ? { backgroundColor: '#fff', borderWidth: 1, borderColor: '#eee' } : { backgroundColor: 'rgba(255,255,255,0.08)' }
+                                        eventContainerStyle
                                     ]}>
                                         <View style={{
                                             width: 60, height: 60, borderRadius: 12,
@@ -404,8 +409,6 @@ export const ProfileView = ({ userData, isOwnProfile = false, isMatch = false }:
 
                 <View style={[styles.divider, { backgroundColor: isLight ? 'rgba(0,0,0,0.1)' : 'rgba(255,255,255,0.1)' }]} />
 
-
-
                 {/* ХУКИ */}
                 <View style={styles.hooksContainer}>
                     {(userData?.bio || userData?.about) && <HookItem title="ОБО МНЕ" text={userData.bio || userData.about} color={HOOK_COLORS.bio} icon="person" />}
@@ -417,8 +420,6 @@ export const ProfileView = ({ userData, isOwnProfile = false, isMatch = false }:
 
                     {/* Остальные хуки */}
                 </View>
-
-
 
                 {/* ИНТЕРЕСЫ */}
 
@@ -432,7 +433,8 @@ export const ProfileView = ({ userData, isOwnProfile = false, isMatch = false }:
                                     style={[
                                         styles.tagBox,
                                         isLight && { backgroundColor: '#fff', borderWidth: 1, borderColor: '#ccc' },
-                                        themeType === 'space' && { backgroundColor: 'rgba(18, 22, 40, 0.9)' }
+                                        themeType === 'space' && { backgroundColor: 'rgba(18, 22, 40, 0.9)' },
+                                        !isLight && themeType !== 'space' && { backgroundColor: theme.cardBg, borderColor: theme.border, borderWidth: 1 }
                                     ]}
                                 >
                                     <Text style={[styles.tagText, isLight && { color: '#333' }]}>{item}</Text>
