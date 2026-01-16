@@ -17,20 +17,20 @@ export default function SplashScreen({ onFinish }: { onFinish: () => void }) {
   useEffect(() => {
     // Небольшая задержка перед стартом
     setTimeout(() => {
-        Animated.parallel([
-          Animated.timing(fadeAnim, {
-            toValue: 1,
-            duration: 1000,
-            useNativeDriver: true,
-          }),
-          Animated.timing(scaleAnim, {
-            toValue: 1, // Доводим масштаб до нормы
-            duration: 1000,
-            useNativeDriver: true,
-          })
-        ]).start(() => {
-          setTimeout(onFinish, 500);
-        });
+      Animated.parallel([
+        Animated.timing(fadeAnim, {
+          toValue: 1,
+          duration: 1000,
+          useNativeDriver: true,
+        }),
+        Animated.timing(scaleAnim, {
+          toValue: 1, // Доводим масштаб до нормы
+          duration: 1000,
+          useNativeDriver: true,
+        })
+      ]).start(() => {
+        setTimeout(onFinish, 500);
+      });
     }, 100)
   }, []);
 
@@ -50,10 +50,10 @@ export default function SplashScreen({ onFinish }: { onFinish: () => void }) {
            Если на картинке есть фон, он станет фоном приложения.
            Логотип будет по центру (если он по центру картинки).
         */}
-        <Image 
-          source={require('../assets/images/logo.jpg')} 
+        <Image
+          source={require('../assets/images/weave-splash.png')}
           style={styles.fullscreenImage}
-          resizeMode="cover" 
+          resizeMode="cover"
         />
       </Animated.View>
     </View>
