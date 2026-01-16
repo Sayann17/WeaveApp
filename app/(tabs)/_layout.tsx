@@ -1,9 +1,8 @@
 // app/(tabs)/_layout.tsx
-import { Colors } from '../constants/colors';
 import { Ionicons } from '@expo/vector-icons';
 import { Tabs } from 'expo-router';
-import { Text, View, useColorScheme } from 'react-native';
-import { AppRoot } from '@telegram-apps/telegram-ui';
+import { View } from 'react-native';
+import { Colors } from '../constants/colors';
 import { useMenu } from '../context/MenuContext';
 import { useNotifications } from '../context/NotificationContext';
 import { useTheme } from '../context/ThemeContext';
@@ -66,7 +65,7 @@ export default function TabLayout() {
           left: 0,
           right: 0,
         },
-        tabBarActiveTintColor: isLight ? '#2a2a2a' : '#81B29A',
+        tabBarActiveTintColor: themeType === 'wine' ? '#F4D35E' : (isLight ? '#2a2a2a' : '#81B29A'),
         tabBarInactiveTintColor: isLight ? '#999' : '#666',
         tabBarIconStyle: { marginBottom: -2 },
         tabBarLabelStyle: { fontSize: 11, marginBottom: 5 },
