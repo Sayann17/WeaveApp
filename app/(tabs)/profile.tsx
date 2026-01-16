@@ -157,7 +157,7 @@ export default function ProfileScreen() {
                   {[
                     { id: 'light', name: 'Светлая', desc: 'Классический стиль', icon: 'sunny-outline', color: '#FFD700', bg: '#f8f9fa' },
                     { id: 'space', name: 'Космос', desc: 'Глубокий темный режим', icon: 'planet-outline', color: '#a29bfe', bg: '#0b0d15' },
-                    { id: 'aura', name: 'Аура', desc: 'Мистический градиент', icon: 'color-wand-outline', color: '#9b59b6', bg: '#2a1b3d' }
+                    { id: 'wine', name: 'Passion', desc: 'Элегантный винный градиент', icon: 'rose-outline', color: '#e1306c', bg: '#4a0e1c' }
                   ].map((item) => (
                     <TouchableOpacity
                       key={item.id}

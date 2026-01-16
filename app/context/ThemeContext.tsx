@@ -5,7 +5,7 @@ import { yandexAuth } from '../services/yandex/AuthService';
 import { useTelegram } from './TelegramProvider';
 
 // Типы тем
-export type ThemeType = 'light' | 'space';
+export type ThemeType = 'light' | 'space' | 'wine';
 
 // Цветовые палитры
 export const THEMES = {
@@ -32,6 +32,18 @@ export const THEMES = {
     accentText: '#000000', // Черный текст на белой кнопке
     icon: '#ffffff',
     tint: 'rgba(255,255,255,0.1)'
+  },
+  wine: {
+    type: 'wine' as ThemeType,
+    background: '#4a0e1c', // Темно-бордовый
+    text: '#ffffff',
+    subText: 'rgba(255,255,255,0.7)',
+    cardBg: 'rgba(74, 14, 28, 0.7)', // Полупрозрачный бордовый
+    border: 'rgba(255,255,255,0.15)',
+    accent: '#ffffff',
+    accentText: '#000000',
+    icon: '#ffffff',
+    tint: 'rgba(255,255,255,0.15)'
   }
 };
 
@@ -52,7 +64,7 @@ export const ThemeProvider = ({ children }: { children: React.ReactNode }) => {
     const loadTheme = async () => {
       try {
         const savedTheme = await AsyncStorage.getItem('app_theme');
-        if (savedTheme && (savedTheme === 'light' || savedTheme === 'space')) {
+        if (savedTheme && (savedTheme === 'light' || savedTheme === 'space' || savedTheme === 'wine')) {
           setThemeType(savedTheme as ThemeType);
         }
       } catch (e) {

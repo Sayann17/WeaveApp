@@ -17,6 +17,21 @@ export const ThemedBackground = ({ children }: { children?: React.ReactNode }) =
     );
   }
 
+  if (themeType === 'wine') {
+    return (
+      <ImageBackground
+        source={require('../../assets/images/themes/wine_bg.jpg')}
+        style={{ flex: 1 }}
+        resizeMode="cover"
+      >
+        <StatusBar style="light" />
+        <View style={{ flex: 1, backgroundColor: 'rgba(50,10,20,0.3)' }}>
+          {children}
+        </View>
+      </ImageBackground>
+    );
+  }
+
   // Для 'light' просто цвет
   return (
     <View style={{ flex: 1, backgroundColor: theme.background }}>
