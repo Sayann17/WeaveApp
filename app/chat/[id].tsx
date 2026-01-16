@@ -601,10 +601,11 @@ const styles = StyleSheet.create({
   textInput: {
     flex: 1,
     paddingHorizontal: 15,
-    paddingVertical: 8,
+    paddingVertical: 10,
     fontSize: 16,
     lineHeight: 22,
-    maxHeight: 160,
+    maxHeight: 145, // ~6 lines
+    textAlignVertical: 'center',
   },
   sendButton: {
     width: 40,

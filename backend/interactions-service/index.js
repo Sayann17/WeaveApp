@@ -1,5 +1,5 @@
 const { getDriver } = require('./db');
-const { TypedData, Types } = require('ydb-sdk');
+const { TypedValues } = require('ydb-sdk');
 const jwt = require('jsonwebtoken');
 
 const JWT_SECRET = process.env.JWT_SECRET || 'dev-secret-key-change-me';
@@ -88,12 +88,12 @@ async function blockUser(driver, blockerId, data, headers) {
         await driver.tableClient.withSession(async (session) => {
             const preparedQuery = await session.prepareQuery(query);
             await session.executeQuery(preparedQuery, {
-                '$blockerId': TypedData.createNative(Types.UTF8, blockerId),
-                '$blockedId': TypedData.createNative(Types.UTF8, targetUserId),
-                '$reason': TypedData.createNative(Types.UTF8, reason || 'No reason provided'),
-                '$chatId': TypedData.createNative(Types.UTF8, chatId),
-                '$now': TypedData.createNative(Types.TIMESTAMP, now)
-            });
+                '$blockerId': TypedValues.utf8(blockerId),
+                '$blockedId': TypedValues.utf8(targetUserId),
+                '$reason': TypedValues.utf8(reason || 'No reason provided'),
+                '$chatId': TypedValues.utf8(chatId),
+                '$now': TypedValues.timestamp(now)
+            }, { commitTx: true, beginTx: { serializableReadWrite: {} } });
         });
 
         console.log(`[blockUser] User ${blockerId} blocked ${targetUserId}`);
