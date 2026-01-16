@@ -456,7 +456,7 @@ export default function MatchesScreen() {
                                             <Text style={[styles.name, { color: theme.text }]} numberOfLines={1}>
                                                 {(profile.name || 'Пользователь')}{profile.age ? `, ${profile.age}` : ''}
                                             </Text>
-                                            <Text style={[styles.details, { color: '#4ade80' }]} numberOfLines={1}>
+                                            <Text style={[styles.details, { color: themeType === 'wine' ? '#ffd9d9' : '#4ade80' }]} numberOfLines={1}>
                                                 {getHeritageString(profile)}
                                             </Text>
                                         </View>
@@ -505,7 +505,7 @@ export default function MatchesScreen() {
                                             <Text style={[styles.name, { color: theme.text }]} numberOfLines={1}>
                                                 {(profile.name || 'Пользователь')}{profile.age ? `, ${profile.age}` : ''}
                                             </Text>
-                                            <Text style={[styles.details, { color: '#4ade80' }]} numberOfLines={1}>
+                                            <Text style={[styles.details, { color: themeType === 'wine' ? '#ffd9d9' : '#4ade80' }]} numberOfLines={1}>
                                                 {getHeritageString(profile)}
                                             </Text>
                                         </View>
