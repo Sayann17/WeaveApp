@@ -282,7 +282,7 @@ export const ProfileView = ({ userData, isOwnProfile = false, isMatch = false }:
                     </View>
 
                     {getFullHeritageString() && (
-                        <Text style={[styles.rootsText, { color: GREEN_ACCENT }]}>
+                        <Text style={[styles.rootsText, { color: themeType === 'wine' ? '#FFD1DC' : GREEN_ACCENT }]}>
                             {getFullHeritageString()}
                         </Text>
                     )}
@@ -354,7 +354,7 @@ export const ProfileView = ({ userData, isOwnProfile = false, isMatch = false }:
                 {/* EVENTS */}
                 {userData?.events && Array.isArray(userData.events) && userData.events.length > 0 && (
                     <View style={styles.sectionContainer}>
-                        <Text style={[styles.sectionTitle, { color: subTextColor, marginBottom: 15 }]}>Бал "Узор Любви"</Text>
+                        <Text style={[styles.sectionTitle, { color: subTextColor, marginBottom: 15 }]}>Мои события</Text>
                         <View style={{ gap: 10 }}>
                             {userData.events.map((evt: any, i: number) => {
                                 const imageSource = evt.imageKey === 'uzor_love'
@@ -389,21 +389,11 @@ export const ProfileView = ({ userData, isOwnProfile = false, isMatch = false }:
 
                                         <View style={{ flex: 1, paddingRight: 8 }}>
                                             <Text style={{
-                                                color: textColor, fontWeight: '700', fontSize: 16, marginBottom: 4, letterSpacing: -0.5
+                                                color: '#E2E8F0', fontWeight: '700', fontSize: 16, marginBottom: 4, letterSpacing: -0.5
                                             }} numberOfLines={1}>{evt.title}</Text>
                                             <Text style={{ color: subTextColor, fontSize: 14, fontWeight: '500' }}>
                                                 {evt.date ? new Date(evt.date).toLocaleDateString('ru-RU', { day: 'numeric', month: 'long' }) : 'Дата уточняется'}
                                             </Text>
-                                        </View>
-
-                                        <View style={{
-                                            height: '60%', width: 1,
-                                            backgroundColor: isLight ? '#eee' : 'rgba(255,255,255,0.2)',
-                                            marginRight: 4
-                                        }} />
-
-                                        <View style={{ paddingHorizontal: 6 }}>
-                                            <Ionicons name="checkmark-circle" size={22} color={GREEN_ACCENT} />
                                         </View>
                                     </View>
                                 )
