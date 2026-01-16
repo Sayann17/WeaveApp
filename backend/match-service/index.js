@@ -175,17 +175,23 @@ async function getDiscovery(driver, requestHeaders, queryParams, responseHeaders
     let profiles = [];
     await driver.tableClient.withSession(async (session) => {
         // Get current user data including location
+        // Get current user data including location and BLOCKED users
         const currentUserQuery = `
             DECLARE $userId AS Utf8;
             SELECT to_user_id FROM likes WHERE from_user_id = $userId;
             SELECT * FROM users WHERE id = $userId;
+            SELECT blocked_id FROM blocked_users WHERE blocker_id = $userId;
+            SELECT blocker_id FROM blocked_users WHERE blocked_id = $userId;
         `;
         const { resultSets: resData } = await session.executeQuery(currentUserQuery, { '$userId': TypedValues.utf8(userId) });
 
-        const excludedIds = resData[0] ? TypedData.createNativeObjects(resData[0]).map(r => r.to_user_id) : [];
-        excludedIds.push(userId); // Exclude self
-
+        const likedIds = resData[0] ? TypedData.createNativeObjects(resData[0]).map(r => r.to_user_id) : [];
         const currentUserDataRaw = resData[1] ? TypedData.createNativeObjects(resData[1])[0] : null;
+        const blockedByMe = resData[2] ? TypedData.createNativeObjects(resData[2]).map(r => r.blocked_id) : [];
+        const blockedMe = resData[3] ? TypedData.createNativeObjects(resData[3]).map(r => r.blocker_id) : [];
+
+        const excludedIds = [...new Set([...likedIds, ...blockedByMe, ...blockedMe])];
+        excludedIds.push(userId); // Exclude self
         if (!currentUserDataRaw) return; // Should not happen if auth is valid
 
         // Normalize current user data for scoring

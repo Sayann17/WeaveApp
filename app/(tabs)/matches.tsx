@@ -5,11 +5,14 @@ import React, { useCallback, useState } from 'react';
 import {
     ActivityIndicator,
     Alert,
+    Modal,
     Pressable,
     ScrollView,
     StatusBar,
     StyleSheet,
     Text,
+    TextInput,
+    TouchableWithoutFeedback,
     View
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -31,7 +34,20 @@ export default function MatchesScreen() {
     const [activeTab, setActiveTab] = useState<'matches' | 'likes' | 'sent'>('matches');
     const [loading, setLoading] = useState(true);
     const insets = useSafeAreaInsets();
-    const { isMobile, hideBackButton } = useTelegram(); // Added hideBackButton
+    const { isMobile, hideBackButton } = useTelegram();
+
+    // Blocking & Menu State
+    const [menuVisible, setMenuVisible] = useState(false);
+    const [selectedMatch, setSelectedMatch] = useState<any>(null);
+    const [blockConfirmVisible, setBlockConfirmVisible] = useState(false);
+    const [reasonModalVisible, setReasonModalVisible] = useState(false);
+    const [customReason, setCustomReason] = useState('');
+
+    const BLOCK_REASONS = [
+        'Мошенничество (Скам)',
+        'Неприемлемый контент',
+        'Нецензурная брань'
+    ];
 
     const isLight = themeType === 'light';
 
@@ -156,9 +172,179 @@ export default function MatchesScreen() {
         return parts.join(' • ');
     };
 
+    // --- Actions ---
+
+    const handleOpenProfile = () => {
+        setMenuVisible(false);
+        if (selectedMatch) {
+            router.push(`/users/${selectedMatch.id}` as any);
+        }
+    };
+
+    const handleBlockOptions = () => {
+        setMenuVisible(false);
+        // Clean delay to allow menu to close smoothly
+        setTimeout(() => {
+            setBlockConfirmVisible(true);
+        }, 100);
+    };
+
+    const confirmBlockInit = () => {
+        setBlockConfirmVisible(false);
+        setTimeout(() => {
+            setReasonModalVisible(true);
+        }, 100);
+    };
+
+    const submitBlock = async (reason: string) => {
+        setReasonModalVisible(false);
+        setCustomReason('');
+
+        if (!selectedMatch) return;
+
+        try {
+            // Optimistic Update
+            const blockedId = selectedMatch.id;
+            setMatches(prev => prev.filter(m => m.id !== blockedId));
+
+            // Call Backend
+            if (yandexMatch.blockUser) {
+                await yandexMatch.blockUser(blockedId, reason);
+            } else {
+                console.warn('blockUser method not implemented in MatchService yet');
+            }
+
+            // Should we also remove from likes/sent? safely yes
+            setLikesYou(prev => prev.filter(p => p.id !== blockedId));
+            setYourLikes(prev => prev.filter(p => p.id !== blockedId));
+
+        } catch (e) {
+            Alert.alert('Ошибка', 'Не удалось заблокировать пользователя');
+            console.error(e);
+        }
+    };
+
     return (
         <ThemedBackground>
             <StatusBar barStyle={isLight ? "dark-content" : "light-content"} />
+
+            {/* --- Modals --- */}
+
+            {/* 1. Main Options Menu */}
+            <Modal
+                transparent
+                visible={menuVisible}
+                animationType="fade"
+                onRequestClose={() => setMenuVisible(false)}
+            >
+                <TouchableWithoutFeedback onPress={() => setMenuVisible(false)}>
+                    <View style={styles.modalOverlay}>
+                        <TouchableWithoutFeedback>
+                            <View style={[styles.menuModal, { backgroundColor: theme.cardBg }]}>
+                                <Pressable style={styles.menuItem} onPress={handleOpenProfile}>
+                                    <Ionicons name="person-outline" size={20} color={theme.text} />
+                                    <Text style={[styles.menuText, { color: theme.text }]}>Открыть профиль</Text>
+                                </Pressable>
+                                <View style={[styles.divider, { backgroundColor: theme.border }]} />
+                                <Pressable style={styles.menuItem} onPress={handleBlockOptions}>
+                                    <Ionicons name="ban-outline" size={20} color="#ff4444" />
+                                    <Text style={[styles.menuText, { color: "#ff4444" }]}>Заблокировать и пожаловаться</Text>
+                                </Pressable>
+                            </View>
+                        </TouchableWithoutFeedback>
+                    </View>
+                </TouchableWithoutFeedback>
+            </Modal>
+
+            {/* 2. Block Confirmation Modal */}
+            <Modal
+                transparent
+                visible={blockConfirmVisible}
+                animationType="fade"
+                onRequestClose={() => setBlockConfirmVisible(false)}
+            >
+                <View style={[styles.modalOverlay, { backgroundColor: 'rgba(0,0,0,0.7)' }]}>
+                    <View style={[styles.alertBox, { backgroundColor: theme.cardBg }]}>
+                        <Text style={[styles.alertTitle, { color: theme.text }]}>Заблокировать пользователя?</Text>
+                        <Text style={[styles.alertMessage, { color: theme.subText }]}>
+                            Это безвозвратное действие, которое приведет к полному удалению мэтча и истории переписки. Вы больше не увидите друг друга в поиске.
+                        </Text>
+                        <View style={styles.alertButtons}>
+                            <Pressable
+                                style={[styles.alertButton, { backgroundColor: theme.cardBg, borderColor: theme.border, borderWidth: 1 }]}
+                                onPress={() => setBlockConfirmVisible(false)}
+                            >
+                                <Text style={[styles.alertButtonText, { color: theme.text }]}>Нет</Text>
+                            </Pressable>
+                            <Pressable
+                                style={[styles.alertButton, { backgroundColor: '#ff4444' }]}
+                                onPress={confirmBlockInit}
+                            >
+                                <Text style={[styles.alertButtonText, { color: '#ffffff' }]}>Да</Text>
+                            </Pressable>
+                        </View>
+                    </View>
+                </View>
+            </Modal>
+
+            {/* 3. Reason Selection Modal */}
+            <Modal
+                transparent
+                visible={reasonModalVisible}
+                animationType="slide"
+                onRequestClose={() => setReasonModalVisible(false)}
+            >
+                <TouchableWithoutFeedback onPress={() => setReasonModalVisible(false)}>
+                    <View style={[styles.modalOverlay, { backgroundColor: 'rgba(0,0,0,0.7)', justifyContent: 'flex-end' }]}>
+                        <TouchableWithoutFeedback>
+                            <View style={[styles.reasonSheet, { backgroundColor: theme.cardBg }]}>
+                                <View style={styles.reasonHeader}>
+                                    <Text style={[styles.reasonTitle, { color: theme.text }]}>Укажите причину</Text>
+                                    <Pressable onPress={() => setReasonModalVisible(false)}>
+                                        <Ionicons name="close" size={24} color={theme.subText} />
+                                    </Pressable>
+                                </View>
+
+                                {BLOCK_REASONS.map((reason) => (
+                                    <Pressable
+                                        key={reason}
+                                        style={[styles.reasonItem, { borderBottomColor: theme.border }]}
+                                        onPress={() => submitBlock(reason)}
+                                    >
+                                        <Text style={[styles.reasonText, { color: theme.text }]}>{reason}</Text>
+                                        <Ionicons name="chevron-forward" size={20} color={theme.subText} />
+                                    </Pressable>
+                                ))}
+
+                                {/* Custom Reason */}
+                                <View style={{ marginTop: 20 }}>
+                                    <Text style={[styles.label, { color: theme.subText }]}>Своя причина</Text>
+                                    <View style={[styles.inputContainer, { backgroundColor: isLight ? '#f5f5f5' : '#2a2a2a' }]}>
+                                        <TextInput
+                                            style={[styles.input, { color: theme.text }]}
+                                            value={customReason}
+                                            onChangeText={setCustomReason}
+                                            placeholder="Опишите причину..."
+                                            placeholderTextColor={theme.subText}
+                                            multiline
+                                        />
+                                    </View>
+                                    <Pressable
+                                        style={[styles.submitButton, { backgroundColor: customReason.trim() ? '#ff4444' : (isLight ? '#eee' : '#333') }]}
+                                        disabled={!customReason.trim()}
+                                        onPress={() => submitBlock(customReason.trim())}
+                                    >
+                                        <Text style={[styles.submitButtonText, { color: customReason.trim() ? '#fff' : theme.subText }]}>
+                                            Подтвердить
+                                        </Text>
+                                    </Pressable>
+                                </View>
+                            </View>
+                        </TouchableWithoutFeedback>
+                    </View>
+                </TouchableWithoutFeedback>
+            </Modal>
+
             <View style={{ flex: 1 }}>
                 {/* Таб-бар */}
                 <View style={[styles.tabContainer, { paddingTop: getPlatformPadding(insets, isMobile, 78) }]}>
@@ -190,7 +376,7 @@ export default function MatchesScreen() {
                                     key={match.id}
                                     style={[styles.card, { backgroundColor: theme.cardBg, flexDirection: 'column', alignItems: 'flex-start' }]}
                                 >
-                                    {/* Top Row: Avatar, Name, Block Button */}
+                                    {/* Top Row: Avatar, Name, Menu Button */}
                                     <View style={{ flexDirection: 'row', alignItems: 'center', width: '100%' }}>
                                         <Pressable
                                             style={{ flexDirection: 'row', alignItems: 'center', flex: 1 }}
@@ -212,13 +398,15 @@ export default function MatchesScreen() {
                                             </View>
                                         </Pressable>
 
-                                        {/* Block Button */}
+                                        {/* Menu Button */}
                                         <Pressable
-                                            style={[styles.actionButton, styles.blockButton]}
-                                            onPress={() => { }}
+                                            style={{ padding: 10 }}
+                                            onPress={() => {
+                                                setSelectedMatch(match);
+                                                setMenuVisible(true);
+                                            }}
                                         >
-                                            <Ionicons name="ban-outline" size={16} color="#ff4444" style={{ marginRight: 4 }} />
-                                            <Text style={[styles.actionButtonText, { color: '#ff4444' }]}>Блок</Text>
+                                            <Ionicons name="menu" size={24} color={theme.subText} />
                                         </Pressable>
                                     </View>
 
@@ -237,7 +425,7 @@ export default function MatchesScreen() {
                                             }}
                                             numberOfLines={1}
                                         >
-                                            {match.lastMessage || 'Вы еще не начали плести ваш Узор... Исправим?'}
+                                            {match.lastMessage || 'Какое сплетение создаст ваш Узор... Проверим?'}
                                         </Text>
                                     </Pressable>
                                 </View>
@@ -395,6 +583,124 @@ const styles = StyleSheet.create({
         borderRadius: 4,
         backgroundColor: '#ff4444',
         borderWidth: 1.5,
+    },
+
+    // Modal Styles
+    modalOverlay: {
+        flex: 1,
+        backgroundColor: 'rgba(0,0,0,0.5)',
+        justifyContent: 'center',
+        alignItems: 'center'
+    },
+    menuModal: {
+        width: 250,
+        backgroundColor: '#fff',
+        borderRadius: 16,
+        padding: 5,
+        elevation: 5
+    },
+    menuItem: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        padding: 15,
+        gap: 12
+    },
+    menuText: {
+        fontSize: 16,
+        fontWeight: '500'
+    },
+    divider: {
+        height: 1,
+        width: '100%',
+        backgroundColor: '#eee'
+    },
+    alertBox: {
+        width: '85%',
+        padding: 20,
+        borderRadius: 20,
+        alignItems: 'center'
+    },
+    alertTitle: {
+        fontSize: 18,
+        fontWeight: '700',
+        marginBottom: 10,
+        textAlign: 'center'
+    },
+    alertMessage: {
+        fontSize: 15,
+        textAlign: 'center',
+        marginBottom: 20,
+        lineHeight: 22
+    },
+    alertButtons: {
+        flexDirection: 'row',
+        gap: 15,
+        width: '100%'
+    },
+    alertButton: {
+        flex: 1,
+        padding: 12,
+        borderRadius: 12,
+        alignItems: 'center',
+        justifyContent: 'center'
+    },
+    alertButtonText: {
+        fontSize: 16,
+        fontWeight: '600'
+    },
+    reasonSheet: {
+        width: '100%',
+        borderTopLeftRadius: 20,
+        borderTopRightRadius: 20,
+        padding: 20,
+        paddingBottom: 40,
+        maxHeight: '90%'
+    },
+    reasonHeader: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        marginBottom: 20
+    },
+    reasonTitle: {
+        fontSize: 20,
+        fontWeight: '700'
+    },
+    reasonItem: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        paddingVertical: 16,
+        borderBottomWidth: 1,
+    },
+    reasonText: {
+        fontSize: 17,
+        fontWeight: '500'
+    },
+    label: {
+        fontSize: 14,
+        marginBottom: 8,
+        fontWeight: '600'
+    },
+    inputContainer: {
+        borderRadius: 12,
+        padding: 12,
+        marginBottom: 15
+    },
+    input: {
+        fontSize: 16,
+        minHeight: 60,
+        textAlignVertical: 'top'
+    },
+    submitButton: {
+        padding: 15,
+        borderRadius: 15,
+        alignItems: 'center',
+        marginTop: 10
+    },
+    submitButtonText: {
+        fontSize: 16,
+        fontWeight: '700'
     }
 });
 

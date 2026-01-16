@@ -41,6 +41,26 @@ class YandexMatchService {
         };
     }
 
+    async blockUser(targetUserId: string, reason: string): Promise<void> {
+        const token = await AsyncStorage.getItem('auth_token');
+        console.log('[MatchService] Blocking user:', targetUserId, 'Reason:', reason);
+
+        const response = await fetch(`${API_URL}/block`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
+            },
+            body: JSON.stringify({ targetUserId, reason })
+        });
+
+        if (!response.ok) {
+            const err = await response.json().catch(() => ({ error: 'Block failed' }));
+            console.error('[MatchService] Block failed:', err);
+            throw new Error(err.error || 'Block failed');
+        }
+    }
+
     async dislikeUser(targetUserId: string): Promise<void> {
         const token = await AsyncStorage.getItem('auth_token');
         const response = await fetch(`${API_URL}/dislike`, {

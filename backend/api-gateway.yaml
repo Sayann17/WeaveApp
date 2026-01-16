@@ -1,0 +1,161 @@
+openapi: 3.0.0
+info:
+  title: Dating App API
+  version: 1.0.0
+servers:
+  - url: https://d5dg37j92h7tg2f7sf87.o2p3jdjj.apigw.yandexcloud.net
+x-yc-apigateway:
+  cors:
+    origin:
+      - http://localhost:8081
+      - http://localhost:19006
+      - http://localhost:3000
+      - https://weave-app-henna.vercel.app
+    methods:
+      - GET
+      - POST
+      - PUT
+      - DELETE
+      - PATCH
+      - HEAD
+      - OPTIONS
+    allowedHeaders:
+      - "*"
+    exposedHeaders:
+      - "*"
+# -------------------------------------
+paths:
+  /ws:
+    x-yc-apigateway-websocket-connect:
+      x-yc-apigateway-integration:
+        type: cloud_functions
+        function_id: d4ecmpdtnp0imbqrprrv
+    x-yc-apigateway-websocket-disconnect:
+      x-yc-apigateway-integration:
+        type: cloud_functions
+        function_id: d4ecmpdtnp0imbqrprrv
+    x-yc-apigateway-websocket-message:
+      x-yc-apigateway-integration:
+        type: cloud_functions
+        function_id: d4ecmpdtnp0imbqrprrv
+  /register:
+    post:
+      x-yc-apigateway-integration:
+        type: cloud_functions
+        function_id: d4e7tedk8v6ng9d3u68f
+      operationId: register
+  /login:
+    post:
+      x-yc-apigateway-integration:
+        type: cloud_functions
+        function_id: d4e7tedk8v6ng9d3u68f
+      operationId: login
+  /telegram-login:
+    post:
+      x-yc-apigateway-integration:
+        type: cloud_functions
+        function_id: d4e7tedk8v6ng9d3u68f
+      operationId: telegramLogin
+  /me:
+    get:
+      x-yc-apigateway-integration:
+        type: cloud_functions
+        function_id: d4e7tedk8v6ng9d3u68f
+      operationId: me
+  /profile:
+    post:
+      x-yc-apigateway-integration:
+        type: cloud_functions
+        function_id: d4e7tedk8v6ng9d3u68f
+      operationId: updateProfile
+    get:
+      x-yc-apigateway-integration:
+        type: cloud_functions
+        function_id: d4e7l76a7mc4mfhjvc6f
+      operationId: getprofile
+  /matches:
+    get:
+      x-yc-apigateway-integration:
+        type: cloud_functions
+        function_id: d4e7l76a7mc4mfhjvc6f
+      operationId: getmatches
+  /chats:
+    get:
+      x-yc-apigateway-integration:
+        type: cloud_functions
+        function_id: d4ecmpdtnp0imbqrprrv
+      operationId: getchat
+  /history:
+    get:
+      x-yc-apigateway-integration:
+        type: cloud_functions
+        function_id: d4ecmpdtnp0imbqrprrv
+      operationId: gethistory
+  /like:
+    post:
+      x-yc-apigateway-integration:
+        type: cloud_functions
+        function_id: d4e7l76a7mc4mfhjvc6f
+      operationId: getlike
+  /dislike:
+    post:
+      x-yc-apigateway-integration:
+        type: cloud_functions
+        function_id: d4e7l76a7mc4mfhjvc6f
+      operationId: dislike
+  /discovery:
+    get:
+      x-yc-apigateway-integration:
+        type: cloud_functions
+        function_id: d4e7l76a7mc4mfhjvc6f
+      operationId: getdiscovery
+  /likes-you:
+    get:
+      x-yc-apigateway-integration:
+        type: cloud_functions
+        function_id: d4e7l76a7mc4mfhjvc6f
+      operationId: getLikesYou
+  /notifications/messages:
+    get:
+      x-yc-apigateway-integration:
+        type: cloud_functions
+        function_id: d4ecmpdtnp0imbqrprrv
+      operationId: getUnreadMessages
+  /notifications/likes:
+    get:
+      x-yc-apigateway-integration:
+        type: cloud_functions
+        function_id: d4e7l76a7mc4mfhjvc6f
+      operationId: getNewLikes
+  /mark-read:
+    post:
+      x-yc-apigateway-integration:
+        type: cloud_functions
+        function_id: d4ecmpdtnp0imbqrprrv
+      operationId: markAsRead
+  /your-likes:
+    get:
+      x-yc-apigateway-integration:
+        type: cloud_functions
+        function_id: d4e7l76a7mc4mfhjvc6f
+      operationId: getYourLikes
+  /events:
+    get:
+      x-yc-apigateway-integration:
+        type: cloud_functions
+        function_id: d4e7l76a7mc4mfhjvc6f
+      operationId: getEvents
+  /events/attend:
+    post:
+      x-yc-apigateway-integration:
+        type: cloud_functions
+        function_id: d4e7l76a7mc4mfhjvc6f
+      operationId: attendEvent
+
+  # --- INTERACTIONS SERVICE ---
+  /block:
+    post:
+      x-yc-apigateway-integration:
+        type: cloud_functions
+        function_id: d4esa663s3sph2k3ohh2
+      operationId: blockUser

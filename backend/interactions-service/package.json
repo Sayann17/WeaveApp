@@ -1,0 +1,10 @@
+{
+    "name": "interactions-service",
+    "version": "1.0.0",
+    "description": "User interactions service (block, report, etc)",
+    "main": "index.js",
+    "dependencies": {
+        "ydb-sdk": "^4.6.0",
+        "jsonwebtoken": "^9.0.0"
+    }
+}
