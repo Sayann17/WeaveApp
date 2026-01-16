@@ -181,6 +181,20 @@ export const MenuModal = ({ visible, onClose }: MenuModalProps) => {
                                         Space
                                     </Text>
                                 </Pressable>
+
+                                <Pressable
+                                    style={[
+                                        styles.themeOption,
+                                        { backgroundColor: theme.cardBg },
+                                        themeType === 'wine' && styles.themeOptionActive
+                                    ]}
+                                    onPress={() => setTheme('wine')}
+                                >
+                                    <Ionicons name="rose" size={20} color={themeType === 'wine' ? '#e1306c' : theme.subText} />
+                                    <Text style={[styles.themeOptionText, { color: themeType === 'wine' ? theme.text : theme.subText }]}>
+                                        Passion
+                                    </Text>
+                                </Pressable>
                             </View>
 
 

@@ -114,14 +114,6 @@ export default function ProfileScreen() {
                 </View>
               </TouchableOpacity>
 
-              <TouchableOpacity style={styles.menuItem} onPress={() => {
-                setMenuVisible(false);
-                setTimeout(() => setSettingsVisible(true), 300);
-              }}>
-                <Ionicons name="color-palette-outline" size={24} color={theme.text} />
-                <Text style={[styles.menuText, { color: theme.text }]}>Оформление</Text>
-              </TouchableOpacity>
-
               <View style={[styles.divider, { backgroundColor: theme.border }]} />
 
               <TouchableOpacity style={styles.menuItem} onPress={() => { setMenuVisible(false); yandexAuth.logout(); }}>
@@ -133,69 +125,7 @@ export default function ProfileScreen() {
         </TouchableWithoutFeedback>
       </Modal>
 
-      {/* МОДАЛКА ОФОРМЛЕНИЯ */}
-      <Modal
-        animationType="slide"
-        transparent={true}
-        visible={settingsVisible}
-        onRequestClose={() => setSettingsVisible(false)}
-      >
-        <TouchableWithoutFeedback onPress={() => setSettingsVisible(false)}>
-          <View style={styles.modalOverlay}>
-            <TouchableWithoutFeedback>
-              <View style={[styles.menuContainer, { backgroundColor: theme.cardBg, paddingBottom: 50 }]}>
 
-                <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 25 }}>
-                  <Text style={{ fontSize: 24, fontWeight: 'bold', color: theme.text }}>Тема приложения (v2)</Text>
-                  <TouchableOpacity onPress={() => setSettingsVisible(false)} style={{ padding: 5 }}>
-                    <Ionicons name="close" size={28} color={theme.text} />
-                  </TouchableOpacity>
-                </View>
-
-                {/* THEME CARDS */}
-                <View style={{ gap: 15 }}>
-                  {[
-                    { id: 'light', name: 'Светлая', desc: 'Классический стиль', icon: 'sunny-outline', color: '#FFD700', bg: '#f8f9fa' },
-                    { id: 'space', name: 'Космос', desc: 'Глубокий темный режим', icon: 'planet-outline', color: '#a29bfe', bg: '#0b0d15' },
-                    { id: 'wine', name: 'Passion', desc: 'Элегантный винный градиент', icon: 'rose-outline', color: '#e1306c', bg: '#4a0e1c' }
-                  ].map((item) => (
-                    <TouchableOpacity
-                      key={item.id}
-                      activeOpacity={0.7}
-                      onPress={() => setTheme(item.id as any)}
-                      style={{
-                        flexDirection: 'row',
-                        alignItems: 'center',
-                        backgroundColor: themeType === item.id ? (isLight ? '#eee' : '#333') : 'transparent',
-                        padding: 15,
-                        borderRadius: 16
-                      }}
-                    >
-                      {/* Icon Box */}
-                      <View style={{
-                        width: 50, height: 50, borderRadius: 14,
-                        backgroundColor: item.bg,
-                        justifyContent: 'center', alignItems: 'center',
-                        marginRight: 15,
-                        borderWidth: 1, borderColor: '#ffffff20'
-                      }}>
-                        <Ionicons name={item.icon as any} size={28} color={item.color} />
-                      </View>
-
-                      {/* Text */}
-                      <View style={{ flex: 1 }}>
-                        <Text style={{ fontSize: 18, fontWeight: '600', color: theme.text, marginBottom: 4 }}>{item.name}</Text>
-                        <Text style={{ fontSize: 14, color: theme.subText }}>{item.desc}</Text>
-                      </View>
-                    </TouchableOpacity>
-                  ))}
-                </View>
-
-              </View>
-            </TouchableWithoutFeedback>
-          </View>
-        </TouchableWithoutFeedback>
-      </Modal>
     </>
   );
 }
