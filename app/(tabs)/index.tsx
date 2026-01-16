@@ -310,7 +310,7 @@ export default function ExploreScreen() {
                 <View style={[
                     styles.floatingActions,
                     isLight ? styles.lightShadow : styles.darkShadow,
-                    { bottom: isLight ? 20 : 110 }
+                    { bottom: themeType === 'space' ? 110 : 20 }
                 ]}>
                     <Pressable style={[styles.btn, styles.filterBtnFloating, { backgroundColor: '#00b894' }]} onPress={openFilters}>
                         <Ionicons name="options" size={22} color="#fff" />
