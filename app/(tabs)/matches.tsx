@@ -206,6 +206,9 @@ export default function MatchesScreen() {
                                                 <Text style={[styles.name, { color: theme.text }]} numberOfLines={1}>
                                                     {(match.name || 'Пользователь')}{match.age ? `, ${match.age}` : ''}
                                                 </Text>
+                                                <Text style={[styles.details, { color: '#4ade80' }]} numberOfLines={1}>
+                                                    {getHeritageString(match)}
+                                                </Text>
                                             </View>
                                         </Pressable>
 
@@ -234,7 +237,7 @@ export default function MatchesScreen() {
                                             }}
                                             numberOfLines={1}
                                         >
-                                            {match.lastMessage || 'Сделай первый шаг! 💬'}
+                                            {match.lastMessage || 'Этот диалог пуст. Исправим?...'}
                                         </Text>
                                     </Pressable>
                                 </View>
