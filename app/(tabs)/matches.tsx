@@ -141,6 +141,16 @@ export default function MatchesScreen() {
 
     // Helper to render bio details (gender, zodiac, religion)
     const renderBioDetails = (profile: any) => {
+        // Debug: check what data we're receiving
+        console.log('[renderBioDetails] Profile data:', {
+            id: profile.id,
+            name: profile.name,
+            gender: profile.gender,
+            zodiac: profile.zodiac,
+            religion: profile.religion,
+            religions: profile.religions
+        });
+
         const items = [];
         const dotColor = theme.subText;
 
