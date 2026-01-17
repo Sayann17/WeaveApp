@@ -318,7 +318,7 @@ export default function MatchesScreen() {
                             matches.map((match) => (
                                 <View
                                     key={match.id}
-                                    style={[styles.card, { backgroundColor: themeType === 'wine' ? '#5a2a2a' : theme.cardBg, flexDirection: 'column', alignItems: 'flex-start' }]}
+                                    style={[styles.card, { backgroundColor: themeType === 'wine' ? '#4f111c' : theme.cardBg, flexDirection: 'column', alignItems: 'flex-start' }]}
                                 >
                                     {/* Top Row: Avatar, Name, Menu Button */}
                                     <View style={{ flexDirection: 'row', alignItems: 'center', width: '100%' }}>
@@ -375,7 +375,7 @@ export default function MatchesScreen() {
                             likesYou.map((profile) => (
                                 <View
                                     key={profile.id}
-                                    style={[styles.card, { backgroundColor: themeType === 'wine' ? '#5a2a2a' : theme.cardBg }]}
+                                    style={[styles.card, { backgroundColor: themeType === 'wine' ? '#4f111c' : theme.cardBg }]}
                                 >
                                     <Pressable
                                         style={{ flexDirection: 'row', alignItems: 'center', flex: 1 }}
@@ -425,7 +425,7 @@ export default function MatchesScreen() {
                             yourLikes.map((profile) => (
                                 <View
                                     key={profile.id}
-                                    style={[styles.card, { backgroundColor: themeType === 'wine' ? '#5a2a2a' : theme.cardBg }]}
+                                    style={[styles.card, { backgroundColor: themeType === 'wine' ? '#4f111c' : theme.cardBg }]}
                                 >
                                     <Pressable
                                         style={{ flexDirection: 'row', alignItems: 'center', flex: 1 }}
