@@ -256,7 +256,7 @@ export default function MatchesScreen() {
                     <ScrollView
                         horizontal
                         showsHorizontalScrollIndicator={false}
-                        contentContainerStyle={{ paddingHorizontal: 20, gap: 10 }}
+                        contentContainerStyle={{ paddingHorizontal: 20, gap: 6 }}
                     >
                         <Pressable
                             style={[
