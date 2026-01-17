@@ -506,6 +506,14 @@ async function getMatches(driver, requestHeaders, responseHeaders) {
 
             if (users.length > 0) {
                 const u = users[0];
+
+                // Parse religion properly
+                let religionsArray = null;
+                if (u.religion) {
+                    const parsed = tryParse(u.religion);
+                    religionsArray = parsed ? (Array.isArray(parsed) ? parsed : [parsed]) : null;
+                }
+
                 matches.push({
                     id: u.id,
                     chatId: m.chatId,
@@ -515,9 +523,9 @@ async function getMatches(driver, requestHeaders, responseHeaders) {
                     bio: u.about,
                     gender: u.gender,
                     ethnicity: u.ethnicity,
-                    religion: u.religion,
+                    religion: u.religion, // Keep original for backward compatibility
                     zodiac: u.zodiac,
-                    religions: tryParse(u.religion),
+                    religions: religionsArray, // Parsed array
                     macroGroups: tryParse(u.macro_groups),
                     sortTime: m.sortTime,
                     hasUnread: m.hasUnread,
