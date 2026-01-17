@@ -22,6 +22,7 @@ import { useTelegram } from '../context/TelegramProvider';
 import { useTheme } from '../context/ThemeContext';
 import { yandexAuth } from '../services/yandex/AuthService';
 import { yandexMatch } from '../services/yandex/MatchService';
+import { getReligionById, getZodiacSignById } from '../utils/basic_info';
 import { getPlatformPadding } from '../utils/platformPadding';
 
 export default function MatchesScreen() {
@@ -136,6 +137,56 @@ export default function MatchesScreen() {
         } catch (e) {
             console.error(e);
         }
+    };
+
+    // Helper to render bio details (gender, zodiac, religion)
+    const renderBioDetails = (profile: any) => {
+        const items = [];
+
+        // Gender icon
+        if (profile.gender) {
+            items.push(
+                <Ionicons
+                    key="gender"
+                    name={profile.gender === 'male' ? 'male' : 'female'}
+                    size={14}
+                    color={theme.subText}
+                    style={{ marginRight: 6 }}
+                />
+            );
+        }
+
+        // Zodiac emoji
+        const zodiac = getZodiacSignById(profile.zodiac);
+        if (zodiac) {
+            items.push(
+                <Text key="zodiac" style={{ fontSize: 13, marginRight: 8, color: theme.subText }}>
+                    {zodiac.emoji}
+                </Text>
+            );
+        }
+
+        // Religion emoji + name
+        let relId = profile.religion;
+        if (!relId && profile.religions && profile.religions.length > 0) {
+            relId = profile.religions[0];
+        }
+        const religion = getReligionById(relId);
+        if (religion) {
+            items.push(
+                <Text key="religion" style={{ fontSize: 13, color: theme.subText }}>
+                    {religion.emoji} {religion.name}
+                </Text>
+            );
+        }
+
+        if (items.length === 0) return null;
+
+        return (
+            <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 4 }}>
+                {items}
+            </View>
+        );
     };
 
     // Helper to format roots
@@ -346,26 +397,65 @@ export default function MatchesScreen() {
             </Modal>
 
             <View style={{ flex: 1 }}>
-                {/* Таб-бар */}
-                <View style={[styles.tabContainer, { paddingTop: getPlatformPadding(insets, isMobile, 78) }]}>
-                    <Pressable
-                        style={[styles.tab, activeTab === 'matches' && { borderBottomColor: theme.text, borderBottomWidth: 2 }]}
-                        onPress={() => setActiveTab('matches')}
+                {/* Таб-бар (Chip Style) */}
+                <View style={{ paddingTop: getPlatformPadding(insets, isMobile, 78), marginBottom: 15 }}>
+                    <ScrollView
+                        horizontal
+                        showsHorizontalScrollIndicator={false}
+                        contentContainerStyle={{ paddingHorizontal: 20, gap: 10 }}
                     >
-                        <Text style={[styles.tabText, { color: activeTab === 'matches' ? theme.text : theme.subText }]}>Мэтчи ({matches.length})</Text>
-                    </Pressable>
-                    <Pressable
-                        style={[styles.tab, activeTab === 'likes' && { borderBottomColor: theme.text, borderBottomWidth: 2 }]}
-                        onPress={() => setActiveTab('likes')}
-                    >
-                        <Text style={[styles.tabText, { color: activeTab === 'likes' ? theme.text : theme.subText }]}>Лайкнули ({likesYou.length})</Text>
-                    </Pressable>
-                    <Pressable
-                        style={[styles.tab, activeTab === 'sent' && { borderBottomColor: theme.text, borderBottomWidth: 2 }]}
-                        onPress={() => setActiveTab('sent')}
-                    >
-                        <Text style={[styles.tabText, { color: activeTab === 'sent' ? theme.text : theme.subText }]}>Вы лайкнули ({yourLikes.length})</Text>
-                    </Pressable>
+                        <Pressable
+                            style={[
+                                styles.tabChip,
+                                {
+                                    backgroundColor: activeTab === 'matches' ? theme.text : 'transparent',
+                                    borderColor: theme.border,
+                                }
+                            ]}
+                            onPress={() => setActiveTab('matches')}
+                        >
+                            <Text style={[
+                                styles.tabChipText,
+                                { color: activeTab === 'matches' ? theme.background : theme.subText }
+                            ]}>
+                                Мэтчи ({matches.length})
+                            </Text>
+                        </Pressable>
+                        <Pressable
+                            style={[
+                                styles.tabChip,
+                                {
+                                    backgroundColor: activeTab === 'likes' ? theme.text : 'transparent',
+                                    borderColor: theme.border,
+                                }
+                            ]}
+                            onPress={() => setActiveTab('likes')}
+                        >
+                            <Text style={[
+                                styles.tabChipText,
+                                { color: activeTab === 'likes' ? theme.background : theme.subText }
+                            ]}>
+                                Вас лайкнули ({likesYou.length})
+                            </Text>
+                        </Pressable>
+                        <Pressable
+                            style={[
+                                styles.tabChip,
+                                {
+                                    backgroundColor: activeTab === 'sent' ? theme.text : 'transparent',
+                                    borderColor: theme.border,
+                                }
+                            ]}
+                            onPress={() => setActiveTab('sent')}
+                        >
+                            <Text style={[
+                                styles.tabChipText,
+                                { color: activeTab === 'sent' ? theme.background : theme.subText }
+                            ]}>
+                                Вы лайкнули ({yourLikes.length})
+                            </Text>
+                        </Pressable>
+                    </ScrollView>
                 </View>
 
                 <ScrollView contentContainerStyle={styles.list}>
@@ -392,6 +482,7 @@ export default function MatchesScreen() {
                                                 <Text style={[styles.name, { color: theme.text }]} numberOfLines={1}>
                                                     {(match.name || 'Пользователь')}{match.age ? `, ${match.age}` : ''}
                                                 </Text>
+                                                {renderBioDetails(match)}
                                                 <Text style={[styles.details, { color: themeType === 'wine' ? '#ffd9d9' : '#4ade80' }]} numberOfLines={1}>
                                                     {getHeritageString(match)}
                                                 </Text>
@@ -423,7 +514,7 @@ export default function MatchesScreen() {
                                                 fontStyle: !match.lastMessage ? 'italic' : 'normal',
                                                 lineHeight: 20
                                             }}
-                                            numberOfLines={1}
+                                            numberOfLines={2}
                                         >
                                             {match.lastMessage || 'Какое сплетение создаст ваш Узор... Проверим?'}
                                         </Text>
@@ -456,6 +547,7 @@ export default function MatchesScreen() {
                                             <Text style={[styles.name, { color: theme.text }]} numberOfLines={1}>
                                                 {(profile.name || 'Пользователь')}{profile.age ? `, ${profile.age}` : ''}
                                             </Text>
+                                            {renderBioDetails(profile)}
                                             <Text style={[styles.details, { color: themeType === 'wine' ? '#ffd9d9' : '#4ade80' }]} numberOfLines={1}>
                                                 {getHeritageString(profile)}
                                             </Text>
@@ -505,6 +597,7 @@ export default function MatchesScreen() {
                                             <Text style={[styles.name, { color: theme.text }]} numberOfLines={1}>
                                                 {(profile.name || 'Пользователь')}{profile.age ? `, ${profile.age}` : ''}
                                             </Text>
+                                            {renderBioDetails(profile)}
                                             <Text style={[styles.details, { color: themeType === 'wine' ? '#ffd9d9' : '#4ade80' }]} numberOfLines={1}>
                                                 {getHeritageString(profile)}
                                             </Text>
@@ -528,6 +621,21 @@ const styles = StyleSheet.create({
     tabContainer: { flexDirection: 'row', paddingHorizontal: 20, marginBottom: 10, marginTop: 10 },
     tab: { paddingVertical: 10, marginRight: 20 },
     tabText: { fontSize: 16, fontWeight: '500' },
+
+    // Chip-style tabs
+    tabChip: {
+        paddingHorizontal: 16,
+        paddingVertical: 10,
+        borderRadius: 20,
+        borderWidth: 1.5,
+        minWidth: 100,
+        alignItems: 'center',
+        justifyContent: 'center',
+    },
+    tabChipText: {
+        fontSize: 14,
+        fontWeight: '600',
+    },
 
     list: { padding: 20 },
     card: {
