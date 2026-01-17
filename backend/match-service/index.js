@@ -484,6 +484,8 @@ async function getMatches(driver, requestHeaders, responseHeaders) {
             sortedMatches.push({
                 ...m,
                 sortTime,
+                lastMessageTime: chatRow?.last_message_time || null,
+                unreadCount: Number(unreadCount),
                 hasUnread,
                 lastMessage
             });
@@ -547,6 +549,8 @@ async function getMatches(driver, requestHeaders, responseHeaders) {
                     religions: religionsArray, // Parsed array
                     macroGroups: tryParse(u.macro_groups),
                     sortTime: m.sortTime,
+                    lastMessageTime: m.lastMessageTime,
+                    unreadCount: m.unreadCount,
                     hasUnread: m.hasUnread,
                     lastMessage: m.lastMessage
                 });

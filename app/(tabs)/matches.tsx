@@ -347,7 +347,7 @@ export default function MatchesScreen() {
                                     </View>
 
                                     {/* Separator Line */}
-                                    <View style={{ height: 1, backgroundColor: themeType === 'light' ? '#000' : '#fff', marginHorizontal: normalize(16), marginTop: normalize(8), opacity: themeType === 'light' ? 0.3 : 0.4 }} />
+                                    <View style={{ height: 1, backgroundColor: theme.subText, marginHorizontal: normalize(16), marginTop: normalize(8), opacity: 0.2 }} />
 
                                     {/* Bottom Row: Message Preview */}
                                     <Pressable
@@ -370,7 +370,7 @@ export default function MatchesScreen() {
                                         </View>
 
                                         {/* Right Column: Time & Badge */}
-                                        <View style={{ alignItems: 'flex-end', justifyContent: 'flex-start', paddingRight: normalize(16), gap: normalize(4) }}>
+                                        <View style={{ alignItems: 'flex-end', justifyContent: 'flex-start', marginRight: normalize(16), gap: normalize(4) }}>
                                             {/* Timestamp */}
                                             <Text style={{ fontSize: normalize(11), color: theme.subText }}>
                                                 {formatMessageTime(match.lastMessageTime) || (match.lastMessageTime ? String(match.lastMessageTime).substring(0, 10) : '')}
