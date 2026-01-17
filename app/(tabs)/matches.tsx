@@ -22,7 +22,6 @@ import { useTelegram } from '../context/TelegramProvider';
 import { useTheme } from '../context/ThemeContext';
 import { yandexAuth } from '../services/yandex/AuthService';
 import { yandexMatch } from '../services/yandex/MatchService';
-import { getReligionById, getZodiacSignById } from '../utils/basic_info';
 import { getPlatformPadding } from '../utils/platformPadding';
 
 export default function MatchesScreen() {
@@ -54,6 +53,7 @@ export default function MatchesScreen() {
 
     useFocusEffect(
         useCallback(() => {
+            // Logic to run when the screen comes into focus
             hideBackButton();
         }, [])
     );
@@ -99,16 +99,28 @@ export default function MatchesScreen() {
         try {
             const result = await yandexMatch.likeUser(profile.id);
             if (result.type === 'match') {
+                // Show Match Alert
                 Alert.alert("It's a Match!", `Вы и ${profile.name} лайкнули друг друга!`);
+
+                // Remove from Likes You
                 setLikesYou(prev => prev.filter(p => p.id !== profile.id));
+
+                // Add to Matches (optimistic)
                 const newMatch = {
                     ...profile,
-                    id: profile.id,
+                    id: profile.id, // Ensure ID is explicit
                     name: profile.name || 'Пользователь',
                     chatId: result.chatId || [yandexAuth.getCurrentUser()?.uid, profile.id].sort().join('_')
                 };
+
+                // Validate fields to prevent "User not found"
+                if (!newMatch.id) {
+                    console.error('[Matches] Created match with missing ID! Profile:', profile);
+                }
+
                 setMatches(prev => [newMatch, ...prev]);
             } else {
+                // If they liked us, remove from "Likes You" list
                 setLikesYou(prev => prev.filter(p => p.id !== profile.id));
             }
         } catch (e) {
@@ -126,58 +138,39 @@ export default function MatchesScreen() {
         }
     };
 
-    // Helper to render gender/zodiac/religion tags
-    const renderBioTags = (profile: any) => {
-        const items = [];
+    // Helper to format roots
+    const getHeritageString = (profile: any) => {
+        const ETHNICITY_MAP: Record<string, string> = {
+            slavic: 'Славянские', asian: 'Азиатские', caucasian: 'Кавказские',
+            finno_ugric: 'Финно-угорские', european: 'Европейские', african: 'Африканские',
+            latin: 'Латиноамериканские', arab: 'Арабские', jewish: 'Еврейские',
+            indian: 'Индийские', native_american: 'Коренные', pacific: 'Тихоокеанские',
+            middle_eastern: 'Ближневосточные', turkic: 'Тюркские',
+            indo_european: 'Индоевропейские корни', world_citizen: 'Человек мира'
+        };
+        const parts = [];
+        if (profile.macroGroups && Array.isArray(profile.macroGroups) && profile.macroGroups.length > 0) {
+            const groups = [...profile.macroGroups];
+            const worldCitizenIndex = groups.indexOf('world_citizen');
+            let worldCitizenPart = '';
 
-        // Gender
-        if (profile.gender) {
-            items.push(
-                <View key="gender" style={[styles.tag, { backgroundColor: theme.cardBg, borderColor: theme.border }]}>
-                    <Ionicons
-                        name={profile.gender === 'male' ? 'male' : 'female'}
-                        size={12}
-                        color={theme.subText}
-                    />
-                </View>
-            );
+            if (worldCitizenIndex !== -1) {
+                worldCitizenPart = 'Человек мира';
+                groups.splice(worldCitizenIndex, 1);
+            }
+
+            const otherRoots = groups.map((g: string) => ETHNICITY_MAP[g] || g).join(', ');
+            const otherRootsPart = otherRoots ? `${otherRoots} корни` : '';
+
+            // Combine
+            const combinedRoots = [worldCitizenPart, otherRootsPart].filter(Boolean).join(', ');
+            if (combinedRoots) parts.push(combinedRoots);
         }
-
-        // Zodiac
-        const zodiac = getZodiacSignById(profile.zodiac);
-        if (zodiac) {
-            items.push(
-                <View key="zodiac" style={[styles.tag, { backgroundColor: theme.cardBg, borderColor: theme.border }]}>
-                    <Text style={{ fontSize: 10 }}>{zodiac.emoji}</Text>
-                    <Text style={[styles.tagText, { color: theme.subText }]}>{zodiac.name}</Text>
-                </View>
-            );
+        if (profile.ethnicity) {
+            parts.push(profile.ethnicity.charAt(0).toUpperCase() + profile.ethnicity.slice(1).toLowerCase());
         }
-
-        // Religion
-        // Support array (new format) or string (old format)
-        let relId = profile.religion;
-        if (!relId && profile.religions && profile.religions.length > 0) {
-            relId = profile.religions[0];
-        }
-
-        const religion = getReligionById(relId);
-        if (religion) {
-            items.push(
-                <View key="religion" style={[styles.tag, { backgroundColor: theme.cardBg, borderColor: theme.border }]}>
-                    <Text style={{ fontSize: 10 }}>{religion.emoji}</Text>
-                    <Text style={[styles.tagText, { color: theme.subText, maxWidth: 80 }]} numberOfLines={1}>{religion.name}</Text>
-                </View>
-            );
-        }
-
-        return (
-            <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginTop: 6 }}>
-                {items}
-            </View>
-        );
+        return parts.join(' • ');
     };
-
 
     // --- Actions ---
 
@@ -190,6 +183,7 @@ export default function MatchesScreen() {
 
     const handleBlockOptions = () => {
         setMenuVisible(false);
+        // Clean delay to allow menu to close smoothly
         setTimeout(() => {
             setBlockConfirmVisible(true);
         }, 100);
@@ -209,13 +203,18 @@ export default function MatchesScreen() {
         if (!selectedMatch) return;
 
         try {
+            // Optimistic Update
             const blockedId = selectedMatch.id;
             setMatches(prev => prev.filter(m => m.id !== blockedId));
 
+            // Call Backend
             if (yandexMatch.blockUser) {
                 await yandexMatch.blockUser(blockedId, reason);
+            } else {
+                console.warn('blockUser method not implemented in MatchService yet');
             }
 
+            // Should we also remove from likes/sent? safely yes
             setLikesYou(prev => prev.filter(p => p.id !== blockedId));
             setYourLikes(prev => prev.filter(p => p.id !== blockedId));
 
@@ -230,7 +229,14 @@ export default function MatchesScreen() {
             <StatusBar barStyle={isLight ? "dark-content" : "light-content"} />
 
             {/* --- Modals --- */}
-            <Modal transparent visible={menuVisible} animationType="fade" onRequestClose={() => setMenuVisible(false)}>
+
+            {/* 1. Main Options Menu */}
+            <Modal
+                transparent
+                visible={menuVisible}
+                animationType="fade"
+                onRequestClose={() => setMenuVisible(false)}
+            >
                 <TouchableWithoutFeedback onPress={() => setMenuVisible(false)}>
                     <View style={styles.modalOverlay}>
                         <TouchableWithoutFeedback>
@@ -242,7 +248,7 @@ export default function MatchesScreen() {
                                 <View style={[styles.divider, { backgroundColor: theme.border }]} />
                                 <Pressable style={styles.menuItem} onPress={handleBlockOptions}>
                                     <Ionicons name="ban-outline" size={20} color="#ff4444" />
-                                    <Text style={[styles.menuText, { color: "#ff4444" }]}>Заблокировать</Text>
+                                    <Text style={[styles.menuText, { color: "#ff4444" }]}>Заблокировать и пожаловаться</Text>
                                 </Pressable>
                             </View>
                         </TouchableWithoutFeedback>
@@ -250,21 +256,30 @@ export default function MatchesScreen() {
                 </TouchableWithoutFeedback>
             </Modal>
 
-            {/* Block Confirmation Modal (omitted for brevity, assume similar structure or kept same logic) */}
-            {/* Keeping the modals simplified in this view for clarity, but logic remains valid above */}
-            {/* NOTE: Restoring Full Modal Logic Below to ensure no regression */}
-            <Modal transparent visible={blockConfirmVisible} animationType="fade" onRequestClose={() => setBlockConfirmVisible(false)}>
+            {/* 2. Block Confirmation Modal */}
+            <Modal
+                transparent
+                visible={blockConfirmVisible}
+                animationType="fade"
+                onRequestClose={() => setBlockConfirmVisible(false)}
+            >
                 <View style={[styles.modalOverlay, { backgroundColor: 'rgba(0,0,0,0.7)' }]}>
                     <View style={[styles.alertBox, { backgroundColor: theme.cardBg }]}>
                         <Text style={[styles.alertTitle, { color: theme.text }]}>Заблокировать пользователя?</Text>
                         <Text style={[styles.alertMessage, { color: theme.subText }]}>
-                            Это безвозвратное действие. Вы больше не увидите друг друга.
+                            Это безвозвратное действие, которое приведет к полному удалению мэтча и истории переписки. Вы больше не увидите друг друга в поиске.
                         </Text>
                         <View style={styles.alertButtons}>
-                            <Pressable style={[styles.alertButton, { backgroundColor: theme.cardBg, borderColor: theme.border, borderWidth: 1 }]} onPress={() => setBlockConfirmVisible(false)}>
+                            <Pressable
+                                style={[styles.alertButton, { backgroundColor: theme.cardBg, borderColor: theme.border, borderWidth: 1 }]}
+                                onPress={() => setBlockConfirmVisible(false)}
+                            >
                                 <Text style={[styles.alertButtonText, { color: theme.text }]}>Нет</Text>
                             </Pressable>
-                            <Pressable style={[styles.alertButton, { backgroundColor: '#ff4444' }]} onPress={confirmBlockInit}>
+                            <Pressable
+                                style={[styles.alertButton, { backgroundColor: '#ff4444' }]}
+                                onPress={confirmBlockInit}
+                            >
                                 <Text style={[styles.alertButtonText, { color: '#ffffff' }]}>Да</Text>
                             </Pressable>
                         </View>
@@ -272,7 +287,13 @@ export default function MatchesScreen() {
                 </View>
             </Modal>
 
-            <Modal transparent visible={reasonModalVisible} animationType="slide" onRequestClose={() => setReasonModalVisible(false)}>
+            {/* 3. Reason Selection Modal */}
+            <Modal
+                transparent
+                visible={reasonModalVisible}
+                animationType="slide"
+                onRequestClose={() => setReasonModalVisible(false)}
+            >
                 <TouchableWithoutFeedback onPress={() => setReasonModalVisible(false)}>
                     <View style={[styles.modalOverlay, { backgroundColor: 'rgba(0,0,0,0.7)', justifyContent: 'flex-end' }]}>
                         <TouchableWithoutFeedback>
@@ -283,12 +304,19 @@ export default function MatchesScreen() {
                                         <Ionicons name="close" size={24} color={theme.subText} />
                                     </Pressable>
                                 </View>
+
                                 {BLOCK_REASONS.map((reason) => (
-                                    <Pressable key={reason} style={[styles.reasonItem, { borderBottomColor: theme.border }]} onPress={() => submitBlock(reason)}>
+                                    <Pressable
+                                        key={reason}
+                                        style={[styles.reasonItem, { borderBottomColor: theme.border }]}
+                                        onPress={() => submitBlock(reason)}
+                                    >
                                         <Text style={[styles.reasonText, { color: theme.text }]}>{reason}</Text>
                                         <Ionicons name="chevron-forward" size={20} color={theme.subText} />
                                     </Pressable>
                                 ))}
+
+                                {/* Custom Reason */}
                                 <View style={{ marginTop: 20 }}>
                                     <Text style={[styles.label, { color: theme.subText }]}>Своя причина</Text>
                                     <View style={[styles.inputContainer, { backgroundColor: isLight ? '#f5f5f5' : '#2a2a2a' }]}>
@@ -296,13 +324,19 @@ export default function MatchesScreen() {
                                             style={[styles.input, { color: theme.text }]}
                                             value={customReason}
                                             onChangeText={setCustomReason}
-                                            placeholder="Опишите..."
+                                            placeholder="Опишите причину..."
                                             placeholderTextColor={theme.subText}
                                             multiline
                                         />
                                     </View>
-                                    <Pressable style={[styles.submitButton, { backgroundColor: customReason.trim() ? '#ff4444' : (isLight ? '#eee' : '#333') }]} disabled={!customReason.trim()} onPress={() => submitBlock(customReason.trim())}>
-                                        <Text style={[styles.submitButtonText, { color: customReason.trim() ? '#fff' : theme.subText }]}>Подтвердить</Text>
+                                    <Pressable
+                                        style={[styles.submitButton, { backgroundColor: customReason.trim() ? '#ff4444' : (isLight ? '#eee' : '#333') }]}
+                                        disabled={!customReason.trim()}
+                                        onPress={() => submitBlock(customReason.trim())}
+                                    >
+                                        <Text style={[styles.submitButtonText, { color: customReason.trim() ? '#fff' : theme.subText }]}>
+                                            Подтвердить
+                                        </Text>
                                     </Pressable>
                                 </View>
                             </View>
@@ -311,22 +345,29 @@ export default function MatchesScreen() {
                 </TouchableWithoutFeedback>
             </Modal>
 
-
             <View style={{ flex: 1 }}>
-                {/* --- Tab Bar --- */}
+                {/* Таб-бар */}
                 <View style={[styles.tabContainer, { paddingTop: getPlatformPadding(insets, isMobile, 78) }]}>
-                    <Pressable style={[styles.tab, activeTab === 'matches' && { borderBottomColor: theme.text, borderBottomWidth: 2 }]} onPress={() => setActiveTab('matches')}>
+                    <Pressable
+                        style={[styles.tab, activeTab === 'matches' && { borderBottomColor: theme.text, borderBottomWidth: 2 }]}
+                        onPress={() => setActiveTab('matches')}
+                    >
                         <Text style={[styles.tabText, { color: activeTab === 'matches' ? theme.text : theme.subText }]}>Мэтчи ({matches.length})</Text>
                     </Pressable>
-                    <Pressable style={[styles.tab, activeTab === 'likes' && { borderBottomColor: theme.text, borderBottomWidth: 2 }]} onPress={() => setActiveTab('likes')}>
-                        <Text style={[styles.tabText, { color: activeTab === 'likes' ? theme.text : theme.subText }]}>Вас лайкнули ({likesYou.length})</Text>
+                    <Pressable
+                        style={[styles.tab, activeTab === 'likes' && { borderBottomColor: theme.text, borderBottomWidth: 2 }]}
+                        onPress={() => setActiveTab('likes')}
+                    >
+                        <Text style={[styles.tabText, { color: activeTab === 'likes' ? theme.text : theme.subText }]}>Лайкнули ({likesYou.length})</Text>
                     </Pressable>
-                    <Pressable style={[styles.tab, activeTab === 'sent' && { borderBottomColor: theme.text, borderBottomWidth: 2 }]} onPress={() => setActiveTab('sent')}>
+                    <Pressable
+                        style={[styles.tab, activeTab === 'sent' && { borderBottomColor: theme.text, borderBottomWidth: 2 }]}
+                        onPress={() => setActiveTab('sent')}
+                    >
                         <Text style={[styles.tabText, { color: activeTab === 'sent' ? theme.text : theme.subText }]}>Вы лайкнули ({yourLikes.length})</Text>
                     </Pressable>
                 </View>
 
-                {/* --- Content List --- */}
                 <ScrollView contentContainerStyle={styles.list}>
                     {activeTab === 'matches' ? (
                         matches.length > 0 ? (
@@ -351,7 +392,9 @@ export default function MatchesScreen() {
                                                 <Text style={[styles.name, { color: theme.text }]} numberOfLines={1}>
                                                     {(match.name || 'Пользователь')}{match.age ? `, ${match.age}` : ''}
                                                 </Text>
-                                                {renderBioTags(match)}
+                                                <Text style={[styles.details, { color: themeType === 'wine' ? '#ffd9d9' : '#4ade80' }]} numberOfLines={1}>
+                                                    {getHeritageString(match)}
+                                                </Text>
                                             </View>
                                         </Pressable>
 
@@ -380,7 +423,7 @@ export default function MatchesScreen() {
                                                 fontStyle: !match.lastMessage ? 'italic' : 'normal',
                                                 lineHeight: 20
                                             }}
-                                            numberOfLines={2}
+                                            numberOfLines={1}
                                         >
                                             {match.lastMessage || 'Какое сплетение создаст ваш Узор... Проверим?'}
                                         </Text>
@@ -413,7 +456,9 @@ export default function MatchesScreen() {
                                             <Text style={[styles.name, { color: theme.text }]} numberOfLines={1}>
                                                 {(profile.name || 'Пользователь')}{profile.age ? `, ${profile.age}` : ''}
                                             </Text>
-                                            {renderBioTags(profile)}
+                                            <Text style={[styles.details, { color: themeType === 'wine' ? '#ffd9d9' : '#4ade80' }]} numberOfLines={1}>
+                                                {getHeritageString(profile)}
+                                            </Text>
                                         </View>
                                     </Pressable>
 
@@ -460,7 +505,9 @@ export default function MatchesScreen() {
                                             <Text style={[styles.name, { color: theme.text }]} numberOfLines={1}>
                                                 {(profile.name || 'Пользователь')}{profile.age ? `, ${profile.age}` : ''}
                                             </Text>
-                                            {renderBioTags(profile)}
+                                            <Text style={[styles.details, { color: themeType === 'wine' ? '#ffd9d9' : '#4ade80' }]} numberOfLines={1}>
+                                                {getHeritageString(profile)}
+                                            </Text>
                                         </View>
                                     </Pressable>
                                 </View>
@@ -504,46 +551,157 @@ const styles = StyleSheet.create({
     empty: { alignItems: 'center', marginTop: 50 },
     emptyText: { fontSize: 16 },
 
-    // Bio Tags (Minimal)
-    tag: {
+    actionColumn: {
+        alignItems: 'flex-end',
+        justifyContent: 'center',
+        gap: 8,
+        minWidth: 100
+    },
+    actionButton: {
         flexDirection: 'row',
         alignItems: 'center',
-        paddingHorizontal: 6,
-        paddingVertical: 2,
-        borderRadius: 6,
-        borderWidth: 1,
-        gap: 4
+        paddingVertical: 8,
+        paddingHorizontal: 12,
+        borderRadius: 12,
     },
-    tagText: { fontSize: 10, fontWeight: '500' },
+    chatButton: {
+        // backgroundColor handled dynamically
+    },
+    blockButton: {
+        backgroundColor: 'transparent',
+    },
+    actionButtonText: {
+        fontSize: 14,
+        fontWeight: '600'
+    },
+    unreadDot: {
+        position: 'absolute',
+        top: -2,
+        right: -2,
+        width: 8,
+        height: 8,
+        borderRadius: 4,
+        backgroundColor: '#ff4444',
+        borderWidth: 1.5,
+    },
 
-    // Keeping these for modal compatibility as they were not part of the card redesign per-se
-    actionColumn: { alignItems: 'flex-end', justifyContent: 'center', gap: 8, minWidth: 100 },
-    actionButton: { flexDirection: 'row', alignItems: 'center', paddingVertical: 8, paddingHorizontal: 12, borderRadius: 12 },
-    chatButton: {},
-    blockButton: { backgroundColor: 'transparent' },
-    actionButtonText: { fontSize: 14, fontWeight: '600' },
-    unreadDot: { position: 'absolute', top: -2, right: -2, width: 8, height: 8, borderRadius: 4, backgroundColor: '#ff4444', borderWidth: 1.5 },
-    modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'center', alignItems: 'center' },
-    menuModal: { width: 250, backgroundColor: '#fff', borderRadius: 16, padding: 5, elevation: 5 },
-    menuItem: { flexDirection: 'row', alignItems: 'center', padding: 15, gap: 12 },
-    menuText: { fontSize: 16, fontWeight: '500' },
-    divider: { height: 1, width: '100%', backgroundColor: '#eee' },
-    alertBox: { width: '85%', padding: 20, borderRadius: 20, alignItems: 'center' },
-    alertTitle: { fontSize: 18, fontWeight: '700', marginBottom: 10, textAlign: 'center' },
-    alertMessage: { fontSize: 15, textAlign: 'center', marginBottom: 20, lineHeight: 22 },
-    alertButtons: { flexDirection: 'row', gap: 15, width: '100%' },
-    alertButton: { flex: 1, padding: 12, borderRadius: 12, alignItems: 'center', justifyContent: 'center' },
-    alertButtonText: { fontSize: 16, fontWeight: '600' },
-    reasonSheet: { width: '100%', borderTopLeftRadius: 20, borderTopRightRadius: 20, padding: 20, paddingBottom: 40, maxHeight: '90%' },
-    reasonHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 },
-    reasonTitle: { fontSize: 20, fontWeight: '700' },
-    reasonItem: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingVertical: 16, borderBottomWidth: 1 },
-    reasonText: { fontSize: 17, fontWeight: '500' },
-    label: { fontSize: 14, marginBottom: 8, fontWeight: '600' },
-    inputContainer: { borderRadius: 12, padding: 12, marginBottom: 15 },
-    input: { fontSize: 16, minHeight: 60, textAlignVertical: 'top' },
-    submitButton: { padding: 15, borderRadius: 15, alignItems: 'center', marginTop: 10 },
-    submitButtonText: { fontSize: 16, fontWeight: '700' }
+    // Modal Styles
+    modalOverlay: {
+        flex: 1,
+        backgroundColor: 'rgba(0,0,0,0.5)',
+        justifyContent: 'center',
+        alignItems: 'center'
+    },
+    menuModal: {
+        width: 250,
+        backgroundColor: '#fff',
+        borderRadius: 16,
+        padding: 5,
+        elevation: 5
+    },
+    menuItem: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        padding: 15,
+        gap: 12
+    },
+    menuText: {
+        fontSize: 16,
+        fontWeight: '500'
+    },
+    divider: {
+        height: 1,
+        width: '100%',
+        backgroundColor: '#eee'
+    },
+    alertBox: {
+        width: '85%',
+        padding: 20,
+        borderRadius: 20,
+        alignItems: 'center'
+    },
+    alertTitle: {
+        fontSize: 18,
+        fontWeight: '700',
+        marginBottom: 10,
+        textAlign: 'center'
+    },
+    alertMessage: {
+        fontSize: 15,
+        textAlign: 'center',
+        marginBottom: 20,
+        lineHeight: 22
+    },
+    alertButtons: {
+        flexDirection: 'row',
+        gap: 15,
+        width: '100%'
+    },
+    alertButton: {
+        flex: 1,
+        padding: 12,
+        borderRadius: 12,
+        alignItems: 'center',
+        justifyContent: 'center'
+    },
+    alertButtonText: {
+        fontSize: 16,
+        fontWeight: '600'
+    },
+    reasonSheet: {
+        width: '100%',
+        borderTopLeftRadius: 20,
+        borderTopRightRadius: 20,
+        padding: 20,
+        paddingBottom: 40,
+        maxHeight: '90%'
+    },
+    reasonHeader: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        marginBottom: 20
+    },
+    reasonTitle: {
+        fontSize: 20,
+        fontWeight: '700'
+    },
+    reasonItem: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        paddingVertical: 16,
+        borderBottomWidth: 1,
+    },
+    reasonText: {
+        fontSize: 17,
+        fontWeight: '500'
+    },
+    label: {
+        fontSize: 14,
+        marginBottom: 8,
+        fontWeight: '600'
+    },
+    inputContainer: {
+        borderRadius: 12,
+        padding: 12,
+        marginBottom: 15
+    },
+    input: {
+        fontSize: 16,
+        minHeight: 60,
+        textAlignVertical: 'top'
+    },
+    submitButton: {
+        padding: 15,
+        borderRadius: 15,
+        alignItems: 'center',
+        marginTop: 10
+    },
+    submitButtonText: {
+        fontSize: 16,
+        fontWeight: '700'
+    }
 });
 
 
