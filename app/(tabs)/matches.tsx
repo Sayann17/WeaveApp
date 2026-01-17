@@ -347,11 +347,11 @@ export default function MatchesScreen() {
                                     </View>
 
                                     {/* Separator Line */}
-                                    <View style={{ height: 1, backgroundColor: theme.border, marginHorizontal: normalize(16), marginTop: normalize(8), opacity: 0.3 }} />
+                                    <View style={{ height: 1, backgroundColor: theme.border, marginHorizontal: normalize(16), marginTop: normalize(8), opacity: 0.5 }} />
 
                                     {/* Bottom Row: Message Preview */}
                                     <Pressable
-                                        style={{ width: '100%', marginTop: normalize(10), flexDirection: 'row', paddingHorizontal: normalize(16) }}
+                                        style={{ width: '100%', marginTop: normalize(10), flexDirection: 'row' }}
                                         onPress={() => router.push({ pathname: '/chat/[id]', params: { id: match.chatId, participantId: match.id } })}
                                     >
                                         <View style={{ flex: 1, marginRight: normalize(10) }}>
@@ -370,14 +370,14 @@ export default function MatchesScreen() {
                                         </View>
 
                                         {/* Right Column: Time & Badge */}
-                                        <View style={{ alignItems: 'flex-end', justifyContent: 'flex-start', minWidth: normalize(50) }}>
+                                        <View style={{ alignItems: 'flex-end', justifyContent: 'flex-start', paddingRight: normalize(16) }}>
                                             {/* Timestamp */}
                                             <Text style={{ fontSize: normalize(11), color: theme.subText, marginBottom: normalize(4) }}>
-                                                {formatMessageTime(match.lastMessageTime)}
+                                                {formatMessageTime(match.lastMessageTime) || '—'}
                                             </Text>
 
                                             {/* Unread Badge */}
-                                            {match.unreadCount > 0 && (
+                                            {(match.unreadCount > 0 || match.hasUnread) && (
                                                 <View style={{
                                                     backgroundColor: theme.accent || '#00b894',
                                                     borderRadius: normalize(10),
@@ -388,7 +388,7 @@ export default function MatchesScreen() {
                                                     justifyContent: 'center'
                                                 }}>
                                                     <Text style={{ color: '#fff', fontSize: normalize(10), fontWeight: 'bold' }}>
-                                                        {match.unreadCount}
+                                                        {match.unreadCount || 1}
                                                     </Text>
                                                 </View>
                                             )}
