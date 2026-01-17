@@ -496,7 +496,7 @@ async function getMatches(driver, requestHeaders, responseHeaders) {
         for (const m of sortedMatches) {
             const userQuery = `
                 DECLARE $id AS Utf8;
-                SELECT id, name, age, photos, about, gender, ethnicity, macro_groups
+                SELECT id, name, age, photos, about, gender, ethnicity, religion, zodiac, macro_groups
                 FROM users WHERE id = $id;
             `;
             const { resultSets: userResults } = await session.executeQuery(userQuery, {
@@ -515,6 +515,9 @@ async function getMatches(driver, requestHeaders, responseHeaders) {
                     bio: u.about,
                     gender: u.gender,
                     ethnicity: u.ethnicity,
+                    religion: u.religion,
+                    zodiac: u.zodiac,
+                    religions: tryParse(u.religion),
                     macroGroups: tryParse(u.macro_groups),
                     sortTime: m.sortTime,
                     hasUnread: m.hasUnread,
