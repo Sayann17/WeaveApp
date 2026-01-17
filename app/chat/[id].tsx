@@ -549,7 +549,7 @@ export default function ChatScreen() {
               style={{ padding: 10 }}
               onPress={handleBlockInit}
             >
-              <Ionicons name="ban-outline" size={24} color="#ff4444" />
+              <Text style={{ color: '#ff4444', fontSize: 14, fontWeight: '600' }}>Заблокировать</Text>
             </Pressable>
           </View>
 
