@@ -507,11 +507,30 @@ async function getMatches(driver, requestHeaders, responseHeaders) {
             if (users.length > 0) {
                 const u = users[0];
 
-                // Parse religion properly
+                // Parse religion properly (handles double-escaped JSON)
                 let religionsArray = null;
                 if (u.religion) {
-                    const parsed = tryParse(u.religion);
-                    religionsArray = parsed ? (Array.isArray(parsed) ? parsed : [parsed]) : null;
+                    try {
+                        const parsed = tryParse(u.religion);
+                        if (parsed && Array.isArray(parsed)) {
+                            // Each element might be a JSON string like "\"buddhism\""
+                            religionsArray = parsed.map(item => {
+                                if (typeof item === 'string') {
+                                    // Try to parse again to remove escaped quotes
+                                    try {
+                                        return JSON.parse(item);
+                                    } catch {
+                                        return item;
+                                    }
+                                }
+                                return item;
+                            }).filter(item => item); // Remove empty values
+                        } else if (parsed) {
+                            religionsArray = [parsed];
+                        }
+                    } catch (e) {
+                        console.error('[getMatches] Failed to parse religion:', e);
+                    }
                 }
 
                 matches.push({
