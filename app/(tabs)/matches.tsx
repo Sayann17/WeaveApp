@@ -320,36 +320,54 @@ export default function MatchesScreen() {
                             matches.map((match) => (
                                 <View
                                     key={match.id}
-                                    style={[styles.card, { backgroundColor: themeType === 'wine' ? '#4f111c' : theme.cardBg }]}
+                                    style={[styles.card, { backgroundColor: themeType === 'wine' ? '#4f111c' : theme.cardBg, flexDirection: 'column', alignItems: 'flex-start' }]}
                                 >
+                                    {/* Top Row: Avatar, Name, Bio */}
+                                    <View style={{ flexDirection: 'row', alignItems: 'center', width: '100%' }}>
+                                        <Pressable
+                                            style={{ flexDirection: 'row', alignItems: 'center', flex: 1, padding: normalize(10) }}
+                                            onPress={() => router.push({ pathname: '/chat/[id]', params: { id: match.chatId, participantId: match.id } })}
+                                        >
+                                            <Image
+                                                source={{ uri: Array.isArray(match.photos) ? match.photos[0] : (match.photo || match.photos) }}
+                                                style={styles.avatar}
+                                                contentFit="cover"
+                                                transition={200}
+                                            />
+
+                                            <View style={styles.info}>
+                                                <Text style={[styles.name, { color: theme.text }]} numberOfLines={1}>
+                                                    {(match.name || 'Пользователь')}{match.age ? `, ${match.age}` : ''}
+                                                </Text>
+                                                <Text style={[styles.details, { color: themeType === 'wine' ? '#ffd9d9' : '#4ade80' }]} numberOfLines={1}>
+                                                    {getHeritageString(match)}
+                                                </Text>
+                                                {renderBioDetails(match)}
+                                            </View>
+                                        </Pressable>
+                                    </View>
+
+                                    {/* Separator Line */}
+                                    <View style={{ height: 1, backgroundColor: theme.border, marginHorizontal: normalize(16), opacity: 0.3 }} />
+
+                                    {/* Bottom Row: Message Preview */}
                                     <Pressable
-                                        style={{ flexDirection: 'row', alignItems: 'center', flex: 1, paddingVertical: normalize(12), paddingHorizontal: normalize(16) }}
+                                        style={{
+                                            flexDirection: 'row',
+                                            alignItems: 'center',
+                                            paddingHorizontal: normalize(16),
+                                            paddingBottom: normalize(12),
+                                            width: '100%'
+                                        }}
                                         onPress={() => router.push({ pathname: '/chat/[id]', params: { id: match.chatId, participantId: match.id } })}
                                     >
-                                        <Image
-                                            source={{ uri: Array.isArray(match.photos) ? match.photos[0] : (match.photo || match.photos) }}
-                                            style={styles.avatar}
-                                            contentFit="cover"
-                                            transition={200}
-                                        />
-
-                                        {/* Middle Column: Info & Message */}
-                                        <View style={[styles.info, { flex: 1, marginRight: normalize(10) }]}>
-                                            <Text style={[styles.name, { color: theme.text }]} numberOfLines={1}>
-                                                {(match.name || 'Пользователь')}{match.age ? `, ${match.age}` : ''}
-                                            </Text>
-                                            <Text style={[styles.details, { color: themeType === 'wine' ? '#ffd9d9' : '#4ade80' }]} numberOfLines={1}>
-                                                {getHeritageString(match)}
-                                            </Text>
-
-                                            {/* Separator Line */}
-                                            <View style={{ height: 1, backgroundColor: theme.border, marginVertical: normalize(8), width: '100%' }} />
-
+                                        <View style={{ flex: 1, marginRight: normalize(10) }}>
                                             <Text
                                                 style={{
                                                     fontSize: normalize(13),
                                                     color: match.unreadCount > 0 ? theme.text : theme.subText,
                                                     fontWeight: match.unreadCount > 0 ? '600' : '400',
+                                                    fontStyle: !match.lastMessage ? 'italic' : 'normal',
                                                 }}
                                                 numberOfLines={1}
                                             >
@@ -358,8 +376,8 @@ export default function MatchesScreen() {
                                         </View>
 
                                         {/* Right Column: Time & Badge */}
-                                        <View style={{ alignItems: 'flex-end', justifyContent: 'space-between', marginLeft: normalize(5), alignSelf: 'stretch', paddingVertical: normalize(5) }}>
-                                            <Text style={{ fontSize: normalize(11), color: theme.subText, marginBottom: normalize(5) }}>
+                                        <View style={{ alignItems: 'flex-end', justifyContent: 'center' }}>
+                                            <Text style={{ fontSize: normalize(11), color: theme.subText, marginBottom: normalize(4) }}>
                                                 {formatMessageTime(match.lastMessageTime)}
                                             </Text>
 
@@ -371,7 +389,8 @@ export default function MatchesScreen() {
                                                     paddingVertical: normalize(2),
                                                     minWidth: normalize(18),
                                                     alignItems: 'center',
-                                                    justifyContent: 'center'
+                                                    justifyContent: 'center',
+                                                    marginTop: normalize(2)
                                                 }}>
                                                     <Text style={{ color: '#fff', fontSize: normalize(10), fontWeight: 'bold' }}>
                                                         {match.unreadCount}
@@ -471,8 +490,9 @@ export default function MatchesScreen() {
                                 <Text style={[styles.emptyText, { color: theme.subText }]}>Вы пока никого не лайкнули</Text>
                             </View>
                         )
-                    )}
-                </ScrollView>
+                    )
+                    }
+                </ScrollView >
             </View >
         </ThemedBackground >
     );
