@@ -142,49 +142,74 @@ export default function MatchesScreen() {
     // Helper to render bio details (gender, zodiac, religion)
     const renderBioDetails = (profile: any) => {
         const items = [];
+        const dotColor = theme.subText;
 
-        // Gender icon
+        // 1. Gender (text)
         if (profile.gender) {
+            const genderText = profile.gender === 'female' ? 'Женщина' : 'Мужчина';
             items.push(
-                <Ionicons
-                    key="gender"
-                    name={profile.gender === 'male' ? 'male' : 'female'}
-                    size={14}
-                    color={theme.subText}
-                    style={{ marginRight: 6 }}
-                />
-            );
-        }
-
-        // Zodiac emoji
-        const zodiac = getZodiacSignById(profile.zodiac);
-        if (zodiac) {
-            items.push(
-                <Text key="zodiac" style={{ fontSize: 13, marginRight: 8, color: theme.subText }}>
-                    {zodiac.emoji}
+                <Text key="gender" style={{ fontSize: 13, color: theme.subText }}>
+                    {genderText}
                 </Text>
             );
         }
 
-        // Religion emoji + name
-        let relId = profile.religion;
-        if (!relId && profile.religions && profile.religions.length > 0) {
-            relId = profile.religions[0];
+        // 2. Zodiac (emoji + name)
+        if (profile.zodiac) {
+            const zodiac = getZodiacSignById(profile.zodiac);
+            if (zodiac) {
+                items.push(
+                    <Text key="zodiac" style={{ fontSize: 13, color: theme.subText }}>
+                        {zodiac.emoji} {zodiac.name}
+                    </Text>
+                );
+            }
         }
-        const religion = getReligionById(relId);
-        if (religion) {
+
+        // 3. Religion (from array or single value)
+        const getReligions = () => {
+            if (profile.religions && Array.isArray(profile.religions) && profile.religions.length > 0) {
+                return profile.religions.map((id: string) => {
+                    const rel = getReligionById(id);
+                    return rel ? rel.name : id;
+                }).join(', ');
+            } else if (profile.religion) {
+                const rel = getReligionById(profile.religion);
+                return rel ? rel.name : profile.religion;
+            }
+            return null;
+        };
+
+        const religionsText = getReligions();
+        if (religionsText) {
             items.push(
                 <Text key="religion" style={{ fontSize: 13, color: theme.subText }}>
-                    {religion.emoji} {religion.name}
+                    {religionsText}
                 </Text>
             );
         }
 
         if (items.length === 0) return null;
 
+        // Render items with dots between them
         return (
-            <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 4 }}>
-                {items}
+            <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 4, flexWrap: 'wrap' }}>
+                {items.map((item, index) => (
+                    <React.Fragment key={index}>
+                        {item}
+                        {index < items.length - 1 && (
+                            <View
+                                style={{
+                                    width: 3,
+                                    height: 3,
+                                    borderRadius: 1.5,
+                                    backgroundColor: dotColor,
+                                    marginHorizontal: 6,
+                                }}
+                            />
+                        )}
+                    </React.Fragment>
+                ))}
             </View>
         );
     };
