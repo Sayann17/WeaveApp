@@ -17,8 +17,6 @@ export const EventsFeed = ({ onScrollToTop }: { onScrollToTop?: () => void }) =>
     const { theme, themeType } = useTheme();
     const [events, setEvents] = useState<WeaveEvent[]>([]);
     const [loading, setLoading] = useState(true);
-    const [currentSlide, setCurrentSlide] = useState(0);
-
     const isLight = themeType === 'light';
 
     useEffect(() => {
@@ -27,17 +25,9 @@ export const EventsFeed = ({ onScrollToTop }: { onScrollToTop?: () => void }) =>
 
     const loadEvents = async () => {
         setLoading(true);
-        // data from API
         const data = await eventService.getEvents();
-
-        // Client-side sort: Priority based (sortOrder ASC)
-        // If sortOrder is missing, push to end.
-        data.sort((a, b) => {
-            const orderA = a.sortOrder ?? 9999;
-            const orderB = b.sortOrder ?? 9999;
-            return orderA - orderB;
-        });
-
+        // Client-side sort
+        data.sort((a, b) => (a.sortOrder ?? 9999) - (b.sortOrder ?? 9999));
         setEvents(data);
         setLoading(false);
     };
@@ -46,31 +36,69 @@ export const EventsFeed = ({ onScrollToTop }: { onScrollToTop?: () => void }) =>
         const currentEvent = events.find(e => e.id === eventId);
         const newIsGoing = !currentEvent?.isGoing;
 
-        // Optimistic update
         setEvents(prev => prev.map(e => e.id === eventId ? { ...e, isGoing: newIsGoing } : e));
-
         const success = await eventService.attendEvent(eventId);
         if (!success) {
-            // Revert on failure
             setEvents(prev => prev.map(e => e.id === eventId ? { ...e, isGoing: !newIsGoing } : e));
-        }
-    };
-
-    const handleScroll = (e: any) => {
-        const contentOffsetX = e.nativeEvent.contentOffset.x;
-        // Adjusted for new card width + margin
-        const cardWidth = width * 0.9 + 10;
-        const index = Math.round(contentOffsetX / cardWidth);
-
-        if (index !== currentSlide) {
-            setCurrentSlide(index);
-            // Scroll to top when changing slide
-            if (onScrollToTop) onScrollToTop();
         }
     };
 
     if (loading) return <View style={styles.center}><ActivityIndicator color={theme.text} /></View>;
     if (events.length === 0) return <View style={styles.center}><Text style={{ color: theme.subText }}>Событий пока нет</Text></View>;
+
+    return (
+        <EventsCarousel
+            events={events}
+            theme={theme}
+            isLight={isLight}
+            onScrollToTop={onScrollToTop}
+            onAttend={handleAttend}
+        />
+    );
+};
+
+export const EventsCarousel = ({
+    events,
+    theme,
+    isLight,
+    onScrollToTop,
+    onAttend
+}: {
+    events: WeaveEvent[],
+    theme: any,
+    isLight: boolean,
+    onScrollToTop?: () => void,
+    onAttend: (id: string) => void
+}) => {
+    const [currentSlide, setCurrentSlide] = useState(0);
+
+    const handleScroll = (e: any) => {
+        const contentOffsetX = e.nativeEvent.contentOffset.x;
+        const cardWidth = width * 0.9 + 15; // Adjusted for card width + marginRight
+        const index = Math.round(contentOffsetX / cardWidth);
+
+        if (index !== currentSlide) {
+            setCurrentSlide(index);
+            if (onScrollToTop) onScrollToTop();
+        }
+    };
+
+    // Pagination Logic: Max 3 dots
+    const total = events.length;
+    const maxDots = 3;
+    const showDots = total > 1;
+    let visibleDotsCount = Math.min(total, maxDots);
+
+    let activeDotIndex = 0;
+    if (total <= maxDots) {
+        activeDotIndex = currentSlide;
+    } else {
+        if (currentSlide === 0) activeDotIndex = 0;
+        else if (currentSlide === total - 1) activeDotIndex = visibleDotsCount - 1;
+        else activeDotIndex = 1; // Middle dot for any other slide
+    }
+
+    const dotsArray = Array.from({ length: visibleDotsCount });
 
     return (
         <View style={styles.container}>
@@ -91,24 +119,21 @@ export const EventsFeed = ({ onScrollToTop }: { onScrollToTop?: () => void }) =>
                             event={item}
                             theme={theme}
                             isLight={isLight}
-                            onAttend={handleAttend}
+                            onAttend={onAttend}
                             onCollapse={onScrollToTop}
                         />
                     )}
                 />
             </View>
 
-            {/* Paginator Dots */}
-            {events.length > 1 && (
-                <View style={styles.pagination}>
-                    {events.map((_, index) => (
+            {showDots && (
+                <View style={[styles.paginationContainer, { backgroundColor: isLight ? 'rgba(0,0,0,0.05)' : 'rgba(255,255,255,0.1)' }]}>
+                    {dotsArray.map((_, index) => (
                         <View
                             key={index}
                             style={[
                                 styles.paginationDot,
-                                index === currentSlide
-                                    ? { backgroundColor: theme.text, width: 20 }
-                                    : { backgroundColor: theme.subText }
+                                { backgroundColor: index === activeDotIndex ? '#FFF' : '#888' }
                             ]}
                         />
                     ))}
@@ -123,7 +148,6 @@ const EventCard = ({ event, theme, isLight, onAttend, onCollapse }: { event: Wea
 
     const toggleExpand = () => {
         if (expanded) {
-            // Collapsing
             setExpanded(false);
             if (onCollapse) onCollapse();
         } else {
@@ -133,7 +157,6 @@ const EventCard = ({ event, theme, isLight, onAttend, onCollapse }: { event: Wea
 
     return (
         <View style={styles.cardContainer}>
-            {/* Visual Layer */}
             <View style={[styles.imageWrapper, { backgroundColor: isLight ? '#f0f0f0' : '#1a1a1a' }]}>
                 <Image
                     source={EVENT_IMAGES[event.imageKey] || EVENT_IMAGES['uzor_love']}
@@ -143,7 +166,6 @@ const EventCard = ({ event, theme, isLight, onAttend, onCollapse }: { event: Wea
                 <View style={styles.overlay} />
             </View>
 
-            {/* Content Layer */}
             <View style={styles.contentContainer}>
                 <View style={styles.metaRow}>
                     <Text style={styles.dateText}>
@@ -162,38 +184,50 @@ const EventCard = ({ event, theme, isLight, onAttend, onCollapse }: { event: Wea
                     {event.description}
                 </Text>
 
-                {/* Show toggle only if text is likely long enough, but simple toggle is safer for UX here */}
-                <TouchableOpacity onPress={toggleExpand} hitSlop={{ top: 10, bottom: 10 }}>
-                    <Text style={{ color: Colors.primary, marginBottom: 20, fontWeight: '600' }}>
-                        {expanded ? 'Свернуть' : 'Показать полностью'}
-                    </Text>
-                </TouchableOpacity>
+                {/* Collapsed State: Show 'Show More' Toggle */}
+                {!expanded && (
+                    <TouchableOpacity onPress={toggleExpand} hitSlop={{ top: 10, bottom: 10 }}>
+                        <Text style={[styles.toggleText, { color: Colors.primary }]}>
+                            Показать полностью
+                        </Text>
+                    </TouchableOpacity>
+                )}
 
-                {/* Action Row */}
+                {/* Expanded State: Action Row then Collapse */}
                 {expanded && (
-                    <View style={styles.actionRow}>
-                        <TouchableOpacity
-                            onPress={() => Linking.openURL('https://forms.gle/uktQtqpxntwTo2Pb9')}
-                            style={styles.detailsButton}
-                        >
-                            <Text style={[styles.detailsText, { color: Colors.primary }]}>Подробнее</Text>
-                        </TouchableOpacity>
+                    <>
+                        <View style={styles.actionRow}>
+                            {/* Detail Button */}
+                            <TouchableOpacity
+                                onPress={() => Linking.openURL('https://forms.gle/uktQtqpxntwTo2Pb9')}
+                                style={styles.detailsButton}
+                            >
+                                <Text style={[styles.detailsText, { color: Colors.primary }]}>Подробнее</Text>
+                            </TouchableOpacity>
 
-                        <TouchableOpacity
-                            onPress={() => onAttend(event.id)}
-                            activeOpacity={0.8}
-                            style={[
-                                styles.attendButton,
-                                { backgroundColor: event.isGoing ? (isLight ? '#F2F2F7' : 'rgba(255,255,255,0.1)') : Colors.primary }
-                            ]}
-                        >
-                            {event.isGoing ? (
-                                <Ionicons name="checkmark" size={20} color={isLight ? Colors.primary : '#fff'} />
-                            ) : (
-                                <Text style={[styles.buttonText, { color: '#fff' }]}>Пойду</Text>
-                            )}
+                            {/* Attend Button */}
+                            <TouchableOpacity
+                                onPress={() => onAttend(event.id)}
+                                activeOpacity={0.8}
+                                style={[
+                                    styles.attendButton,
+                                    { backgroundColor: event.isGoing ? (isLight ? '#F2F2F7' : 'rgba(255,255,255,0.1)') : Colors.primary }
+                                ]}
+                            >
+                                {event.isGoing ? (
+                                    <Ionicons name="checkmark" size={20} color={isLight ? Colors.primary : '#fff'} />
+                                ) : (
+                                    <Text style={[styles.buttonText, { color: '#fff' }]}>Пойду</Text>
+                                )}
+                            </TouchableOpacity>
+                        </View>
+
+                        <TouchableOpacity onPress={toggleExpand} hitSlop={{ top: 10, bottom: 10 }} style={{ marginTop: 20 }}>
+                            <Text style={[styles.toggleText, { color: Colors.primary }]}>
+                                Свернуть
+                            </Text>
                         </TouchableOpacity>
-                    </View>
+                    </>
                 )}
             </View>
         </View>
@@ -237,6 +271,12 @@ const styles = StyleSheet.create({
     title: { fontSize: 28, fontWeight: '700', marginBottom: 10, lineHeight: 32 },
     description: { fontSize: 16, lineHeight: 24, marginBottom: 20 },
 
+    toggleText: {
+        fontSize: 16,
+        fontWeight: '700', // Bold as requested
+        marginBottom: 20
+    },
+
     actionRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
 
     attendButton: {
@@ -263,12 +303,16 @@ const styles = StyleSheet.create({
         fontWeight: '700',
     },
 
-    pagination: {
+    paginationContainer: {
         flexDirection: 'row',
         justifyContent: 'center',
         alignItems: 'center',
+        alignSelf: 'center', // Center it
         marginTop: 20,
         marginBottom: 30,
+        paddingHorizontal: 12,
+        paddingVertical: 8,
+        borderRadius: 20, // Rounded container logic
         gap: 8
     },
     paginationDot: {

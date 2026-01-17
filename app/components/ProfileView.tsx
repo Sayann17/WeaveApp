@@ -20,7 +20,9 @@ import {
 import { Colors } from '../constants/colors';
 import { useTelegram } from '../context/TelegramProvider';
 import { useTheme } from '../context/ThemeContext';
+import { eventService } from '../services/EventService';
 import { getReligionById, getZodiacSignById } from '../utils/basic_info';
+import { EventsCarousel } from './EventsFeed';
 
 const { width } = Dimensions.get('window');
 
@@ -71,6 +73,27 @@ export const ProfileView = ({ userData, isOwnProfile = false, isMatch = false }:
     const { theme, themeType } = useTheme();
     const { showBackButton, hideBackButton, setBackButtonHandler, isMobile, isDesktop, isWeb } = useTelegram();
     const [currentCarouselIndex, setCurrentCarouselIndex] = useState(0);
+    const [localEvents, setLocalEvents] = useState<any[]>(userData?.events || []);
+
+    useEffect(() => {
+        if (userData?.events) {
+            setLocalEvents(userData.events);
+        }
+    }, [userData]);
+
+    const handleAttendEvent = async (eventId: string) => {
+        const currentEvent = localEvents.find(e => e.id === eventId);
+        const newIsGoing = !currentEvent?.isGoing;
+
+        setLocalEvents(prev => prev.map(e => e.id === eventId ? { ...e, isGoing: newIsGoing } : e));
+
+        // Only allow attending if it's own profile? Or if it's a social feature?
+        // Assuming user can attend events seen on other profiles too if they are public events.
+        const success = await eventService.attendEvent(eventId);
+        if (!success) {
+            setLocalEvents(prev => prev.map(e => e.id === eventId ? { ...e, isGoing: !newIsGoing } : e));
+        }
+    };
 
     const [activePhotoIndex, setActivePhotoIndex] = useState(0);
     const [isFullScreenPhoto, setIsFullScreenPhoto] = useState(false);
@@ -352,53 +375,16 @@ export const ProfileView = ({ userData, isOwnProfile = false, isMatch = false }:
                 </View>
 
                 {/* EVENTS */}
-                {userData?.events && Array.isArray(userData.events) && userData.events.length > 0 && (
+                {localEvents && Array.isArray(localEvents) && localEvents.length > 0 && (
                     <View style={styles.sectionContainer}>
                         <Text style={[styles.sectionTitle, { color: subTextColor, marginBottom: 15 }]}>Мои события</Text>
-                        <View style={{ gap: 10 }}>
-                            {userData.events.map((evt: any, i: number) => {
-                                const imageSource = evt.imageKey === 'uzor_love'
-                                    ? require('../../assets/images/events/uzor_love.jpg')
-                                    : null;
-
-                                const eventContainerStyle = isLight
-                                    ? { backgroundColor: '#fff', borderWidth: 1, borderColor: '#eee' }
-                                    : {
-                                        backgroundColor: themeType === 'space' ? 'rgba(255,255,255,0.08)' : theme.cardBg,
-                                        borderWidth: 1,
-                                        borderColor: themeType === 'space' ? 'transparent' : theme.border
-                                    };
-
-                                return (
-                                    <View key={i} style={[
-                                        { flexDirection: 'row', padding: 10, borderRadius: 20, gap: 14, alignItems: 'center' },
-                                        eventContainerStyle
-                                    ]}>
-                                        <View style={{
-                                            width: 60, height: 60, borderRadius: 12,
-                                            overflow: 'hidden', backgroundColor: '#eee'
-                                        }}>
-                                            {imageSource ? (
-                                                <Image source={imageSource} style={{ width: '100%', height: '100%' }} contentFit="cover" />
-                                            ) : (
-                                                <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: Colors.primary }}>
-                                                    <Ionicons name="calendar" size={24} color="white" />
-                                                </View>
-                                            )}
-                                        </View>
-
-                                        <View style={{ flex: 1, paddingRight: 8 }}>
-                                            <Text style={{
-                                                color: '#E2E8F0', fontWeight: '700', fontSize: 16, marginBottom: 4, letterSpacing: -0.5
-                                            }} numberOfLines={1}>{evt.title}</Text>
-                                            <Text style={{ color: subTextColor, fontSize: 14, fontWeight: '500' }}>
-                                                {evt.date ? new Date(evt.date).toLocaleDateString('ru-RU', { day: 'numeric', month: 'long' }) : 'Дата уточняется'}
-                                            </Text>
-                                        </View>
-                                    </View>
-                                )
-                            })}
-                        </View>
+                        <EventsCarousel
+                            events={localEvents}
+                            theme={theme}
+                            isLight={isLight}
+                            onScrollToTop={() => { }} // Optional here
+                            onAttend={handleAttendEvent}
+                        />
                         <View style={{ height: 10 }} />
                     </View>
                 )}
