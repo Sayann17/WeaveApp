@@ -56,11 +56,11 @@ export default function TabLayout() {
           backgroundColor: themeType === 'space' ? Colors.tabBarBackground : theme.background, // Explicit dark BG for Space
           borderTopColor: isLight ? theme.border : 'transparent', // No visible border for Space
           elevation: 0,
-          borderTopWidth: isLight ? 1 : 0, // No border width for Space
+          borderTopWidth: isLight ? 1 : 0,
           height: 96,
           paddingBottom: 34,
           paddingTop: 8,
-          position: themeType === 'space' ? 'absolute' : undefined,
+          position: 'absolute',
           bottom: 0,
           left: 0,
           right: 0,

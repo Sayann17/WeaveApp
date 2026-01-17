@@ -69,7 +69,7 @@ interface ProfileViewProps {
     isMatch?: boolean; // Is this user a match (mutual like)?
 }
 
-export const ProfileView = ({ userData, isOwnProfile = false, isMatch = false }: ProfileViewProps) => {
+export const ProfileView = ({ userData, isOwnProfile = false, isMatch = false, bottomPadding = normalize(120) }: ProfileViewProps & { bottomPadding?: number }) => {
     const { theme, themeType } = useTheme();
     const { showBackButton, hideBackButton, setBackButtonHandler, isMobile, isDesktop, isWeb } = useTelegram();
     const [currentCarouselIndex, setCurrentCarouselIndex] = useState(0);
@@ -247,7 +247,7 @@ export const ProfileView = ({ userData, isOwnProfile = false, isMatch = false }:
     return (
         <>
             <ScrollView
-                contentContainerStyle={styles.scrollContent}
+                contentContainerStyle={[styles.scrollContent, { paddingBottom: bottomPadding }]}
                 showsVerticalScrollIndicator={false}
             >
                 {/* КАРУСЕЛЬ */}

@@ -15,7 +15,7 @@ export const THEMES = {
     text: '#1c1c1e',
     subText: '#555555',
     cardBg: '#fafaf2',
-    sheetBg: '#ffffff', // Pure white for sheets in light mode
+    sheetBg: '#f4f4e7', // Beige like main background
     border: '#e0e0e0',
     accent: '#000000',
     accentText: '#ffffff',

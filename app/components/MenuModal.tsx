@@ -15,6 +15,7 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme } from '../context/ThemeContext';
 import { yandexAuth } from '../services/yandex/AuthService';
+import { SpaceBackground } from './ui/SpaceBackground';
 
 interface MenuModalProps {
     visible: boolean;
@@ -85,6 +86,8 @@ export const MenuModal = ({ visible, onClose }: MenuModalProps) => {
         router.push(path as any);
     };
 
+    const MenuWrapper = themeType === 'space' ? SpaceBackground : View;
+
     return (
         <Modal
             visible={visible}
@@ -97,7 +100,7 @@ export const MenuModal = ({ visible, onClose }: MenuModalProps) => {
                     style={[
                         styles.menuContainer,
                         {
-                            backgroundColor: (theme as any).sheetBg || theme.cardBg, // Use new sheetBg
+                            backgroundColor: themeType === 'space' ? 'transparent' : ((theme as any).sheetBg || theme.cardBg),
                             paddingBottom: insets.bottom + 20,
                             overflow: 'hidden',
                             borderColor: theme.border,
@@ -106,7 +109,7 @@ export const MenuModal = ({ visible, onClose }: MenuModalProps) => {
                     ]}
                     onPress={(e) => e.stopPropagation()}
                 >
-                    <View style={{ flex: 1 }}>
+                    <MenuWrapper style={{ flex: 1 }}>
                         {/* Header */}
                         <View style={styles.header}>
                             <Text style={[styles.headerTitle, { color: theme.text }]}>Меню</Text>
@@ -118,8 +121,9 @@ export const MenuModal = ({ visible, onClose }: MenuModalProps) => {
                         {/* Menu Items */}
                         <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
                             {/* Edit Profile */}
+                            {/* Edit Profile */}
                             <Pressable
-                                style={[styles.menuItem, { backgroundColor: theme.cardBg }]}
+                                style={[styles.menuItem, { backgroundColor: isLight ? '#ffffff' : theme.cardBg }]}
                                 onPress={() => handleNavigation('/profile/edit')}
                             >
                                 <View style={[styles.iconContainer, { backgroundColor: isLight ? '#f0f0f0' : 'rgba(255,255,255,0.1)' }]}>
@@ -133,7 +137,7 @@ export const MenuModal = ({ visible, onClose }: MenuModalProps) => {
                             </Pressable>
 
                             {/* Visibility Toggle */}
-                            <View style={[styles.menuItem, { backgroundColor: theme.cardBg }]}>
+                            <View style={[styles.menuItem, { backgroundColor: isLight ? '#ffffff' : theme.cardBg }]}>
                                 <View style={[styles.iconContainer, { backgroundColor: isLight ? '#f0f0f0' : 'rgba(255,255,255,0.1)' }]}>
                                     <Ionicons name={isVisibleProfile ? "eye-outline" : "eye-off-outline"} size={24} color={theme.text} />
                                 </View>
@@ -158,7 +162,7 @@ export const MenuModal = ({ visible, onClose }: MenuModalProps) => {
                                 <Pressable
                                     style={[
                                         styles.themeOption,
-                                        { backgroundColor: theme.cardBg },
+                                        { backgroundColor: isLight ? '#ffffff' : theme.cardBg },
                                         themeType === 'light' && styles.themeOptionActive
                                     ]}
                                     onPress={() => setTheme('light')}
@@ -172,7 +176,7 @@ export const MenuModal = ({ visible, onClose }: MenuModalProps) => {
                                 <Pressable
                                     style={[
                                         styles.themeOption,
-                                        { backgroundColor: theme.cardBg },
+                                        { backgroundColor: isLight ? '#ffffff' : theme.cardBg },
                                         themeType === 'space' && styles.themeOptionActive
                                     ]}
                                     onPress={() => setTheme('space')}
@@ -186,7 +190,7 @@ export const MenuModal = ({ visible, onClose }: MenuModalProps) => {
                                 <Pressable
                                     style={[
                                         styles.themeOption,
-                                        { backgroundColor: theme.cardBg },
+                                        { backgroundColor: isLight ? '#ffffff' : theme.cardBg },
                                         themeType === 'wine' && styles.themeOptionActive
                                     ]}
                                     onPress={() => setTheme('wine')}
@@ -200,7 +204,7 @@ export const MenuModal = ({ visible, onClose }: MenuModalProps) => {
 
 
                         </ScrollView>
-                    </View>
+                    </MenuWrapper>
                 </Pressable>
             </Pressable >
         </Modal >
