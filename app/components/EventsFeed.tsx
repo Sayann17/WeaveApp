@@ -1,6 +1,6 @@
 import { Ionicons } from '@expo/vector-icons';
 import React, { useEffect, useState } from 'react';
-import { ActivityIndicator, Dimensions, Image, Linking, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { ActivityIndicator, Dimensions, FlatList, Image, Linking, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { Colors } from '../constants/colors';
 import { useTheme } from '../context/ThemeContext';
 import { eventService, WeaveEvent } from '../services/EventService';
@@ -14,6 +14,8 @@ const EVENT_IMAGES: Record<string, any> = {
 
 export const EventsFeed = () => {
     const { theme, themeType } = useTheme();
+    const [events, setEvents] = useState<WeaveEvent[]>([]);
+    const [loading, setLoading] = useState(true);
     const [currentSlide, setCurrentSlide] = useState(0);
 
     const isLight = themeType === 'light';
@@ -224,6 +226,5 @@ const styles = StyleSheet.create({
         width: 8,
         height: 8,
         borderRadius: 4,
-        transition: 'all 0.3s'
     }
 });

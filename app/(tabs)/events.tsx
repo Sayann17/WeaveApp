@@ -4,6 +4,7 @@ import { StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { EventsFeed } from '../components/EventsFeed';
 import { ThemedBackground } from '../components/ThemedBackground';
+import { useTelegram } from '../context/TelegramProvider';
 import { useTheme } from '../context/ThemeContext';
 import { getPlatformPadding } from '../utils/platformPadding';
 
