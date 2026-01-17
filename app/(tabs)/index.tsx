@@ -20,7 +20,7 @@ import { useTelegram } from '../context/TelegramProvider';
 import { useTheme } from '../context/ThemeContext';
 import { User } from '../services/interfaces/IAuthService';
 import { yandexAuth } from '../services/yandex/AuthService';
-import { eventService } from '../services/EventService';
+import { normalize } from '../utils/normalize';
 import { getPlatformPadding } from '../utils/platformPadding';
 
 export default function ProfileScreen() {
@@ -134,8 +134,8 @@ const styles = StyleSheet.create({
   safeArea: { flex: 1 },
 
   modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'flex-end' },
-  menuContainer: { borderTopLeftRadius: 20, borderTopRightRadius: 20, padding: 20, paddingBottom: 40 },
-  menuItem: { flexDirection: 'row', alignItems: 'center', paddingVertical: 15, gap: 15 },
-  menuText: { fontSize: 18, fontWeight: '500' },
-  divider: { height: 1, marginVertical: 10 }
+  menuContainer: { borderTopLeftRadius: normalize(20), borderTopRightRadius: normalize(20), padding: normalize(20), paddingBottom: normalize(40) },
+  menuItem: { flexDirection: 'row', alignItems: 'center', paddingVertical: normalize(15), gap: normalize(15) },
+  menuText: { fontSize: normalize(18), fontWeight: '500' },
+  divider: { height: 1, marginVertical: normalize(10) }
 });
