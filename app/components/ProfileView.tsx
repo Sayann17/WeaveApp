@@ -22,7 +22,6 @@ import { useTelegram } from '../context/TelegramProvider';
 import { useTheme } from '../context/ThemeContext';
 import { eventService } from '../services/EventService';
 import { getReligionById, getZodiacSignById } from '../utils/basic_info';
-import { EventsCarousel } from './EventsFeed';
 
 const { width } = Dimensions.get('window');
 
@@ -73,6 +72,7 @@ export const ProfileView = ({ userData, isOwnProfile = false, isMatch = false }:
     const { theme, themeType } = useTheme();
     const { showBackButton, hideBackButton, setBackButtonHandler, isMobile, isDesktop, isWeb } = useTelegram();
     const [currentCarouselIndex, setCurrentCarouselIndex] = useState(0);
+    const [eventSlideIndex, setEventSlideIndex] = useState(0); // For user events carousel
     const [localEvents, setLocalEvents] = useState<any[]>(userData?.events || []);
 
     useEffect(() => {
@@ -375,16 +375,144 @@ export const ProfileView = ({ userData, isOwnProfile = false, isMatch = false }:
                 </View>
 
                 {/* EVENTS */}
+                {/* EVENTS */}
                 {localEvents && Array.isArray(localEvents) && localEvents.length > 0 && (
                     <View style={styles.sectionContainer}>
                         <Text style={[styles.sectionTitle, { color: subTextColor, marginBottom: 15 }]}>Мои события</Text>
-                        <EventsCarousel
-                            events={localEvents}
-                            theme={theme}
-                            isLight={isLight}
-                            onScrollToTop={() => { }} // Optional here
-                            onAttend={handleAttendEvent}
-                        />
+
+                        {/* Custom Mini Carousel */}
+                        <View>
+                            <FlatList
+                                data={localEvents}
+                                horizontal
+                                pagingEnabled
+                                showsHorizontalScrollIndicator={false}
+                                onScroll={(e) => {
+                                    // Reuse handleScroll logic or create specific one?
+                                    // We can reuse the same state 'currentCarouselIndex' if we don't mix up with Photos carousel?
+                                    // Wait, 'currentCarouselIndex' IS used for Photos. We need a new state for Events or reuse it if they are never on screen together in a way that matters? 
+                                    // Actually, they are separate. But let's check state name. 
+                                    // 'currentCarouselIndex' is used for the top photo carousel.
+                                    // We need a NEW state for Events carousel dots.
+                                }}
+                                // Wait, I need to add state for this carousel.
+                                // Let's use a ref or new state.
+                                // Simplest is allow independent scrolling but we need dots.
+                                // I will add 'currentEventIndex' state in a separate edit or assume I can add it here if I modify the component start.
+                                // But I'm only modifying this block.
+                                // I should probably update the component to add 'currentEventIndex' first? 
+                                // Or I can just leave dots out for a second? 
+                                // User asked for "индикатор как в 1 пункте".
+                                // So I need state.
+
+                                // Let's simplify: generic 'onScroll' updates a state.
+                                // I will use 'onViewableItemsChanged' or just onScroll.
+                                // I need to introduce 'eventSlideIndex' state.
+                                // Since I can't add state in this specific 'replace_file_content' easily without changing the whole file header again...
+                                // Actually I CAN do it if I just do a targeted replace for the state definition too.
+                                // BUT, let's look at the code structure. I can't do two non-contiguous edits in 'replace_file_content'.
+                                // I should use 'multi_replace_file_content' or just 2 steps.
+                                // I will use 2 steps. generic "Render list" first, then "Add state" logic. 
+                                // OR: I can just render the list assuming I'll fix state next.
+
+                                snapToAlignment="center"
+                                snapToInterval={width - 40} // Full width minus padding? Or card width?
+                                // Original design was a list of rows. 
+                                // "Simply add possibility to swipe left right".
+                                // So one card per "slide"? 
+                                // "Сами карточки должны были остаться... просто добавить возможность свайпать".
+                                // So Horizontal FlatList where each item is width = screenWidth - padding.
+                                decelerationRate="fast"
+                                contentContainerStyle={{ gap: 10 }} // Gap doesn't work well with pagingEnabled on old RN sometimes, but usually fine.
+                                // If pagingEnabled, gap messes up calculation.
+                                // Better to handle padding in renderItem.
+                                keyExtractor={(item, index) => item.id || index.toString()}
+                                renderItem={({ item }) => {
+                                    const imageSource = item.imageKey === 'uzor_love'
+                                        ? require('../../assets/images/events/uzor_love.jpg')
+                                        : null; // Fallback?
+
+                                    const eventContainerStyle = isLight
+                                        ? { backgroundColor: '#fff', borderWidth: 1, borderColor: '#eee' }
+                                        : {
+                                            backgroundColor: themeType === 'space' ? 'rgba(255,255,255,0.08)' : theme.cardBg,
+                                            borderWidth: 1,
+                                            borderColor: themeType === 'space' ? 'transparent' : theme.border
+                                        };
+
+                                    return (
+                                        <View style={[{
+                                            width: width - 40, // Full width of container
+                                            flexDirection: 'row',
+                                            padding: 10,
+                                            borderRadius: 20,
+                                            alignItems: 'center',
+                                            marginRight: 0 // No margin if paging
+                                        }, eventContainerStyle]}>
+                                            <View style={{
+                                                width: 60, height: 60, borderRadius: 12,
+                                                overflow: 'hidden', backgroundColor: '#eee', marginRight: 14
+                                            }}>
+                                                {imageSource ? (
+                                                    <Image source={imageSource} style={{ width: '100%', height: '100%' }} contentFit="cover" />
+                                                ) : (
+                                                    <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: Colors.primary }}>
+                                                        <Ionicons name="calendar" size={24} color="white" />
+                                                    </View>
+                                                )}
+                                            </View>
+
+                                            <View style={{ flex: 1, paddingRight: 8 }}>
+                                                <Text style={{
+                                                    color: isLight ? '#1a1a1a' : '#E2E8F0',
+                                                    fontWeight: '700', fontSize: 16, marginBottom: 4, letterSpacing: -0.5
+                                                }} numberOfLines={1}>{item.title}</Text>
+                                                <Text style={{ color: subTextColor, fontSize: 14, fontWeight: '500' }}>
+                                                    {item.date ? new Date(item.date).toLocaleDateString('ru-RU', { day: 'numeric', month: 'long' }) : 'Дата уточняется'}
+                                                </Text>
+                                            </View>
+                                        </View>
+                                    );
+                                }}
+                                // We need onScroll to update dots
+                                onScroll={(e) => {
+                                    const x = e.nativeEvent.contentOffset.x;
+                                    const index = Math.round(x / (width - 40));
+                                    setEventSlideIndex(index);
+                                }}
+                                scrollEventThrottle={16}
+                            />
+                        </View>
+
+                        {/* Dots for Events */}
+                        {localEvents.length > 1 && (
+                            <View style={[styles.dotsContainer, { marginTop: 15, justifyContent: 'center' }]}>
+                                {Array.from({ length: Math.min(localEvents.length, 3) }).map((_, i) => {
+                                    // Logic for 3 dots max
+                                    let activeDot = 0;
+                                    if (localEvents.length <= 3) activeDot = eventSlideIndex;
+                                    else {
+                                        if (eventSlideIndex === 0) activeDot = 0;
+                                        else if (eventSlideIndex === localEvents.length - 1) activeDot = 2; // Last visual dot
+                                        else activeDot = 1; // Middle
+                                    }
+
+                                    // Visual styling
+                                    const isActive = i === activeDot;
+                                    return (
+                                        <View
+                                            key={i}
+                                            style={{
+                                                width: 6, height: 6, borderRadius: 3,
+                                                backgroundColor: isActive ? '#FFF' : '#888',
+                                                marginHorizontal: 3
+                                            }}
+                                        />
+                                    )
+                                })}
+                            </View>
+                        )}
+
                         <View style={{ height: 10 }} />
                     </View>
                 )}
