@@ -489,27 +489,60 @@ export default function MatchesScreen() {
                             matches.map((match) => (
                                 <View
                                     key={match.id}
-                                    style={[styles.card, { backgroundColor: theme.cardBg }]}
+                                    style={[styles.card, { backgroundColor: theme.cardBg, flexDirection: 'column', alignItems: 'flex-start' }]}
                                 >
+                                    {/* Top Row: Avatar, Name, Menu Button */}
+                                    <View style={{ flexDirection: 'row', alignItems: 'center', width: '100%' }}>
+                                        <Pressable
+                                            style={{ flexDirection: 'row', alignItems: 'center', flex: 1 }}
+                                            onPress={() => router.push({ pathname: '/chat/[id]', params: { id: match.chatId, participantId: match.id } })}
+                                        >
+                                            <Image
+                                                source={{ uri: Array.isArray(match.photos) ? match.photos[0] : (match.photo || match.photos) }}
+                                                style={styles.avatar}
+                                                contentFit="cover"
+                                                transition={200}
+                                            />
+                                            <View style={styles.info}>
+                                                <Text style={[styles.name, { color: theme.text }]} numberOfLines={1}>
+                                                    {(match.name || 'Пользователь')}{match.age ? `, ${match.age}` : ''}
+                                                </Text>
+                                                <Text style={[styles.details, { color: themeType === 'wine' ? '#ffd9d9' : '#4ade80' }]} numberOfLines={1}>
+                                                    {getHeritageString(match)}
+                                                </Text>
+                                                {renderBioDetails(match)}
+                                            </View>
+                                        </Pressable>
+
+                                        {/* Menu Button */}
+                                        <Pressable
+                                            style={{ padding: 10 }}
+                                            onPress={() => {
+                                                setSelectedMatch(match);
+                                                setMenuVisible(true);
+                                            }}
+                                        >
+                                            <Ionicons name="menu" size={24} color={theme.subText} />
+                                        </Pressable>
+                                    </View>
+
+                                    {/* Bottom Row: Message Preview */}
                                     <Pressable
-                                        style={{ flexDirection: 'row', alignItems: 'center', flex: 1 }}
+                                        style={{ width: '100%', marginTop: 10 }}
                                         onPress={() => router.push({ pathname: '/chat/[id]', params: { id: match.chatId, participantId: match.id } })}
                                     >
-                                        <Image
-                                            source={{ uri: Array.isArray(match.photos) ? match.photos[0] : (match.photo || match.photos) }}
-                                            style={styles.avatar}
-                                            contentFit="cover"
-                                            transition={200}
-                                        />
-                                        <View style={styles.info}>
-                                            <Text style={[styles.name, { color: theme.text }]} numberOfLines={1}>
-                                                {(match.name || 'Пользователь')}{match.age ? `, ${match.age}` : ''}
-                                            </Text>
-                                            <Text style={[styles.details, { color: themeType === 'wine' ? '#ffd9d9' : '#4ade80' }]} numberOfLines={1}>
-                                                {getHeritageString(match)}
-                                            </Text>
-                                            {renderBioDetails(match)}
-                                        </View>
+                                        <Text
+                                            style={{
+                                                fontSize: 14,
+                                                color: match.hasUnread ? theme.text : (match.lastMessage ? theme.subText : theme.subText),
+                                                fontWeight: match.hasUnread ? '700' : '400',
+                                                fontStyle: !match.lastMessage ? 'italic' : 'normal',
+                                                lineHeight: 20
+                                            }}
+                                            numberOfLines={2}
+                                        >
+                                            {match.lastMessage || 'Какое сплетение создаст ваш Узор... Проверим?'}
+                                        </Text>
                                     </Pressable>
                                 </View>
                             ))
