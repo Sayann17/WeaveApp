@@ -15,7 +15,6 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme } from '../context/ThemeContext';
 import { yandexAuth } from '../services/yandex/AuthService';
-import { ThemedBackground } from './ThemedBackground';
 
 interface MenuModalProps {
     visible: boolean;
@@ -98,14 +97,16 @@ export const MenuModal = ({ visible, onClose }: MenuModalProps) => {
                     style={[
                         styles.menuContainer,
                         {
-                            backgroundColor: themeType === 'space' ? 'transparent' : theme.background,
+                            backgroundColor: (theme as any).sheetBg || theme.cardBg, // Use new sheetBg
                             paddingBottom: insets.bottom + 20,
-                            overflow: 'hidden' // Ensure gradient respects border radius
+                            overflow: 'hidden',
+                            borderColor: theme.border,
+                            borderWidth: 1 // Ensure visible border for dark themes
                         }
                     ]}
                     onPress={(e) => e.stopPropagation()}
                 >
-                    <ThemedBackground>
+                    <View style={{ flex: 1 }}>
                         {/* Header */}
                         <View style={styles.header}>
                             <Text style={[styles.headerTitle, { color: theme.text }]}>Меню</Text>
@@ -199,7 +200,7 @@ export const MenuModal = ({ visible, onClose }: MenuModalProps) => {
 
 
                         </ScrollView>
-                    </ThemedBackground>
+                    </View>
                 </Pressable>
             </Pressable >
         </Modal >

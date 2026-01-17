@@ -349,7 +349,7 @@ export default function ExploreScreen() {
                                 </Pressable>
                             </View>
 
-                            <ScrollView style={{ padding: 20 }}>
+                            <ScrollView style={{ padding: 20 }} contentContainerStyle={{ paddingBottom: normalize(120) }}>
                                 {/* ПОЛ */}
                                 <Text style={[styles.filterLabel, { color: theme.text }]}>Кого искать?</Text>
                                 <View style={styles.genderRow}>
@@ -501,12 +501,12 @@ const styles = StyleSheet.create({
 
     // Floating Buttons
     // Floating Buttons
-    floatingActions: { position: 'absolute', bottom: normalize(110), alignSelf: 'center', flexDirection: 'row', gap: normalize(20), zIndex: 100 },
+    floatingActions: { position: 'absolute', bottom: normalize(130), alignSelf: 'center', flexDirection: 'row', gap: normalize(20), zIndex: 100 },
     btn: { width: normalize(60), height: normalize(60), borderRadius: normalize(30), justifyContent: 'center', alignItems: 'center' },
     filterBtnFloating: { backgroundColor: '#00b894' },
     passBtn: { backgroundColor: 'rgba(255,255,255,0.1)', borderWidth: 1, borderColor: 'rgba(255,255,255,0.2)' },
     likeBtn: { backgroundColor: '#fff' },
-    floatingFilterBtn: { position: 'absolute', bottom: normalize(110), right: normalize(30), width: normalize(60), height: normalize(60), borderRadius: normalize(30), justifyContent: 'center', alignItems: 'center', zIndex: 100 },
+    floatingFilterBtn: { position: 'absolute', bottom: normalize(130), right: normalize(30), width: normalize(60), height: normalize(60), borderRadius: normalize(30), justifyContent: 'center', alignItems: 'center', zIndex: 100 },
     lightShadow: { shadowColor: '#000', shadowOffset: { width: 0, height: normalize(2) }, shadowOpacity: 0.1, shadowRadius: 4 },
     darkShadow: { shadowColor: '#000', shadowOffset: { width: 0, height: normalize(2) }, shadowOpacity: 0.3, shadowRadius: 6 },
 

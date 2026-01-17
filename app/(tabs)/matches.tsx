@@ -313,7 +313,7 @@ export default function MatchesScreen() {
                     </ScrollView>
                 </View>
 
-                <ScrollView contentContainerStyle={styles.list}>
+                <ScrollView contentContainerStyle={[styles.list, { paddingBottom: normalize(120) }]}>
                     {activeTab === 'matches' ? (
                         matches.length > 0 ? (
                             matches.map((match) => (

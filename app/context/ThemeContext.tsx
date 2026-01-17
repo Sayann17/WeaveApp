@@ -14,32 +14,35 @@ export const THEMES = {
     background: '#f4f4e7',
     text: '#1c1c1e',
     subText: '#555555',
-    cardBg: '#fafaf2', // Soft beige instead of pure white
+    cardBg: '#fafaf2',
+    sheetBg: '#ffffff', // Pure white for sheets in light mode
     border: '#e0e0e0',
-    accent: '#000000', // Темные кнопки (Black)
-    accentText: '#ffffff', // Белый текст на черной кнопке
+    accent: '#000000',
+    accentText: '#ffffff',
     icon: '#1c1c1e',
     tint: 'rgba(0,0,0,0.05)'
   },
   space: {
     type: 'space' as ThemeType,
-    background: '#0b0d15', // Темно-синий
+    background: '#0b0d15',
     text: '#ffffff',
     subText: '#a0a0a0',
-    cardBg: 'rgba(23, 27, 44, 0.85)', // Полупрозрачный темный
+    cardBg: 'rgba(23, 27, 44, 0.85)',
+    sheetBg: '#1a1d2d', // Solid dark for space sheets
     border: 'rgba(255,255,255,0.1)',
-    accent: '#ffffff', // Белая кнопка для контраста (как Black в светлой теме)
-    accentText: '#000000', // Черный текст на белой кнопке
+    accent: '#ffffff',
+    accentText: '#000000',
     icon: '#ffffff',
     tint: 'rgba(255,255,255,0.1)'
   },
   wine: {
     type: 'wine' as ThemeType,
-    background: '#4a0e1c', // Темно-бордовый
+    background: '#4a0e1c',
     text: '#ffffff',
     subText: 'rgba(255,255,255,0.7)',
-    cardBg: 'rgba(255, 255, 255, 0.1)', // Светлая прозрачность (белое стекло)
-    border: 'rgba(255, 255, 255, 0.2)', // Тонкая светлая граница
+    cardBg: 'rgba(255, 255, 255, 0.1)',
+    sheetBg: '#591c2b', // Solid wine color for sheets/modals
+    border: 'rgba(255, 255, 255, 0.2)',
     accent: '#ffffff',
     accentText: '#000000',
     icon: '#ffffff',

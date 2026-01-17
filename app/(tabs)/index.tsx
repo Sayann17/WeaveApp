@@ -1,17 +1,13 @@
-import { Ionicons } from '@expo/vector-icons';
 import { useFocusEffect, useRouter } from 'expo-router';
 import React, { useCallback, useState } from 'react';
 import {
   ActivityIndicator,
-  Modal,
   StatusBar,
   StyleSheet,
-  Text,
-  TouchableOpacity,
-  TouchableWithoutFeedback,
   View
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { MenuModal } from '../components/MenuModal';
 import { ProfileView } from '../components/ProfileView';
 import { ThemedBackground } from '../components/ThemedBackground';
 import { Colors } from '../constants/colors';
@@ -20,7 +16,6 @@ import { useTelegram } from '../context/TelegramProvider';
 import { useTheme } from '../context/ThemeContext';
 import { User } from '../services/interfaces/IAuthService';
 import { yandexAuth } from '../services/yandex/AuthService';
-import { normalize } from '../utils/normalize';
 import { getPlatformPadding } from '../utils/platformPadding';
 
 export default function ProfileScreen() {
@@ -87,55 +82,11 @@ export default function ProfileScreen() {
         </View>
       </ThemedBackground>
 
-      {/* МЕНЮ */}
-      <Modal
-        animationType="fade"
-        transparent={true}
-        visible={isMenuVisible}
-        onRequestClose={() => setMenuVisible(false)}
-      >
-        <TouchableWithoutFeedback onPress={() => setMenuVisible(false)}>
-          <View style={styles.modalOverlay}>
-            <View style={[styles.menuContainer, { backgroundColor: theme.cardBg }]}>
-              <TouchableOpacity style={styles.menuItem} onPress={() => { setMenuVisible(false); router.push('/profile/edit'); }}>
-                <Ionicons name="create-outline" size={24} color={theme.text} />
-                <Text style={[styles.menuText, { color: theme.text }]}>Редактировать профиль</Text>
-              </TouchableOpacity>
-
-              <TouchableOpacity style={styles.menuItem} onPress={() => { setMenuVisible(false); router.push('/notifications'); }}>
-                <Ionicons name="notifications-outline" size={24} color={theme.text} />
-                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 5 }}>
-                  <Text style={[styles.menuText, { color: theme.text }]}>Уведомления</Text>
-                  {unreadMessagesCount > 0 && (
-                    <View style={{ backgroundColor: '#e1306c', borderRadius: 10, paddingHorizontal: 6, paddingVertical: 2 }}>
-                      <Text style={{ color: 'white', fontSize: 10, fontWeight: 'bold' }}>{unreadMessagesCount}</Text>
-                    </View>
-                  )}
-                </View>
-              </TouchableOpacity>
-
-              <View style={[styles.divider, { backgroundColor: theme.border }]} />
-
-              <TouchableOpacity style={styles.menuItem} onPress={() => { setMenuVisible(false); yandexAuth.logout(); }}>
-                <Ionicons name="log-out-outline" size={24} color={Colors.error} />
-                <Text style={[styles.menuText, { color: Colors.error }]}>Выйти</Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-        </TouchableWithoutFeedback>
-      </Modal>
-
-
+      <MenuModal visible={isMenuVisible} onClose={() => setMenuVisible(false)} />
     </>
   );
 }
 
 const styles = StyleSheet.create({
   safeArea: { flex: 1 },
-
-  modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'flex-end' },
-  menuContainer: { borderTopLeftRadius: normalize(20), borderTopRightRadius: normalize(20), padding: normalize(20), paddingBottom: normalize(40) },
-  menuItem: { flexDirection: 'row', alignItems: 'center', paddingVertical: normalize(15), gap: normalize(15) },
-  menuText: { fontSize: normalize(18), fontWeight: '500' },
-  divider: { height: 1, marginVertical: normalize(10) }
 });
