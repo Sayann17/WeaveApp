@@ -347,11 +347,11 @@ export default function MatchesScreen() {
                                     </View>
 
                                     {/* Separator Line */}
-                                    <View style={{ height: 1, backgroundColor: theme.subText, marginHorizontal: normalize(16), marginTop: normalize(8), opacity: 0.2 }} />
+                                    <View style={{ height: 1, backgroundColor: theme.border, marginHorizontal: normalize(16), marginTop: normalize(8) }} />
 
                                     {/* Bottom Row: Message Preview */}
                                     <Pressable
-                                        style={{ width: '100%', marginTop: normalize(10), flexDirection: 'row', alignItems: 'flex-start' }}
+                                        style={{ width: '100%', marginTop: normalize(10), flexDirection: 'row', alignItems: 'center' }}
                                         onPress={() => router.push({ pathname: '/chat/[id]', params: { id: match.chatId, participantId: match.id } })}
                                     >
                                         <View style={{ flex: 1, marginRight: normalize(10) }}>
@@ -370,7 +370,7 @@ export default function MatchesScreen() {
                                         </View>
 
                                         {/* Right Column: Time & Badge */}
-                                        <View style={{ alignItems: 'flex-end', justifyContent: 'flex-start', marginRight: normalize(16), gap: normalize(4) }}>
+                                        <View style={{ flexDirection: 'row', alignItems: 'center', marginRight: normalize(16), gap: normalize(6) }}>
                                             {/* Timestamp */}
                                             <Text style={{ fontSize: normalize(11), color: theme.subText }}>
                                                 {formatMessageTime(match.lastMessageTime) || (match.lastMessageTime ? String(match.lastMessageTime).substring(0, 10) : '')}
