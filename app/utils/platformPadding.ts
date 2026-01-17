@@ -15,7 +15,9 @@ export function getPlatformPadding(
     isMobile: boolean,
     offset: number = 85
 ): number {
-    return isMobile ? insets.top + offset : insets.top;
+    // For Desktop/Web, we usually don't need extra padding as the window handles it.
+    // We force 0 to avoid "Padding 92" issues mentioned by the user.
+    return isMobile ? insets.top + offset : 0;
 }
 
 /**
