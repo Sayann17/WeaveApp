@@ -29,9 +29,14 @@ export const EventsFeed = () => {
         setLoading(true);
         // data from API
         const data = await eventService.getEvents();
-        // Client-side sort: Nearest future event first
-        // If sorting DESC (newest first), swap a and b. Here assuming ASC (earliest first).
-        data.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+
+        // Client-side sort: Priority based (sortOrder ASC)
+        // If sortOrder is missing, push to end.
+        data.sort((a, b) => {
+            const orderA = a.sortOrder ?? 9999;
+            const orderB = b.sortOrder ?? 9999;
+            return orderA - orderB;
+        });
 
         setEvents(data);
         setLoading(false);

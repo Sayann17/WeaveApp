@@ -7,6 +7,7 @@ export interface WeaveEvent {
     date: string; // ISO string from backend
     imageKey: string;
     isGoing: boolean;
+    sortOrder?: number;
 }
 
 const API_URL = 'https://d5dg37j92h7tg2f7sf87.o2p3jdjj.apigw.yandexcloud.net';

@@ -860,7 +860,7 @@ async function getEvents(driver, requestHeaders, responseHeaders) {
 
     await driver.tableClient.withSession(async (session) => {
         const query = `
-            SELECT * FROM events ORDER BY event_date ASC;
+            SELECT id, title, description, event_date, image_key, sort_order FROM events;
         `;
         const { resultSets } = await session.executeQuery(query);
         const allEvents = TypedData.createNativeObjects(resultSets[0]);
@@ -894,6 +894,7 @@ async function getEvents(driver, requestHeaders, responseHeaders) {
             description: e.description,
             date: e.event_date,
             imageKey: e.image_key,
+            sortOrder: e.sort_order, // Map snake_case to camelCase
             isGoing: myEventIds.includes(e.id)
         }));
     });
