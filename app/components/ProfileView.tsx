@@ -387,34 +387,6 @@ export const ProfileView = ({ userData, isOwnProfile = false, isMatch = false }:
                                 horizontal
                                 pagingEnabled
                                 showsHorizontalScrollIndicator={false}
-                                onScroll={(e) => {
-                                    // Reuse handleScroll logic or create specific one?
-                                    // We can reuse the same state 'currentCarouselIndex' if we don't mix up with Photos carousel?
-                                    // Wait, 'currentCarouselIndex' IS used for Photos. We need a new state for Events or reuse it if they are never on screen together in a way that matters? 
-                                    // Actually, they are separate. But let's check state name. 
-                                    // 'currentCarouselIndex' is used for the top photo carousel.
-                                    // We need a NEW state for Events carousel dots.
-                                }}
-                                // Wait, I need to add state for this carousel.
-                                // Let's use a ref or new state.
-                                // Simplest is allow independent scrolling but we need dots.
-                                // I will add 'currentEventIndex' state in a separate edit or assume I can add it here if I modify the component start.
-                                // But I'm only modifying this block.
-                                // I should probably update the component to add 'currentEventIndex' first? 
-                                // Or I can just leave dots out for a second? 
-                                // User asked for "индикатор как в 1 пункте".
-                                // So I need state.
-
-                                // Let's simplify: generic 'onScroll' updates a state.
-                                // I will use 'onViewableItemsChanged' or just onScroll.
-                                // I need to introduce 'eventSlideIndex' state.
-                                // Since I can't add state in this specific 'replace_file_content' easily without changing the whole file header again...
-                                // Actually I CAN do it if I just do a targeted replace for the state definition too.
-                                // BUT, let's look at the code structure. I can't do two non-contiguous edits in 'replace_file_content'.
-                                // I should use 'multi_replace_file_content' or just 2 steps.
-                                // I will use 2 steps. generic "Render list" first, then "Add state" logic. 
-                                // OR: I can just render the list assuming I'll fix state next.
-
                                 snapToAlignment="center"
                                 snapToInterval={width - 40} // Full width minus padding? Or card width?
                                 // Original design was a list of rows. 
