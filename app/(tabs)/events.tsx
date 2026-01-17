@@ -1,6 +1,6 @@
 // app/(tabs)/index.tsx
 import React from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { EventsFeed } from '../components/EventsFeed';
 import { ThemedBackground } from '../components/ThemedBackground';
@@ -16,8 +16,10 @@ export default function HomeScreen() {
   return (
     <ThemedBackground>
       <View style={[styles.container, { paddingTop: getPlatformPadding(insets, isMobile) }]}>
-        <Text style={[styles.headerTitle, { color: theme.text }]}>Мероприятия</Text>
-        <EventsFeed />
+        <ScrollView contentContainerStyle={{ paddingBottom: 100 }} showsVerticalScrollIndicator={false}>
+          <Text style={[styles.headerTitle, { color: theme.text }]}>Мероприятия</Text>
+          <EventsFeed />
+        </ScrollView>
       </View>
     </ThemedBackground>
   );

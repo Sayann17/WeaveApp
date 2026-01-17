@@ -110,7 +110,7 @@ export const EventsFeed = () => {
                                 <View style={styles.actionRow}>
                                     {/* Facepile Mockup */}
                                     <TouchableOpacity
-                                        onPress={() => Linking.openURL('https://t.me/uzor_of_love')}
+                                        onPress={() => Linking.openURL('https://forms.gle/uktQtqpxntwTo2Pb9')}
                                         style={styles.detailsButton}
                                     >
                                         <Text style={[styles.detailsText, { color: Colors.primary }]}>Подробнее</Text>
