@@ -1,21 +1,22 @@
 // app/(tabs)/index.tsx
 import React from 'react';
-import { View, Text, StyleSheet, ScrollView } from 'react-native';
+import { StyleSheet, Text, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { EventsFeed } from '../components/EventsFeed';
 import { ThemedBackground } from '../components/ThemedBackground';
 import { useTheme } from '../context/ThemeContext';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { getPlatformPadding } from '../utils/platformPadding';
 
 export default function HomeScreen() {
   const { theme } = useTheme();
   const insets = useSafeAreaInsets();
+  const { isMobile } = useTelegram();
 
   return (
     <ThemedBackground>
-      <View style={styles.container}>
-        <ScrollView style={styles.content} contentContainerStyle={{ paddingBottom: 100, paddingTop: 92 }}>
-          <EventsFeed />
-        </ScrollView>
+      <View style={[styles.container, { paddingTop: getPlatformPadding(insets, isMobile) }]}>
+        <Text style={[styles.headerTitle, { color: theme.text }]}>Мероприятия</Text>
+        <EventsFeed />
       </View>
     </ThemedBackground>
   );
@@ -41,5 +42,13 @@ const styles = StyleSheet.create({
     fontSize: 16,
     textAlign: 'center',
     lineHeight: 24,
+  },
+  headerTitle: {
+    fontSize: 34,
+    fontWeight: '800',
+    paddingHorizontal: 20,
+    marginBottom: 20,
+    marginTop: 20,
+    letterSpacing: -1
   },
 });
