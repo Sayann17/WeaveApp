@@ -31,8 +31,12 @@ export default function PhotoSection({ photos, setPhotos, isFirstEdit }: PhotoSe
   );
 }
 
+import { normalize } from '../../utils/normalize';
+
+// ... imports
+
 const styles = StyleSheet.create({
-  section: { marginBottom: 30 },
-  sectionTitle: { fontSize: 18, fontWeight: 'bold', marginBottom: 15 },
+  section: { marginBottom: normalize(30) },
+  sectionTitle: { fontSize: normalize(18), fontWeight: 'bold', marginBottom: normalize(15) },
   requiredStar: { color: '#e1306c' },
 });

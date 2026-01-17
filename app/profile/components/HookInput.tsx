@@ -45,19 +45,23 @@ export default function HookInput({ label, value, onChange, placeholder, icon }:
   );
 }
 
+import { normalize } from '../../utils/normalize';
+
+// ... imports
+
 const styles = StyleSheet.create({
   container: {
-    marginBottom: 24,
+    marginBottom: normalize(24),
   },
   headerRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
-    marginBottom: 10,
+    gap: normalize(8),
+    marginBottom: normalize(10),
   },
   label: {
     color: Colors.text,
-    fontSize: 16,
+    fontSize: normalize(16),
     fontWeight: '600',
     flex: 1, // Чтобы текст переносился, если длинный
   },
@@ -65,12 +69,12 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.card,
     borderWidth: 1,
     borderColor: Colors.border,
-    borderRadius: 12,
-    padding: 15,
+    borderRadius: normalize(12),
+    padding: normalize(15),
     color: Colors.text,
-    fontSize: 16,
-    lineHeight: 22,
-    minHeight: 80,
+    fontSize: normalize(16),
+    lineHeight: normalize(22),
+    minHeight: normalize(80),
     textAlignVertical: 'top',
   },
 });

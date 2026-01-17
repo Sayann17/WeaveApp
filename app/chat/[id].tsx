@@ -25,6 +25,7 @@ import { yandexAuth } from '../services/yandex/AuthService';
 import { yandexChat, type Message } from '../services/yandex/ChatService';
 import { yandexMatch } from '../services/yandex/MatchService';
 import { YandexUserService } from '../services/yandex/UserService';
+import { normalize } from '../utils/normalize';
 import { getPlatformPadding } from '../utils/platformPadding';
 
 
@@ -471,7 +472,7 @@ export default function ChatScreen() {
                     <View style={styles.reasonHeader}>
                       <Text style={[styles.reasonTitle, { color: theme.text }]}>Укажите причину</Text>
                       <Pressable onPress={() => setReasonModalVisible(false)}>
-                        <Ionicons name="close" size={24} color={theme.subText} />
+                        <Ionicons name="close-circle" size={normalize(20)} color={theme.subText} />
                       </Pressable>
                     </View>
 
@@ -482,7 +483,7 @@ export default function ChatScreen() {
                         onPress={() => submitBlock(reason)}
                       >
                         <Text style={[styles.reasonText, { color: theme.text }]}>{reason}</Text>
-                        <Ionicons name="chevron-forward" size={20} color={theme.subText} />
+                        <Ionicons name="chevron-forward" size={normalize(20)} color={theme.subText} />
                       </Pressable>
                     ))}
 
@@ -536,7 +537,7 @@ export default function ChatScreen() {
                 />
               ) : (
                 <View style={[styles.fallbackAvatar, { backgroundColor: theme.cardBg }]}>
-                  <Ionicons name="person" size={20} color={theme.subText} />
+                  <Ionicons name="person" size={normalize(20)} color={theme.subText} />
                 </View>
               )}
               <Text style={[styles.participantName, { color: theme.text }]} numberOfLines={1}>
@@ -549,7 +550,7 @@ export default function ChatScreen() {
               style={{ padding: 10 }}
               onPress={handleBlockInit}
             >
-              <Ionicons name="ban-outline" size={24} color="#ff4444" />
+              <Ionicons name="ban-outline" size={normalize(24)} color="#ff4444" />
             </Pressable>
           </View>
 
@@ -579,7 +580,7 @@ export default function ChatScreen() {
                   </Text>
                 </View>
                 <Pressable onPress={cancelAction} style={styles.closeAction}>
-                  <Ionicons name="close" size={20} color={theme.subText} />
+                  <Ionicons name="close" size={normalize(20)} color={theme.subText} />
                 </Pressable>
               </View>
             )}
@@ -614,7 +615,7 @@ export default function ChatScreen() {
                 >
                   <Ionicons
                     name={editingMessage ? "checkmark" : "arrow-up"}
-                    size={20}
+                    size={normalize(20)}
                     color="#ffffff"
                   />
                 </Pressable>
@@ -633,8 +634,8 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingHorizontal: 15,
-    paddingVertical: 10,
+    paddingHorizontal: normalize(15),
+    paddingVertical: normalize(10),
     borderBottomWidth: 1,
   },
   participantInfo: {
@@ -644,123 +645,123 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   participantAvatar: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    marginRight: 10,
+    width: normalize(36),
+    height: normalize(36),
+    borderRadius: normalize(18),
+    marginRight: normalize(10),
     backgroundColor: '#ddd',
   },
   fallbackAvatar: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
+    width: normalize(36),
+    height: normalize(36),
+    borderRadius: normalize(18),
     justifyContent: 'center',
     alignItems: 'center',
-    marginRight: 10,
+    marginRight: normalize(10),
   },
   participantName: {
-    fontSize: 16,
+    fontSize: normalize(16),
     fontWeight: '600',
   },
 
   // CHAT AREA
   chatContainer: { flex: 1 },
-  messagesContent: { padding: 15, paddingBottom: 20 },
+  messagesContent: { padding: normalize(15), paddingBottom: normalize(20) },
 
   // MESSAGES
-  messageContainer: { marginBottom: 10, flexDirection: 'row' },
+  messageContainer: { marginBottom: normalize(10), flexDirection: 'row' },
   myMessage: { justifyContent: 'flex-end' },
   theirMessage: { justifyContent: 'flex-start' },
 
   messageBubble: {
     maxWidth: '75%',
-    padding: 12,
-    borderRadius: 18,
+    padding: normalize(12),
+    borderRadius: normalize(18),
   },
   myBubble: {
-    borderBottomRightRadius: 4,
+    borderBottomRightRadius: normalize(4),
   },
   theirBubble: {
-    borderBottomLeftRadius: 4,
+    borderBottomLeftRadius: normalize(4),
   },
 
-  messageText: { fontSize: 16, lineHeight: 22 },
+  messageText: { fontSize: normalize(16), lineHeight: normalize(22) },
   myMessageText: { color: '#ffffff' },
 
-  metaContainer: { flexDirection: 'row', justifyContent: 'flex-end', marginTop: 4, alignItems: 'center' },
-  messageTime: { fontSize: 11, textAlign: 'right' },
+  metaContainer: { flexDirection: 'row', justifyContent: 'flex-end', marginTop: normalize(4), alignItems: 'center' },
+  messageTime: { fontSize: normalize(11), textAlign: 'right' },
   myMessageTime: { color: 'rgba(255,255,255,0.6)' },
-  editedLabel: { fontSize: 10, marginRight: 4 },
+  editedLabel: { fontSize: normalize(10), marginRight: normalize(4) },
 
   replyPreview: {
     borderLeftWidth: 2,
-    paddingLeft: 8,
-    marginBottom: 8,
+    paddingLeft: normalize(8),
+    marginBottom: normalize(8),
     opacity: 0.8
   },
-  replySender: { fontWeight: '600', fontSize: 12, marginBottom: 2 },
-  replyText: { fontSize: 12 },
+  replySender: { fontWeight: '600', fontSize: normalize(12), marginBottom: normalize(2) },
+  replyText: { fontSize: normalize(12) },
 
-  systemMessageContainer: { alignItems: 'center', marginVertical: 15 },
+  systemMessageContainer: { alignItems: 'center', marginVertical: normalize(15) },
   systemMessageText: {
-    fontSize: 12,
+    fontSize: normalize(12),
     backgroundColor: 'rgba(0,0,0,0.05)',
-    paddingHorizontal: 12,
-    paddingVertical: 4,
-    borderRadius: 10,
+    paddingHorizontal: normalize(12),
+    paddingVertical: normalize(4),
+    borderRadius: normalize(10),
   },
 
   // DATE SEPARATOR
-  dateSeparatorContainer: { alignItems: 'center', marginVertical: 20 },
+  dateSeparatorContainer: { alignItems: 'center', marginVertical: normalize(20) },
   dateSeparatorText: {
-    fontSize: 13,
+    fontSize: normalize(13),
     fontWeight: '600',
     backgroundColor: 'rgba(0,0,0,0.05)',
-    paddingHorizontal: 16,
-    paddingVertical: 6,
-    borderRadius: 12,
+    paddingHorizontal: normalize(16),
+    paddingVertical: normalize(6),
+    borderRadius: normalize(12),
   },
 
   // ACTION BANNER
   actionBanner: {
     flexDirection: 'row',
     alignItems: 'center',
-    padding: 10,
+    padding: normalize(10),
     borderTopWidth: 1,
     borderBottomWidth: 1,
   },
-  actionInfo: { flex: 1, paddingRight: 10 },
-  actionTitle: { fontWeight: '600', fontSize: 12, marginBottom: 2 },
-  actionText: { fontSize: 12 },
-  closeAction: { padding: 5 },
+  actionInfo: { flex: 1, paddingRight: normalize(10) },
+  actionTitle: { fontWeight: '600', fontSize: normalize(12), marginBottom: normalize(2) },
+  actionText: { fontSize: normalize(12) },
+  closeAction: { padding: normalize(5) },
 
   // INPUT
   inputWrapper: {
-    padding: 10,
+    padding: normalize(10),
   },
   inputContainer: {
     flexDirection: 'row',
     alignItems: 'flex-end',
-    borderRadius: 25,
-    padding: 5,
+    borderRadius: normalize(25),
+    padding: normalize(5),
     borderWidth: 0,
   },
   textInput: {
     flex: 1,
-    paddingHorizontal: 15,
-    paddingVertical: 10,
-    fontSize: 16,
-    lineHeight: 22,
-    maxHeight: 145, // ~6 lines
+    paddingHorizontal: normalize(15),
+    paddingVertical: normalize(10),
+    fontSize: normalize(16),
+    lineHeight: normalize(22),
+    maxHeight: normalize(145), // ~6 lines
     textAlignVertical: 'center',
   },
   sendButton: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
+    width: normalize(40),
+    height: normalize(40),
+    borderRadius: normalize(20),
     justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: 2,
+    marginBottom: normalize(2),
   },
   sendButtonDisabled: {
     opacity: 0.5,
@@ -775,84 +776,79 @@ const styles = StyleSheet.create({
   },
   alertBox: {
     width: '80%',
-    maxWidth: 400,
-    padding: 20,
-    borderRadius: 12,
+    maxWidth: normalize(400),
+    padding: normalize(20),
+    borderRadius: normalize(12),
   },
   alertTitle: {
-    fontSize: 18,
+    fontSize: normalize(18),
     fontWeight: '700',
-    marginBottom: 10,
+    marginBottom: normalize(10),
     textAlign: 'center',
   },
   alertMessage: {
-    fontSize: 14,
-    lineHeight: 20,
-    marginBottom: 20,
+    fontSize: normalize(14),
+    lineHeight: normalize(20),
+    marginBottom: normalize(20),
     textAlign: 'center',
   },
   alertButtons: {
     flexDirection: 'row',
-    gap: 10,
+    gap: normalize(10),
   },
   alertButton: {
     flex: 1,
-    paddingVertical: 12,
-    borderRadius: 8,
+    paddingVertical: normalize(12),
+    borderRadius: normalize(8),
     alignItems: 'center',
+    justifyContent: 'center',
   },
   alertButtonText: {
-    fontSize: 16,
+    fontSize: normalize(16),
     fontWeight: '600',
   },
+
+  // REASON SHEET (Slide Up)
   reasonSheet: {
     width: '100%',
-    maxHeight: '80%',
-    borderTopLeftRadius: 20,
-    borderTopRightRadius: 20,
-    padding: 20,
+    borderTopLeftRadius: normalize(20),
+    borderTopRightRadius: normalize(20),
+    padding: normalize(20),
+    paddingBottom: normalize(40),
   },
   reasonHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 20,
+    marginBottom: normalize(20),
   },
   reasonTitle: {
-    fontSize: 18,
-    fontWeight: '700',
+    fontSize: normalize(20),
+    fontWeight: 'bold',
   },
   reasonItem: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingVertical: 15,
+    paddingVertical: normalize(15),
     borderBottomWidth: 1,
   },
   reasonText: {
-    fontSize: 16,
+    fontSize: normalize(16),
   },
-  label: {
-    fontSize: 14,
-    marginBottom: 8,
-  },
+  label: { fontSize: normalize(14), marginBottom: normalize(8), fontWeight: '500' },
   inputContainerReason: {
-    borderRadius: 10,
-    padding: 10,
-    minHeight: 80,
+    borderRadius: normalize(12),
+    paddingHorizontal: normalize(12),
+    paddingVertical: normalize(12),
+    marginBottom: normalize(15),
   },
-  input: {
-    fontSize: 14,
-    lineHeight: 20,
-  },
+  input: { fontSize: normalize(16), minHeight: normalize(60), textAlignVertical: 'top' },
   submitButton: {
-    marginTop: 15,
-    paddingVertical: 12,
-    borderRadius: 8,
+    borderRadius: normalize(12),
+    paddingVertical: normalize(14),
     alignItems: 'center',
+    marginTop: normalize(10),
   },
-  submitButtonText: {
-    fontSize: 16,
-    fontWeight: '600',
-  },
+  submitButtonText: { fontSize: normalize(16), fontWeight: '600' },
 });

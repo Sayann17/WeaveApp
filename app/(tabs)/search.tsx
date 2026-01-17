@@ -24,6 +24,7 @@ import { yandexAuth } from '../services/yandex/AuthService';
 import { YandexUserService } from '../services/yandex/UserService';
 import { religions } from '../utils/basic_info';
 import { ethnicityGroups } from '../utils/ethnicities';
+import { normalize } from '../utils/normalize';
 import { getPlatformPadding } from '../utils/platformPadding';
 
 const userService = new YandexUserService();
@@ -468,99 +469,99 @@ export default function ExploreScreen() {
 const styles = StyleSheet.create({
     container: { flex: 1 },
     safeArea: { flex: 1 },
-    center: { justifyContent: 'center', alignItems: 'center', gap: 20 },
+    center: { justifyContent: 'center', alignItems: 'center', gap: normalize(20) },
 
 
     modeSwitcher: {
         flexDirection: 'row',
-        borderRadius: 12,
-        padding: 4,
+        borderRadius: normalize(12),
+        padding: normalize(4),
         alignSelf: 'flex-start',
-        marginBottom: 8
+        marginBottom: normalize(8)
     },
     modeBtn: {
         flexDirection: 'row',
         alignItems: 'center',
-        paddingVertical: 6,
-        paddingHorizontal: 12,
-        borderRadius: 8,
-        gap: 6
+        paddingVertical: normalize(6),
+        paddingHorizontal: normalize(12),
+        borderRadius: normalize(8),
+        gap: normalize(6)
     },
-    modeText: { fontWeight: '600', fontSize: 13 },
-    modeDesc: { fontSize: 12, marginLeft: 5 },
+    modeText: { fontWeight: '600', fontSize: normalize(13) },
+    modeDesc: { fontSize: normalize(12), marginLeft: normalize(5) },
 
-    filterBtn: { padding: 8, borderRadius: 12 },
+    filterBtn: { padding: normalize(8), borderRadius: normalize(12) },
 
-    emptyText: { fontSize: 16 },
+    emptyText: { fontSize: normalize(16) },
 
     // Actions
-    actionBtn: { width: '100%', paddingVertical: 15, borderRadius: 12, alignItems: 'center' },
-    actionBtnOutline: { width: '100%', paddingVertical: 15, borderRadius: 12, alignItems: 'center', borderWidth: 1 },
-    actionBtnText: { fontSize: 16, fontWeight: 'bold', color: '#fff' },
+    actionBtn: { width: '100%', paddingVertical: normalize(15), borderRadius: normalize(12), alignItems: 'center' },
+    actionBtnOutline: { width: '100%', paddingVertical: normalize(15), borderRadius: normalize(12), alignItems: 'center', borderWidth: 1 },
+    actionBtnText: { fontSize: normalize(16), fontWeight: 'bold', color: '#fff' },
 
     // Floating Buttons
     // Floating Buttons
-    floatingActions: { position: 'absolute', bottom: 110, alignSelf: 'center', flexDirection: 'row', gap: 20, zIndex: 100 },
-    btn: { width: 60, height: 60, borderRadius: 30, justifyContent: 'center', alignItems: 'center' },
+    floatingActions: { position: 'absolute', bottom: normalize(110), alignSelf: 'center', flexDirection: 'row', gap: normalize(20), zIndex: 100 },
+    btn: { width: normalize(60), height: normalize(60), borderRadius: normalize(30), justifyContent: 'center', alignItems: 'center' },
     filterBtnFloating: { backgroundColor: '#00b894' },
     passBtn: { backgroundColor: 'rgba(255,255,255,0.1)', borderWidth: 1, borderColor: 'rgba(255,255,255,0.2)' },
     likeBtn: { backgroundColor: '#fff' },
-    floatingFilterBtn: { position: 'absolute', bottom: 110, right: 30, width: 60, height: 60, borderRadius: 30, justifyContent: 'center', alignItems: 'center', zIndex: 100 },
-    lightShadow: { shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.1, shadowRadius: 4 },
-    darkShadow: { shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.3, shadowRadius: 6 },
+    floatingFilterBtn: { position: 'absolute', bottom: normalize(110), right: normalize(30), width: normalize(60), height: normalize(60), borderRadius: normalize(30), justifyContent: 'center', alignItems: 'center', zIndex: 100 },
+    lightShadow: { shadowColor: '#000', shadowOffset: { width: 0, height: normalize(2) }, shadowOpacity: 0.1, shadowRadius: 4 },
+    darkShadow: { shadowColor: '#000', shadowOffset: { width: 0, height: normalize(2) }, shadowOpacity: 0.3, shadowRadius: 6 },
 
     // Modal
     modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'flex-end' },
-    modalContainer: { height: '80%', borderTopLeftRadius: 20, borderTopRightRadius: 20, overflow: 'hidden' }, // Added overflow: hidden
-    modalHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', padding: 20 },
-    modalTitle: { fontSize: 24, fontWeight: 'bold' },
-    closeBtn: { padding: 5 },
-    modalFooter: { padding: 20, borderTopWidth: 1 },
+    modalContainer: { height: '80%', borderTopLeftRadius: normalize(20), borderTopRightRadius: normalize(20), overflow: 'hidden' }, // Added overflow: hidden
+    modalHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', padding: normalize(20) },
+    modalTitle: { fontSize: normalize(24), fontWeight: 'bold' },
+    closeBtn: { padding: normalize(5) },
+    modalFooter: { padding: normalize(20), borderTopWidth: 1 },
 
     // Filter Button
     filterButton: {
         flexDirection: 'row',
         alignItems: 'center',
-        paddingVertical: 12,
-        paddingHorizontal: 20,
-        borderRadius: 12,
-        gap: 8,
-        marginTop: 10,
+        paddingVertical: normalize(12),
+        paddingHorizontal: normalize(20),
+        borderRadius: normalize(12),
+        gap: normalize(8),
+        marginTop: normalize(10),
     },
     filterButtonText: {
         color: '#fff',
-        fontSize: 16,
+        fontSize: normalize(16),
         fontWeight: '600',
     },
 
     // Filter Elements
-    filterLabel: { fontSize: 16, fontWeight: '600', marginBottom: 10 },
-    genderRow: { flexDirection: 'row', gap: 10 },
-    genderBtn: { flex: 1, paddingVertical: 10, borderWidth: 1, borderRadius: 10, alignItems: 'center' },
+    filterLabel: { fontSize: normalize(16), fontWeight: '600', marginBottom: normalize(10) },
+    genderRow: { flexDirection: 'row', gap: normalize(10) },
+    genderBtn: { flex: 1, paddingVertical: normalize(10), borderWidth: 1, borderRadius: normalize(10), alignItems: 'center' },
     genderText: { fontWeight: '600' },
 
     // Age Range
-    ageRow: { flexDirection: 'row', alignItems: 'center', gap: 15 },
-    ageLabel: { fontSize: 12, marginBottom: 5, fontWeight: '500' },
-    ageInput: { borderWidth: 1, borderRadius: 10, padding: 12, fontSize: 16, textAlign: 'center' },
-    ageSeparator: { fontSize: 20, fontWeight: '300', marginTop: 20 },
+    ageRow: { flexDirection: 'row', alignItems: 'center', gap: normalize(15) },
+    ageLabel: { fontSize: normalize(12), marginBottom: normalize(5), fontWeight: '500' },
+    ageInput: { borderWidth: 1, borderRadius: normalize(10), padding: normalize(12), fontSize: normalize(16), textAlign: 'center' },
+    ageSeparator: { fontSize: normalize(20), fontWeight: '300', marginTop: normalize(20) },
 
     // Chips for ethnicity/religion
-    chipContainer: { flexDirection: 'row', flexWrap: 'wrap', gap: 10 },
+    chipContainer: { flexDirection: 'row', flexWrap: 'wrap', gap: normalize(10) },
     chip: {
         flexDirection: 'row',
         alignItems: 'center',
-        paddingHorizontal: 12,
-        paddingVertical: 8,
-        borderRadius: 12,
+        paddingHorizontal: normalize(12),
+        paddingVertical: normalize(8),
+        borderRadius: normalize(12),
         borderWidth: 1,
-        gap: 6,
+        gap: normalize(6),
     },
-    chipEmoji: { fontSize: 16 },
-    chipText: { fontSize: 14, fontWeight: '500' },
+    chipEmoji: { fontSize: normalize(16) },
+    chipText: { fontSize: normalize(14), fontWeight: '500' },
 
     row: { flexDirection: 'row', alignItems: 'center' },
-    input: { borderWidth: 1, borderRadius: 10, padding: 12, fontSize: 16 },
-    applyBtn: { paddingVertical: 16, borderRadius: 12, alignItems: 'center' },
-    applyBtnText: { color: '#fff', fontSize: 18, fontWeight: 'bold' }
+    input: { borderWidth: 1, borderRadius: normalize(10), padding: normalize(12), fontSize: normalize(16) },
+    applyBtn: { paddingVertical: normalize(16), borderRadius: normalize(12), alignItems: 'center' },
+    applyBtnText: { color: '#fff', fontSize: normalize(18), fontWeight: 'bold' }
 });

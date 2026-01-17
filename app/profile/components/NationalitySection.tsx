@@ -91,37 +91,41 @@ export default function NationalitySection({
   );
 }
 
+import { normalize } from '../../utils/normalize';
+
+// ... imports
+
 const styles = StyleSheet.create({
   section: {
-    marginBottom: 30,
+    marginBottom: normalize(30),
   },
   sectionTitle: {
-    fontSize: 18,
+    fontSize: normalize(18),
     fontWeight: 'bold',
-    marginBottom: 15,
+    marginBottom: normalize(15),
   },
   sectionSubtitle: {
-    fontSize: 14,
-    marginBottom: 15,
+    fontSize: normalize(14),
+    marginBottom: normalize(15),
   },
   requiredStar: {
     color: '#e1306c',
   },
   nationalityScrollContainer: {
-    marginBottom: 10,
+    marginBottom: normalize(10),
   },
   nationalityList: {
-    paddingHorizontal: 10,
-    paddingVertical: 10,
+    paddingHorizontal: normalize(10),
+    paddingVertical: normalize(10),
   },
   nationalityCard: {
     width: screenWidth * 0.7,
     borderWidth: 2,
-    borderRadius: 16,
-    padding: 25,
+    borderRadius: normalize(16),
+    padding: normalize(25),
     alignItems: 'center',
     justifyContent: 'center',
-    marginHorizontal: 10,
+    marginHorizontal: normalize(10),
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.25,
@@ -137,15 +141,15 @@ const styles = StyleSheet.create({
     borderColor: '#e1306c',
   },
   nationalityFlag: {
-    fontSize: 48,
-    marginBottom: 15,
+    fontSize: normalize(48),
+    marginBottom: normalize(15),
   },
   nationalityName: {
     color: '#ffffff',
-    fontSize: 20,
+    fontSize: normalize(20),
     fontWeight: '600',
     textAlign: 'center',
-    marginBottom: 5,
+    marginBottom: normalize(5),
   },
   nationalityNameSelected: {
     color: '#ffffff',
@@ -153,7 +157,7 @@ const styles = StyleSheet.create({
   },
   nationalityHint: {
     color: '#cccccc',
-    fontSize: 14,
+    fontSize: normalize(14),
     textAlign: 'center',
     fontStyle: 'italic',
   },
@@ -161,12 +165,12 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    marginTop: 15,
-    gap: 8,
+    marginTop: normalize(15),
+    gap: normalize(8),
   },
   scrollIndicatorText: {
     color: '#666',
-    fontSize: 12,
+    fontSize: normalize(12),
     fontWeight: '500',
   },
 });

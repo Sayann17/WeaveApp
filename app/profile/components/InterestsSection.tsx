@@ -57,58 +57,62 @@ export default function InterestsSection({ interests, onEditPress }: InterestsSe
   );
 }
 
+import { normalize } from '../../utils/normalize';
+
+// ... imports
+
 const styles = StyleSheet.create({
   section: {
-    marginBottom: 30,
+    marginBottom: normalize(30),
   },
   sectionHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 15,
+    marginBottom: normalize(15),
   },
   sectionTitle: {
-    fontSize: 18,
+    fontSize: normalize(18),
     fontWeight: 'bold',
   },
   editButton: {
-    padding: 8,
+    padding: normalize(8),
     backgroundColor: '#22c55e',
-    borderRadius: 20,
-    paddingHorizontal: 12,
+    borderRadius: normalize(20),
+    paddingHorizontal: normalize(12),
   },
   interestsContainer: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: 8,
+    gap: normalize(8),
   },
   interestTag: {
     backgroundColor: 'rgba(255, 255, 255, 0.05)',
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 16,
+    paddingHorizontal: normalize(12),
+    paddingVertical: normalize(6),
+    borderRadius: normalize(16),
     borderWidth: 1,
     borderColor: 'rgba(255, 255, 255, 0.1)',
   },
   interestTagText: {
-    fontSize: 14,
+    fontSize: normalize(14),
     fontWeight: '500',
   },
   addInterestsButton: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    padding: 20,
+    padding: normalize(20),
     borderWidth: 2,
     borderColor: '#22c55e',
     backgroundColor: 'rgba(34, 197, 94, 0.1)',
     borderStyle: 'solid',
-    borderRadius: 16,
-    gap: 10,
+    borderRadius: normalize(16),
+    gap: normalize(10),
   },
   addInterestsText: {
     color: '#22c55e',
-    fontSize: 17,
+    fontSize: normalize(17),
     fontWeight: 'bold',
   },
 });

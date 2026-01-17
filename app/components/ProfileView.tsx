@@ -22,6 +22,7 @@ import { useTelegram } from '../context/TelegramProvider';
 import { useTheme } from '../context/ThemeContext';
 import { eventService } from '../services/EventService';
 import { getReligionById, getZodiacSignById } from '../utils/basic_info';
+import { normalize } from '../utils/normalize';
 
 const { width } = Dimensions.get('window');
 
@@ -581,30 +582,30 @@ export const ProfileView = ({ userData, isOwnProfile = false, isMatch = false }:
 };
 
 const styles = StyleSheet.create({
-    scrollContent: { paddingBottom: 20, alignItems: 'center' },
+    scrollContent: { paddingBottom: normalize(20), alignItems: 'center' },
 
     // --- ФОТО ---
     carouselContainer: {
         height: PHOTO_HEIGHT,
-        marginTop: 10,
-        marginBottom: 20,
+        marginTop: normalize(10),
+        marginBottom: normalize(20),
         width: PHOTO_WIDTH,
     },
     photoSlide: {
         width: PHOTO_WIDTH,
         height: PHOTO_HEIGHT,
         marginHorizontal: 0,
-        borderRadius: 24,
+        borderRadius: normalize(24),
         overflow: 'hidden',
         backgroundColor: '#1c1c1e',
-        shadowColor: "#000", shadowOffset: { width: 0, height: 10 }, shadowOpacity: 0.5, shadowRadius: 15, elevation: 10,
+        shadowColor: "#000", shadowOffset: { width: 0, height: normalize(10) }, shadowOpacity: 0.5, shadowRadius: normalize(15), elevation: 10,
     },
     photoImage: { width: '100%', height: '100%', resizeMode: 'cover' },
 
     photoPlaceholder: {
         width: PHOTO_WIDTH,
         height: PHOTO_HEIGHT,
-        borderRadius: 24,
+        borderRadius: normalize(24),
         backgroundColor: '#1c1c1e',
         justifyContent: 'center',
         alignItems: 'center',
@@ -613,54 +614,54 @@ const styles = StyleSheet.create({
     },
     placeholderText: {
         color: 'rgba(255,255,255,0.4)',
-        fontSize: 16,
-        marginTop: 10,
+        fontSize: normalize(16),
+        marginTop: normalize(10),
         fontWeight: '500',
     },
 
     dotsContainer: {
-        flexDirection: 'row', justifyContent: 'center', alignItems: 'center', marginTop: 12, gap: 6
+        flexDirection: 'row', justifyContent: 'center', alignItems: 'center', marginTop: normalize(12), gap: normalize(6)
     },
-    dot: { width: 6, height: 6, borderRadius: 3, backgroundColor: 'rgba(255,255,255,0.2)' },
-    dotActive: { width: 6, height: 6, borderRadius: 3, backgroundColor: '#fff' },
+    dot: { width: normalize(6), height: normalize(6), borderRadius: normalize(3), backgroundColor: 'rgba(255,255,255,0.2)' },
+    dotActive: { width: normalize(6), height: normalize(6), borderRadius: normalize(3), backgroundColor: '#fff' },
 
     // --- ИНФО ---
-    infoBlock: { width: '100%', paddingHorizontal: 20, alignItems: 'flex-start', marginBottom: 20 },
+    infoBlock: { width: '100%', paddingHorizontal: normalize(20), alignItems: 'flex-start', marginBottom: normalize(20) },
     nameRow: { flexDirection: 'row', alignItems: 'center' },
-    nameText: { fontSize: 28, fontWeight: 'bold' },
+    nameText: { fontSize: normalize(28), fontWeight: 'bold' },
 
-    rootsText: { fontSize: 15, fontWeight: '600', marginTop: 4, marginBottom: 12 },
+    rootsText: { fontSize: normalize(15), fontWeight: '600', marginTop: normalize(4), marginBottom: normalize(12) },
 
     statusRow: { flexDirection: 'row', alignItems: 'center', flexWrap: 'wrap' },
-    statusText: { fontSize: 15, fontWeight: '400' },
-    statusDot: { width: 3, height: 3, borderRadius: 1.5, marginHorizontal: 8 },
+    statusText: { fontSize: normalize(15), fontWeight: '400' },
+    statusDot: { width: normalize(3), height: normalize(3), borderRadius: normalize(1.5), marginHorizontal: normalize(8) },
 
-    socialStack: { flexDirection: 'column', gap: 6, marginTop: 12 },
-    socialItem: { flexDirection: 'row', alignItems: 'center', gap: 8 },
-    socialText: { fontSize: 14, fontWeight: '500' },
+    socialStack: { flexDirection: 'column', gap: normalize(6), marginTop: normalize(12) },
+    socialItem: { flexDirection: 'row', alignItems: 'center', gap: normalize(8) },
+    socialText: { fontSize: normalize(14), fontWeight: '500' },
 
-    divider: { width: width - 40, height: 1, marginBottom: 25 },
+    divider: { width: width - normalize(40), height: 1, marginBottom: normalize(25) },
 
     // --- HOOKS ---
-    hooksContainer: { width: '100%', paddingHorizontal: 20, gap: 20, marginBottom: 30 },
+    hooksContainer: { width: '100%', paddingHorizontal: normalize(20), gap: normalize(20), marginBottom: normalize(30) },
     hookContainer: {
-        borderRadius: 16,
-        padding: 16,
+        borderRadius: normalize(16),
+        padding: normalize(16),
     },
-    hookHeader: { flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 8 },
-    iconCircle: { width: 28, height: 28, borderRadius: 14, justifyContent: 'center', alignItems: 'center' },
-    hookTitle: { fontSize: 11, fontWeight: 'bold', letterSpacing: 0.5, textTransform: 'uppercase', flex: 1, lineHeight: 16 },
-    hookText: { fontSize: 16, lineHeight: 24 },
+    hookHeader: { flexDirection: 'row', alignItems: 'center', gap: normalize(10), marginBottom: normalize(8) },
+    iconCircle: { width: normalize(28), height: normalize(28), borderRadius: normalize(14), justifyContent: 'center', alignItems: 'center' },
+    hookTitle: { fontSize: normalize(11), fontWeight: 'bold', letterSpacing: 0.5, textTransform: 'uppercase', flex: 1, lineHeight: normalize(16) },
+    hookText: { fontSize: normalize(16), lineHeight: normalize(24) },
 
     // --- INTERESTS ---
-    sectionContainer: { width: '100%', paddingHorizontal: 20, marginBottom: 30 },
-    sectionTitle: { fontSize: 12, fontWeight: 'bold', marginBottom: 12, textTransform: 'uppercase', letterSpacing: 1 },
-    interestsCloud: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
+    sectionContainer: { width: '100%', paddingHorizontal: normalize(20), marginBottom: normalize(30) },
+    sectionTitle: { fontSize: normalize(12), fontWeight: 'bold', marginBottom: normalize(12), textTransform: 'uppercase', letterSpacing: 1 },
+    interestsCloud: { flexDirection: 'row', flexWrap: 'wrap', gap: normalize(8) },
     tagBox: {
         backgroundColor: 'rgba(255,255,255,0.08)',
-        paddingHorizontal: 14, paddingVertical: 8, borderRadius: 20,
+        paddingHorizontal: normalize(14), paddingVertical: normalize(8), borderRadius: normalize(20),
     },
-    tagText: { color: '#e4e4e7', fontSize: 14, fontWeight: '500' },
+    tagText: { color: '#e4e4e7', fontSize: normalize(14), fontWeight: '500' },
 
     // --- LIGHTBOX ---
     lightboxContainer: { flex: 1, backgroundColor: 'rgba(0,0,0,0.95)', justifyContent: 'center', alignItems: 'center' },
@@ -670,6 +671,6 @@ const styles = StyleSheet.create({
         height: '100%',
         ...(Platform.OS === 'web' ? { width: '100%', height: '90%', maxWidth: 500 } : {})
     },
-    navArrowLeft: { position: 'absolute', left: 0, top: '40%', bottom: '40%', width: 60, justifyContent: 'center', alignItems: 'center', zIndex: 50 },
-    navArrowRight: { position: 'absolute', right: 0, top: '40%', bottom: '40%', width: 60, justifyContent: 'center', alignItems: 'center', zIndex: 50 },
+    navArrowLeft: { position: 'absolute', left: 0, top: '40%', bottom: '40%', width: normalize(60), justifyContent: 'center', alignItems: 'center', zIndex: 50 },
+    navArrowRight: { position: 'absolute', right: 0, top: '40%', bottom: '40%', width: normalize(60), justifyContent: 'center', alignItems: 'center', zIndex: 50 },
 });

@@ -68,17 +68,21 @@ export default function EthnicitySection({
   );
 }
 
+import { normalize } from '../../utils/normalize';
+
+// ... imports
+
 const styles = StyleSheet.create({
-  section: { marginBottom: 30 },
-  sectionHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 15 },
-  sectionTitle: { fontSize: 18, fontWeight: 'bold' },
+  section: { marginBottom: normalize(30) },
+  sectionHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: normalize(15) },
+  sectionTitle: { fontSize: normalize(18), fontWeight: 'bold' },
   requiredStar: { color: '#81B29A' },
-  editButton: { padding: 5 },
+  editButton: { padding: normalize(5) },
   ethnicityDisplayContainer: {
     flexDirection: 'row', alignItems: 'center', backgroundColor: 'rgba(255, 255, 255, 0.05)',
-    padding: 16, borderRadius: 12, borderWidth: 1, borderColor: 'rgba(255, 255, 255, 0.1)'
+    padding: normalize(16), borderRadius: normalize(12), borderWidth: 1, borderColor: 'rgba(255, 255, 255, 0.1)'
   },
   requiredField: { borderColor: '#81B29A' },
-  mainText: { fontSize: 18, fontWeight: '600', marginBottom: 4 },
-  subText: { color: '#999', fontSize: 14 }
+  mainText: { fontSize: normalize(18), fontWeight: '600', marginBottom: normalize(4) },
+  subText: { color: '#999', fontSize: normalize(14) }
 });

@@ -10,11 +10,12 @@ import {
   TouchableWithoutFeedback,
   View
 } from 'react-native';
+import { ThemedBackground } from '../../../components/ThemedBackground';
+import { PrimaryButton } from '../../../components/ui/PrimaryButton';
 import { useTheme } from '../../../context/ThemeContext';
 import { yandexAuth } from '../../../services/yandex/AuthService';
 import { zodiacSigns } from '../../../utils/basic_info';
-import { PrimaryButton } from '../../../components/ui/PrimaryButton';
-import { ThemedBackground } from '../../../components/ThemedBackground';
+import { normalize } from '../../../utils/normalize';
 
 interface ZodiacModalProps {
   visible: boolean;
@@ -147,71 +148,71 @@ const styles = StyleSheet.create({
   },
   modalContent: {
     height: '60%', // Half/Part screen
-    borderTopLeftRadius: 20,
-    borderTopRightRadius: 20,
+    borderTopLeftRadius: normalize(20),
+    borderTopRightRadius: normalize(20),
   },
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    padding: 20,
+    padding: normalize(20),
     borderBottomWidth: 1,
   },
   title: {
-    fontSize: 20,
+    fontSize: normalize(20),
     fontWeight: 'bold',
   },
   closeButton: {
-    padding: 4,
+    padding: normalize(4),
   },
   subheader: {
-    paddingHorizontal: 20,
-    paddingTop: 10,
+    paddingHorizontal: normalize(20),
+    paddingTop: normalize(10),
     paddingBottom: 0,
   },
   subtitle: {
-    fontSize: 14,
+    fontSize: normalize(14),
     textAlign: 'left',
   },
   list: {
-    padding: 20,
+    padding: normalize(20),
   },
   zodiacItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    padding: 16,
-    borderRadius: 12,
-    marginBottom: 10,
+    padding: normalize(16),
+    borderRadius: normalize(12),
+    marginBottom: normalize(10),
     borderWidth: 1,
   },
   zodiacItemSelected: {
     borderColor: '#10b981',
   },
   zodiacEmoji: {
-    fontSize: 32,
-    marginRight: 12,
-    width: 40,
+    fontSize: normalize(32),
+    marginRight: normalize(12),
+    width: normalize(40),
     textAlign: 'center',
   },
   zodiacInfo: {
     flex: 1,
   },
   zodiacName: {
-    fontSize: 16,
+    fontSize: normalize(16),
     fontWeight: '500',
-    marginBottom: 2,
+    marginBottom: normalize(2),
   },
   zodiacNameSelected: {
     color: '#10b981',
     fontWeight: 'bold',
   },
   zodiacDates: {
-    fontSize: 12,
+    fontSize: normalize(12),
   },
   footer: {
-    padding: 20,
+    padding: normalize(20),
     borderTopWidth: 1,
-    gap: 10,
-    paddingBottom: 40,
+    gap: normalize(10),
+    paddingBottom: normalize(40),
   },
 });

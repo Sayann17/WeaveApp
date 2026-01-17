@@ -76,29 +76,33 @@ export default function GenderSection({ gender, setGender, isFirstEdit }: Gender
   );
 }
 
+import { normalize } from '../../utils/normalize';
+
+// ... imports
+
 const styles = StyleSheet.create({
   section: {
-    marginBottom: 30,
+    marginBottom: normalize(30),
   },
   sectionTitle: {
-    fontSize: 18,
+    fontSize: normalize(18),
     fontWeight: 'bold',
-    marginBottom: 15,
+    marginBottom: normalize(15),
   },
   requiredStar: {
     color: '#e1306c',
   },
   genderContainer: {
     flexDirection: 'row',
-    gap: 15,
+    gap: normalize(15),
   },
   genderButton: {
     flex: 1,
     backgroundColor: '#1a1a1a',
     borderWidth: 2,
     borderColor: '#333',
-    borderRadius: 12,
-    padding: 15,
+    borderRadius: normalize(12),
+    padding: normalize(15),
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -111,9 +115,9 @@ const styles = StyleSheet.create({
   },
   genderText: {
     color: '#666',
-    fontSize: 14,
+    fontSize: normalize(14),
     fontWeight: '600',
-    marginTop: 5,
+    marginTop: normalize(5),
   },
   genderTextSelected: {
     color: '#ffffff',

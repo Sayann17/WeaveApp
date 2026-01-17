@@ -6,6 +6,7 @@ import { EventsFeed } from '../components/EventsFeed';
 import { ThemedBackground } from '../components/ThemedBackground';
 import { useTelegram } from '../context/TelegramProvider';
 import { useTheme } from '../context/ThemeContext';
+import { normalize } from '../utils/normalize';
 import { getPlatformPadding } from '../utils/platformPadding';
 
 export default function HomeScreen() {
@@ -39,28 +40,28 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   header: {
-    paddingHorizontal: 20,
-    paddingBottom: 15,
+    paddingHorizontal: normalize(20),
+    paddingBottom: normalize(15),
     borderBottomWidth: 1,
   },
   title: {
-    fontSize: 28,
+    fontSize: normalize(28),
     fontWeight: 'bold',
   },
   content: {
     flex: 1,
   },
   placeholder: {
-    fontSize: 16,
+    fontSize: normalize(16),
     textAlign: 'center',
-    lineHeight: 24,
+    lineHeight: normalize(24),
   },
   headerTitle: {
-    fontSize: 34,
+    fontSize: normalize(34),
     fontWeight: '800',
-    paddingHorizontal: 20,
-    marginBottom: 20,
-    marginTop: 20,
+    paddingHorizontal: normalize(20),
+    marginBottom: normalize(20),
+    marginTop: normalize(20),
     letterSpacing: -1
   },
 });

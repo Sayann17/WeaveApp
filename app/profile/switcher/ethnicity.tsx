@@ -7,7 +7,6 @@ import {
   Alert,
   KeyboardAvoidingView,
   Platform,
-  SafeAreaView,
   ScrollView,
   StyleSheet,
   Text,
@@ -15,11 +14,12 @@ import {
   TouchableOpacity,
   View
 } from 'react-native';
+import { ThemedBackground } from '../../components/ThemedBackground';
 import { PrimaryButton } from '../../components/ui/PrimaryButton';
+import { useTheme } from '../../context/ThemeContext';
 import { yandexAuth } from '../../services/yandex/AuthService';
 import { ethnicityGroups } from '../../utils/ethnicities';
-import { useTheme } from '../../context/ThemeContext';
-import { ThemedBackground } from '../../components/ThemedBackground';
+import { normalize } from '../../utils/normalize';
 
 export default function EditEthnicityScreen() {
   const router = useRouter();
@@ -88,6 +88,10 @@ export default function EditEthnicityScreen() {
     );
   }
 
+
+
+  // ... imports
+
   return (
     <ThemedBackground>
       <View style={styles.container}>
@@ -96,7 +100,7 @@ export default function EditEthnicityScreen() {
          Супер-большой паддинг сверху, чтобы контент начинался НИЖЕ системных кнопок.
          Telegram WebApp Header обычно занимает около 60-80px, плюс статус бар.
       */}
-        <View style={{ flex: 1, paddingTop: 120 }}>
+        <View style={{ flex: 1, paddingTop: normalize(120) }}>
 
           <View style={styles.header}>
             {/* Кнопка "Назад" убрана из UI, полагаемся на системный жест или кнопку BackButton (если есть) */}
@@ -109,7 +113,7 @@ export default function EditEthnicityScreen() {
           >
             <ScrollView
               style={{ flex: 1 }}
-              contentContainerStyle={[styles.scrollContent, { paddingBottom: 20 }]}
+              contentContainerStyle={[styles.scrollContent, { paddingBottom: normalize(20) }]}
             >
 
               {/* 1. Поле для ввода */}
@@ -130,7 +134,7 @@ export default function EditEthnicityScreen() {
                   />
                   {customEthnicity.length > 0 && (
                     <TouchableOpacity onPress={() => setCustomEthnicity('')}>
-                      <Ionicons name="close-circle" size={20} color={theme.subText} />
+                      <Ionicons name="close-circle" size={normalize(20)} color={theme.subText} />
                     </TouchableOpacity>
                   )}
                 </View>
@@ -200,43 +204,43 @@ const styles = StyleSheet.create({
   centerContainer: { flex: 1, justifyContent: 'center', alignItems: 'center' },
 
   header: {
-    paddingHorizontal: 20,
-    paddingBottom: 20,
+    paddingHorizontal: normalize(20),
+    paddingBottom: normalize(20),
     alignItems: 'center',
   },
-  headerTitle: { fontSize: 22, fontWeight: 'bold' },
+  headerTitle: { fontSize: normalize(22), fontWeight: 'bold' },
 
-  scrollContent: { padding: 20, paddingBottom: 150 }, // Enough padding for footer
-  section: { marginBottom: 30 },
+  scrollContent: { padding: normalize(20), paddingBottom: normalize(150) }, // Enough padding for footer
+  section: { marginBottom: normalize(30) },
 
-  label: { fontSize: 18, fontWeight: '600', marginBottom: 10 },
-  hint: { fontSize: 14, marginBottom: 15 },
+  label: { fontSize: normalize(18), fontWeight: '600', marginBottom: normalize(10) },
+  hint: { fontSize: normalize(14), marginBottom: normalize(15) },
 
   inputWrapper: {
     flexDirection: 'row', alignItems: 'center',
-    borderRadius: 12, borderWidth: 1,
-    paddingHorizontal: 15,
+    borderRadius: normalize(12), borderWidth: 1,
+    paddingHorizontal: normalize(15),
   },
-  input: { flex: 1, fontSize: 16, paddingVertical: 15 },
+  input: { flex: 1, fontSize: normalize(16), paddingVertical: normalize(15) },
 
-  grid: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between', gap: 10 },
+  grid: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between', gap: normalize(10) },
 
   card: {
     width: '48%',
-    padding: 16,
-    borderRadius: 16,
+    padding: normalize(16),
+    borderRadius: normalize(16),
     borderWidth: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 8,
+    gap: normalize(8),
   },
-  emoji: { fontSize: 32 },
-  title: { fontSize: 14, fontWeight: '500', textAlign: 'center' },
+  emoji: { fontSize: normalize(32) },
+  title: { fontSize: normalize(14), fontWeight: '500', textAlign: 'center' },
 
   footer: {
-    padding: 20,
+    padding: normalize(20),
     borderTopWidth: 1,
     // position: 'relative', // Changed from absolute to relative to sit at bottom of flex container
-    paddingBottom: 40
+    paddingBottom: normalize(40)
   },
 });

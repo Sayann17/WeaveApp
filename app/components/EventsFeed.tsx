@@ -4,6 +4,7 @@ import { ActivityIndicator, Dimensions, FlatList, Image, Linking, StyleSheet, Te
 import { Colors } from '../constants/colors';
 import { useTheme } from '../context/ThemeContext';
 import { eventService, WeaveEvent } from '../services/EventService';
+import { normalize } from '../utils/normalize';
 
 const { width } = Dimensions.get('window');
 
@@ -107,10 +108,10 @@ export const EventsCarousel = ({
                     data={events}
                     horizontal
                     pagingEnabled={false}
-                    snapToInterval={width * 0.9 + 15}
+                    snapToInterval={width * 0.9 + normalize(15)}
                     decelerationRate="fast"
                     showsHorizontalScrollIndicator={false}
-                    contentContainerStyle={{ paddingHorizontal: 10 }}
+                    contentContainerStyle={{ paddingHorizontal: normalize(10) }}
                     onScroll={handleScroll}
                     scrollEventThrottle={16}
                     keyExtractor={(item) => item.id}
@@ -246,11 +247,11 @@ const EventCard = ({ event, theme, isLight, onAttend, onCollapse }: { event: Wea
 
 const styles = StyleSheet.create({
     container: { flex: 1 },
-    center: { padding: 20, alignItems: 'center' },
+    center: { padding: normalize(20), alignItems: 'center' },
 
     cardContainer: {
         width: width * 0.9,
-        marginRight: 15, // Space between cards
+        marginRight: normalize(15), // Space between cards
         marginBottom: 0
     },
 
@@ -258,7 +259,7 @@ const styles = StyleSheet.create({
         width: '100%',
         height: width * 0.9, // Square-ish aspect ratio relative to card width
         position: 'relative',
-        borderRadius: 20, // Add more rounding for card look
+        borderRadius: normalize(20), // Add more rounding for card look
         overflow: 'hidden',
     },
     image: { width: '100%', height: '100%' },
@@ -268,48 +269,48 @@ const styles = StyleSheet.create({
     },
 
     contentContainer: {
-        marginTop: 20,
-        paddingHorizontal: 20,
+        marginTop: normalize(20),
+        paddingHorizontal: normalize(20),
         backgroundColor: 'transparent',
     },
 
-    metaRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 8 },
-    dateText: { fontSize: 13, fontWeight: '700', color: Colors.primary, letterSpacing: 1 },
-    timeText: { fontSize: 13, fontWeight: '600', color: '#888' },
-    dot: { width: 3, height: 3, borderRadius: 1.5, backgroundColor: '#888', marginHorizontal: 8 },
+    metaRow: { flexDirection: 'row', alignItems: 'center', marginBottom: normalize(8) },
+    dateText: { fontSize: normalize(13), fontWeight: '700', color: Colors.primary, letterSpacing: 1 },
+    timeText: { fontSize: normalize(13), fontWeight: '600', color: '#888' },
+    dot: { width: normalize(3), height: normalize(3), borderRadius: normalize(1.5), backgroundColor: '#888', marginHorizontal: normalize(8) },
 
-    title: { fontSize: 28, fontWeight: '700', marginBottom: 10, lineHeight: 32 },
-    description: { fontSize: 16, lineHeight: 24, marginBottom: 20 },
+    title: { fontSize: normalize(28), fontWeight: '700', marginBottom: normalize(10), lineHeight: normalize(32) },
+    description: { fontSize: normalize(16), lineHeight: normalize(24), marginBottom: normalize(20) },
 
     toggleText: {
-        fontSize: 16,
+        fontSize: normalize(16),
         fontWeight: '700', // Bold as requested
-        marginBottom: 20
+        marginBottom: normalize(20)
     },
 
     actionRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
 
     attendButton: {
-        paddingHorizontal: 24,
-        paddingVertical: 12,
-        borderRadius: 30,
-        minWidth: 100,
+        paddingHorizontal: normalize(24),
+        paddingVertical: normalize(12),
+        borderRadius: normalize(30),
+        minWidth: normalize(100),
         alignItems: 'center',
         justifyContent: 'center',
     },
-    buttonText: { fontSize: 16, fontWeight: '700' },
+    buttonText: { fontSize: normalize(16), fontWeight: '700' },
 
     detailsButton: {
-        paddingVertical: 10,
-        paddingHorizontal: 20,
-        borderRadius: 30,
+        paddingVertical: normalize(10),
+        paddingHorizontal: normalize(20),
+        borderRadius: normalize(30),
         borderWidth: 1.5,
         borderColor: Colors.primary,
         justifyContent: 'center',
         alignItems: 'center',
     },
     detailsText: {
-        fontSize: 15,
+        fontSize: normalize(15),
         fontWeight: '700',
     },
 
@@ -318,16 +319,16 @@ const styles = StyleSheet.create({
         justifyContent: 'center',
         alignItems: 'center',
         alignSelf: 'center', // Center it
-        marginTop: 20,
-        marginBottom: 30,
-        paddingHorizontal: 12,
-        paddingVertical: 8,
-        borderRadius: 20, // Rounded container logic
-        gap: 8
+        marginTop: normalize(20),
+        marginBottom: normalize(30),
+        paddingHorizontal: normalize(12),
+        paddingVertical: normalize(8),
+        borderRadius: normalize(20), // Rounded container logic
+        gap: normalize(8)
     },
     paginationDot: {
-        width: 8,
-        height: 8,
-        borderRadius: 4,
+        width: normalize(8),
+        height: normalize(8),
+        borderRadius: normalize(4),
     }
 });

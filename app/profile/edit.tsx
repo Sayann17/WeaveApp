@@ -19,6 +19,7 @@ import { Colors } from '../constants/colors';
 import { useTelegram } from '../context/TelegramProvider';
 import { useTheme } from '../context/ThemeContext';
 import { yandexAuth } from '../services/yandex/AuthService';
+import { normalize } from '../utils/normalize';
 import { getPlatformPadding } from '../utils/platformPadding';
 
 // Компоненты секций
@@ -32,10 +33,10 @@ import ReligionSection from './components/ReligionSection';
 import ZodiacSection from './components/ZodiacSection';
 
 // Модальные окна
+import { ThemedBackground } from '../components/ThemedBackground';
 import { PrimaryButton } from '../components/ui/PrimaryButton';
 import InterestsModal from './components/modals/InterestsModal';
 import ZodiacModal from './components/modals/ZodiacModal';
-import { ThemedBackground } from '../components/ThemedBackground';
 
 export default function EditProfileScreen() {
   const router = useRouter();
@@ -526,67 +527,67 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    padding: 15,
+    padding: normalize(15),
     borderBottomWidth: 1,
     // borderBottomColor: Colors.border, // Removed to use dynamic theme.border in component
   },
   backButton: {
-    padding: 5,
+    padding: normalize(5),
   },
 
   hooksBlock: {
-    marginTop: 20,
-    marginBottom: 10,
-    gap: 15,
+    marginTop: normalize(20),
+    marginBottom: normalize(10),
+    gap: normalize(15),
   },
   sectionTitle: {
-    fontSize: 18,
+    fontSize: normalize(18),
     fontWeight: 'bold',
-    marginBottom: 12,
-    marginTop: 10,
+    marginBottom: normalize(12),
+    marginTop: normalize(10),
   },
 
   headerTitle: {
-    fontSize: 18,
+    fontSize: normalize(18),
     fontWeight: 'bold',
   },
   scrollContent: {
-    padding: 20,
+    padding: normalize(20),
   },
   footer: {
-    padding: 20,
+    padding: normalize(20),
     borderTopWidth: 1,
   },
 
   // Styles for Bio Input
   inputContainer: {
-    marginBottom: 25,
+    marginBottom: normalize(25),
   },
   input: {
     backgroundColor: 'rgba(255, 255, 255, 0.05)', // Default, will be overridden by theme
     borderWidth: 1,
     borderColor: 'rgba(255, 255, 255, 0.1)',
-    borderRadius: 12,
-    padding: 16,
-    fontSize: 16,
+    borderRadius: normalize(12),
+    padding: normalize(16),
+    fontSize: normalize(16),
   },
   bioInput: {
-    height: 120,
+    height: normalize(120),
     textAlignVertical: 'top',
-    lineHeight: 22,
+    lineHeight: normalize(22),
   },
   locationButton: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    padding: 12,
-    marginTop: 10,
-    borderRadius: 12,
+    padding: normalize(12),
+    marginTop: normalize(10),
+    borderRadius: normalize(12),
     borderWidth: 1,
     borderStyle: 'dashed',
   },
   locationButtonText: {
-    marginLeft: 8,
+    marginLeft: normalize(8),
     fontWeight: '500',
   }
 });

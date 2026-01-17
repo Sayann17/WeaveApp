@@ -79,22 +79,26 @@ export default function BasicInfoSection({
   );
 }
 
+import { normalize } from '../../utils/normalize';
+
+// ... imports
+
 const styles = StyleSheet.create({
   section: {
-    marginBottom: 15,
+    marginBottom: normalize(15),
   },
   sectionTitle: {
-    fontSize: 18,
+    fontSize: normalize(18),
     fontWeight: 'bold',
-    marginBottom: 15,
+    marginBottom: normalize(15),
   },
   inputContainer: {
-    marginBottom: 15,
+    marginBottom: normalize(15),
   },
   label: {
-    fontSize: 16,
+    fontSize: normalize(16),
     fontWeight: '600',
-    marginBottom: 8,
+    marginBottom: normalize(8),
   },
   requiredStar: {
     color: '#e1306c',
@@ -103,9 +107,9 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(255, 255, 255, 0.05)',
     borderWidth: 1,
     borderColor: 'rgba(255, 255, 255, 0.1)',
-    borderRadius: 12,
-    padding: 16,
-    fontSize: 16,
+    borderRadius: normalize(12),
+    padding: normalize(16),
+    fontSize: normalize(16),
   },
   requiredField: {
     borderColor: '#e1306c',

@@ -71,25 +71,29 @@ export default function ReligionSection({ selectedReligions, setSelectedReligion
   );
 }
 
+import { normalize } from '../../utils/normalize';
+
+// ... imports
+
 const styles = StyleSheet.create({
   section: {
-    marginBottom: 30,
+    marginBottom: normalize(30),
   },
   sectionTitle: {
-    fontSize: 18,
+    fontSize: normalize(18),
     fontWeight: 'bold',
     color: '#ffffff',
-    marginBottom: 8,
+    marginBottom: normalize(8),
   },
   sectionSubtitle: {
-    fontSize: 14,
+    fontSize: normalize(14),
     color: '#cccccc',
-    marginBottom: 15,
+    marginBottom: normalize(15),
   },
   religionContainer: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: 10,
+    gap: normalize(10),
   },
   religionButton: {
     flexDirection: 'row',
@@ -97,21 +101,21 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(255, 255, 255, 0.05)',
     borderWidth: 1,
     borderColor: 'rgba(255, 255, 255, 0.1)',
-    borderRadius: 12,
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    gap: 6,
+    borderRadius: normalize(12),
+    paddingHorizontal: normalize(12),
+    paddingVertical: normalize(8),
+    gap: normalize(6),
   },
   religionButtonSelected: {
     // backgroundColor: '#1a1a1a', // Removed black BG
     borderColor: '#10b981', // Green border
   },
   religionEmoji: {
-    fontSize: 16,
+    fontSize: normalize(16),
   },
   religionText: {
     color: '#ffffff',
-    fontSize: 14,
+    fontSize: normalize(14),
     fontWeight: '500',
   },
   religionTextSelected: {

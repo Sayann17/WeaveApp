@@ -10,11 +10,12 @@ import {
   TouchableWithoutFeedback,
   View
 } from 'react-native';
+import { ThemedBackground } from '../../../components/ThemedBackground';
 import { PrimaryButton } from '../../../components/ui/PrimaryButton';
 import { useTheme } from '../../../context/ThemeContext';
 import { yandexAuth } from '../../../services/yandex/AuthService';
 import { availableInterests } from '../../../utils/basic_info';
-import { ThemedBackground } from '../../../components/ThemedBackground';
+import { normalize } from '../../../utils/normalize';
 
 interface InterestsModalProps {
   visible: boolean;
@@ -149,49 +150,49 @@ const styles = StyleSheet.create({
   },
   modalContent: {
     height: '60%', // Half/Part screen
-    borderTopLeftRadius: 20,
-    borderTopRightRadius: 20,
+    borderTopLeftRadius: normalize(20),
+    borderTopRightRadius: normalize(20),
   },
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    padding: 20,
+    padding: normalize(20),
     borderBottomWidth: 1,
   },
   title: {
-    fontSize: 20,
+    fontSize: normalize(20),
     fontWeight: 'bold',
   },
   closeButton: {
-    padding: 4,
+    padding: normalize(4),
   },
   subheader: {
-    paddingHorizontal: 20,
-    paddingTop: 10,
+    paddingHorizontal: normalize(20),
+    paddingTop: normalize(10),
     paddingBottom: 0,
   },
   subtitle: {
-    fontSize: 14,
+    fontSize: normalize(14),
     textAlign: 'left',
   },
   list: {
-    padding: 20,
+    padding: normalize(20),
   },
   interestItem: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     borderWidth: 1,
-    padding: 16,
-    borderRadius: 12,
-    marginBottom: 10,
+    padding: normalize(16),
+    borderRadius: normalize(12),
+    marginBottom: normalize(10),
   },
   interestItemSelected: {
     borderColor: '#10b981', // Green border
   },
   interestItemText: {
-    fontSize: 16,
+    fontSize: normalize(16),
     fontWeight: '500',
   },
   interestItemTextSelected: {
@@ -199,8 +200,8 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
   },
   footer: {
-    padding: 20,
+    padding: normalize(20),
     borderTopWidth: 1,
-    paddingBottom: 40,
+    paddingBottom: normalize(40),
   },
 });
