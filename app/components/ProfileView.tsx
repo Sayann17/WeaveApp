@@ -400,9 +400,9 @@ export const ProfileView = ({ userData, isOwnProfile = false, isMatch = false }:
                                 // Better to handle padding in renderItem.
                                 keyExtractor={(item, index) => item.id || index.toString()}
                                 renderItem={({ item }) => {
-                                    const imageSource = item.imageKey === 'uzor_love'
-                                        ? require('../../assets/images/events/uzor_love.jpg')
-                                        : null; // Fallback?
+                                    let imageSource = null;
+                                    if (item.imageKey === 'uzor_love') imageSource = require('../../assets/images/events/uzor_love.jpg');
+                                    else if (item.imageKey === 'tuva_culture') imageSource = require('../../assets/images/events/tuva_culture.jpg');
 
                                     const eventContainerStyle = isLight
                                         ? { backgroundColor: '#fff', borderWidth: 1, borderColor: '#eee' }
@@ -458,7 +458,17 @@ export const ProfileView = ({ userData, isOwnProfile = false, isMatch = false }:
 
                         {/* Dots for Events */}
                         {localEvents.length > 1 && (
-                            <View style={[styles.dotsContainer, { marginTop: 15, justifyContent: 'center' }]}>
+                            <View style={[
+                                styles.dotsContainer,
+                                {
+                                    marginTop: 15,
+                                    alignSelf: 'center',
+                                    paddingHorizontal: 12,
+                                    paddingVertical: 8,
+                                    borderRadius: 20,
+                                    backgroundColor: isLight ? 'rgba(0,0,0,0.05)' : 'rgba(255,255,255,0.1)'
+                                }
+                            ]}>
                                 {Array.from({ length: Math.min(localEvents.length, 3) }).map((_, i) => {
                                     // Logic for 3 dots max
                                     let activeDot = 0;
