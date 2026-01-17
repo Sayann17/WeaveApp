@@ -86,7 +86,7 @@ export const MenuModal = ({ visible, onClose }: MenuModalProps) => {
         router.push(path as any);
     };
 
-    const MenuWrapper = themeType === 'space' ? SpaceBackground : View;
+
 
     return (
         <Modal
@@ -100,16 +100,26 @@ export const MenuModal = ({ visible, onClose }: MenuModalProps) => {
                     style={[
                         styles.menuContainer,
                         {
-                            backgroundColor: themeType === 'space' ? 'transparent' : ((theme as any).sheetBg || theme.cardBg),
-                            paddingBottom: insets.bottom + 20,
-                            overflow: 'hidden',
+                            backgroundColor: 'transparent', // Handled by inner views
                             borderColor: theme.border,
-                            borderWidth: 1 // Ensure visible border for dark themes
+                            borderWidth: 1,
+                            overflow: 'hidden',
+                            // Remove padding here, so background fills completely
                         }
                     ]}
                     onPress={(e) => e.stopPropagation()}
                 >
-                    <MenuWrapper style={{ flex: 1 }}>
+                    {/* 1. Background Layer */}
+                    <View style={StyleSheet.absoluteFill}>
+                        {themeType === 'space' ? (
+                            <SpaceBackground style={{ flex: 1 }}>{null}</SpaceBackground>
+                        ) : (
+                            <View style={{ flex: 1, backgroundColor: (theme as any).sheetBg || theme.cardBg }} />
+                        )}
+                    </View>
+
+                    {/* 2. Content Layer with Padding */}
+                    <View style={{ flex: 1, paddingTop: 20, paddingBottom: insets.bottom + 20 }}>
                         {/* Header */}
                         <View style={styles.header}>
                             <Text style={[styles.headerTitle, { color: theme.text }]}>Меню</Text>
@@ -204,7 +214,7 @@ export const MenuModal = ({ visible, onClose }: MenuModalProps) => {
 
 
                         </ScrollView>
-                    </MenuWrapper>
+                    </View>
                 </Pressable>
             </Pressable >
         </Modal >
@@ -220,7 +230,6 @@ const styles = StyleSheet.create({
     menuContainer: {
         borderTopLeftRadius: 24,
         borderTopRightRadius: 24,
-        paddingTop: 20,
         maxHeight: '80%',
     },
     header: {
