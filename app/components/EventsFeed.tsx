@@ -154,29 +154,31 @@ const EventCard = ({ event, theme, isLight, onAttend }: { event: WeaveEvent, the
                 </TouchableOpacity>
 
                 {/* Action Row */}
-                <View style={styles.actionRow}>
-                    <TouchableOpacity
-                        onPress={() => Linking.openURL('https://forms.gle/uktQtqpxntwTo2Pb9')}
-                        style={styles.detailsButton}
-                    >
-                        <Text style={[styles.detailsText, { color: Colors.primary }]}>Подробнее</Text>
-                    </TouchableOpacity>
+                {expanded && (
+                    <View style={styles.actionRow}>
+                        <TouchableOpacity
+                            onPress={() => Linking.openURL('https://forms.gle/uktQtqpxntwTo2Pb9')}
+                            style={styles.detailsButton}
+                        >
+                            <Text style={[styles.detailsText, { color: Colors.primary }]}>Подробнее</Text>
+                        </TouchableOpacity>
 
-                    <TouchableOpacity
-                        onPress={() => onAttend(event.id)}
-                        activeOpacity={0.8}
-                        style={[
-                            styles.attendButton,
-                            { backgroundColor: event.isGoing ? (isLight ? '#F2F2F7' : 'rgba(255,255,255,0.1)') : Colors.primary }
-                        ]}
-                    >
-                        {event.isGoing ? (
-                            <Ionicons name="checkmark" size={20} color={isLight ? Colors.primary : '#fff'} />
-                        ) : (
-                            <Text style={[styles.buttonText, { color: '#fff' }]}>Пойду</Text>
-                        )}
-                    </TouchableOpacity>
-                </View>
+                        <TouchableOpacity
+                            onPress={() => onAttend(event.id)}
+                            activeOpacity={0.8}
+                            style={[
+                                styles.attendButton,
+                                { backgroundColor: event.isGoing ? (isLight ? '#F2F2F7' : 'rgba(255,255,255,0.1)') : Colors.primary }
+                            ]}
+                        >
+                            {event.isGoing ? (
+                                <Ionicons name="checkmark" size={20} color={isLight ? Colors.primary : '#fff'} />
+                            ) : (
+                                <Text style={[styles.buttonText, { color: '#fff' }]}>Пойду</Text>
+                            )}
+                        </TouchableOpacity>
+                    </View>
+                )}
             </View>
         </View>
     );
