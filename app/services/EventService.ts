@@ -12,6 +12,8 @@ export interface WeaveEvent {
 
 const API_URL = 'https://d5dg37j92h7tg2f7sf87.o2p3jdjj.apigw.yandexcloud.net';
 
+import { yandexAuth } from './yandex/AuthService';
+
 class EventService {
 
     async getEvents(): Promise<WeaveEvent[]> {
@@ -50,7 +52,12 @@ class EventService {
                 body: JSON.stringify({ eventId })
             });
 
-            return response.ok;
+            if (response.ok) {
+                // Sync session to update profile immediately
+                yandexAuth.refreshSession().catch(err => console.error('[EventService] Session sync failed', err));
+                return true;
+            }
+            return false;
         } catch (e) {
             console.error('[EventService] Failed to attend event', e);
             return false;
