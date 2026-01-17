@@ -143,13 +143,13 @@ paths:
     get:
       x-yc-apigateway-integration:
         type: cloud_functions
-        function_id: d4e7l76a7mc4mfhjvc6f
+        function_id: d4esa663s3sph2k3ohh2
       operationId: getEvents
   /events/attend:
     post:
       x-yc-apigateway-integration:
         type: cloud_functions
-        function_id: d4e7l76a7mc4mfhjvc6f
+        function_id: d4esa663s3sph2k3ohh2
       operationId: attendEvent
 
   # --- INTERACTIONS SERVICE ---
