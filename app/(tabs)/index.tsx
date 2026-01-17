@@ -259,7 +259,7 @@ export default function ExploreScreen() {
                 <View style={[styles.safeArea, { paddingTop: getPlatformPadding(insets, isMobile) }]}>
                     <StatusBar barStyle={isLight ? "dark-content" : "light-content"} />
 
-                    <View style={[styles.center, { paddingHorizontal: 30, flex: 1, paddingBottom: 100 }]}>
+                    <View style={[styles.center, { paddingHorizontal: 30, flex: 1, paddingBottom: 80 }]}>
                         <Ionicons name="earth-outline" size={80} color={theme.subText} />
                         <Text style={[styles.emptyText, { color: theme.text, textAlign: 'center', lineHeight: 28 }]}>
                             Мы пока не нашли подходящих людей. Попробуйте изменить фильтры или заглянуть позже!
@@ -280,7 +280,7 @@ export default function ExploreScreen() {
                             styles.floatingFilterBtn,
                             { backgroundColor: '#00b894' },
                             isLight ? styles.lightShadow : styles.darkShadow,
-                            { bottom: isLight ? 20 : 110 }
+                            { bottom: 20 }
                         ]}
                         onPress={openFilters}
                     >
@@ -310,7 +310,7 @@ export default function ExploreScreen() {
                 <View style={[
                     styles.floatingActions,
                     isLight ? styles.lightShadow : styles.darkShadow,
-                    { bottom: themeType === 'space' ? 110 : 20 }
+                    { bottom: 20 }
                 ]}>
                     <Pressable style={[styles.btn, styles.filterBtnFloating, { backgroundColor: '#00b894' }]} onPress={openFilters}>
                         <Ionicons name="options" size={22} color="#fff" />

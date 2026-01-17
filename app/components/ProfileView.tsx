@@ -581,7 +581,7 @@ export const ProfileView = ({ userData, isOwnProfile = false, isMatch = false }:
 };
 
 const styles = StyleSheet.create({
-    scrollContent: { paddingBottom: 100, alignItems: 'center' },
+    scrollContent: { paddingBottom: 80, alignItems: 'center' },
 
     // --- ФОТО ---
     carouselContainer: {
