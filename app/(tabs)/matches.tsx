@@ -347,11 +347,11 @@ export default function MatchesScreen() {
                                     </View>
 
                                     {/* Separator Line */}
-                                    <View style={{ height: 1, backgroundColor: theme.border, marginHorizontal: normalize(16), marginTop: normalize(8), opacity: 0.5 }} />
+                                    <View style={{ height: 1, backgroundColor: themeType === 'light' ? '#000' : '#fff', marginHorizontal: normalize(16), marginTop: normalize(8), opacity: themeType === 'light' ? 0.1 : 0.2 }} />
 
                                     {/* Bottom Row: Message Preview */}
                                     <Pressable
-                                        style={{ width: '100%', marginTop: normalize(10), flexDirection: 'row' }}
+                                        style={{ width: '100%', marginTop: normalize(10), flexDirection: 'row', alignItems: 'flex-start' }}
                                         onPress={() => router.push({ pathname: '/chat/[id]', params: { id: match.chatId, participantId: match.id } })}
                                     >
                                         <View style={{ flex: 1, marginRight: normalize(10) }}>
@@ -363,23 +363,23 @@ export default function MatchesScreen() {
                                                     fontStyle: !match.lastMessage ? 'italic' : 'normal',
                                                     lineHeight: normalize(20)
                                                 }}
-                                                numberOfLines={2}
+                                                numberOfLines={1}
                                             >
                                                 {match.lastMessage || 'Какое сплетение создаст ваш Узор... Проверим?'}
                                             </Text>
                                         </View>
 
                                         {/* Right Column: Time & Badge */}
-                                        <View style={{ alignItems: 'flex-end', justifyContent: 'flex-start', paddingRight: normalize(16) }}>
+                                        <View style={{ alignItems: 'flex-end', justifyContent: 'flex-start', paddingRight: normalize(16), gap: normalize(4) }}>
                                             {/* Timestamp */}
-                                            <Text style={{ fontSize: normalize(11), color: theme.subText, marginBottom: normalize(4) }}>
-                                                {formatMessageTime(match.lastMessageTime) || '—'}
+                                            <Text style={{ fontSize: normalize(11), color: theme.subText }}>
+                                                {formatMessageTime(match.lastMessageTime)}
                                             </Text>
 
                                             {/* Unread Badge */}
                                             {(match.unreadCount > 0 || match.hasUnread) && (
                                                 <View style={{
-                                                    backgroundColor: theme.accent || '#00b894',
+                                                    backgroundColor: themeType === 'light' ? (theme.accent || '#00b894') : '#fff',
                                                     borderRadius: normalize(10),
                                                     paddingHorizontal: normalize(6),
                                                     paddingVertical: normalize(2),
@@ -387,7 +387,7 @@ export default function MatchesScreen() {
                                                     alignItems: 'center',
                                                     justifyContent: 'center'
                                                 }}>
-                                                    <Text style={{ color: '#fff', fontSize: normalize(10), fontWeight: 'bold' }}>
+                                                    <Text style={{ color: themeType === 'light' ? '#fff' : '#000', fontSize: normalize(10), fontWeight: 'bold' }}>
                                                         {match.unreadCount || 1}
                                                     </Text>
                                                 </View>
