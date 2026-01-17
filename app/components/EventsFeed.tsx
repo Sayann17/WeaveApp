@@ -13,7 +13,7 @@ const EVENT_IMAGES: Record<string, any> = {
     'tuva_culture': require('../../assets/images/events/tuva_culture.jpg'),
 };
 
-export const EventsFeed = () => {
+export const EventsFeed = ({ onScrollToTop }: { onScrollToTop?: () => void }) => {
     const { theme, themeType } = useTheme();
     const [events, setEvents] = useState<WeaveEvent[]>([]);
     const [loading, setLoading] = useState(true);
@@ -61,7 +61,12 @@ export const EventsFeed = () => {
         // Adjusted for new card width + margin
         const cardWidth = width * 0.9 + 10;
         const index = Math.round(contentOffsetX / cardWidth);
-        setCurrentSlide(index);
+
+        if (index !== currentSlide) {
+            setCurrentSlide(index);
+            // Scroll to top when changing slide
+            if (onScrollToTop) onScrollToTop();
+        }
     };
 
     if (loading) return <View style={styles.center}><ActivityIndicator color={theme.text} /></View>;
@@ -69,7 +74,7 @@ export const EventsFeed = () => {
 
     return (
         <View style={styles.container}>
-            <View style={{ flex: 1 }}>
+            <View>
                 <FlatList
                     data={events}
                     horizontal
@@ -87,6 +92,7 @@ export const EventsFeed = () => {
                             theme={theme}
                             isLight={isLight}
                             onAttend={handleAttend}
+                            onCollapse={onScrollToTop}
                         />
                     )}
                 />
@@ -112,8 +118,18 @@ export const EventsFeed = () => {
     );
 };
 
-const EventCard = ({ event, theme, isLight, onAttend }: { event: WeaveEvent, theme: any, isLight: boolean, onAttend: (id: string) => void }) => {
+const EventCard = ({ event, theme, isLight, onAttend, onCollapse }: { event: WeaveEvent, theme: any, isLight: boolean, onAttend: (id: string) => void, onCollapse?: () => void }) => {
     const [expanded, setExpanded] = useState(false);
+
+    const toggleExpand = () => {
+        if (expanded) {
+            // Collapsing
+            setExpanded(false);
+            if (onCollapse) onCollapse();
+        } else {
+            setExpanded(true);
+        }
+    };
 
     return (
         <View style={styles.cardContainer}>
@@ -147,7 +163,7 @@ const EventCard = ({ event, theme, isLight, onAttend }: { event: WeaveEvent, the
                 </Text>
 
                 {/* Show toggle only if text is likely long enough, but simple toggle is safer for UX here */}
-                <TouchableOpacity onPress={() => setExpanded(!expanded)} hitSlop={{ top: 10, bottom: 10 }}>
+                <TouchableOpacity onPress={toggleExpand} hitSlop={{ top: 10, bottom: 10 }}>
                     <Text style={{ color: Colors.primary, marginBottom: 20, fontWeight: '600' }}>
                         {expanded ? 'Свернуть' : 'Показать полностью'}
                     </Text>

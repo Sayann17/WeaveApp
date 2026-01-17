@@ -1,5 +1,5 @@
 // app/(tabs)/index.tsx
-import React from 'react';
+import React, { useRef } from 'react';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { EventsFeed } from '../components/EventsFeed';
@@ -12,13 +12,22 @@ export default function HomeScreen() {
   const { theme } = useTheme();
   const insets = useSafeAreaInsets();
   const { isMobile } = useTelegram();
+  const scrollViewRef = useRef<ScrollView>(null);
+
+  const handleScrollToTop = () => {
+    scrollViewRef.current?.scrollTo({ y: 0, animated: true });
+  };
 
   return (
     <ThemedBackground>
       <View style={[styles.container, { paddingTop: getPlatformPadding(insets, isMobile) }]}>
-        <ScrollView contentContainerStyle={{ paddingBottom: 100 }} showsVerticalScrollIndicator={false}>
+        <ScrollView
+          ref={scrollViewRef}
+          contentContainerStyle={{ paddingBottom: 100 }}
+          showsVerticalScrollIndicator={false}
+        >
           <Text style={[styles.headerTitle, { color: theme.text }]}>События</Text>
-          <EventsFeed />
+          <EventsFeed onScrollToTop={handleScrollToTop} />
         </ScrollView>
       </View>
     </ThemedBackground>
