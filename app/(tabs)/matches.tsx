@@ -20,6 +20,7 @@ import { useTheme } from '../context/ThemeContext';
 import { yandexAuth } from '../services/yandex/AuthService';
 import { yandexMatch } from '../services/yandex/MatchService';
 import { getReligionById, getZodiacSignById } from '../utils/basic_info';
+import { formatMessageTime } from '../utils/date';
 import { normalize } from '../utils/normalize';
 import { getPlatformPadding } from '../utils/platformPadding';
 
@@ -319,50 +320,65 @@ export default function MatchesScreen() {
                             matches.map((match) => (
                                 <View
                                     key={match.id}
-                                    style={[styles.card, { backgroundColor: themeType === 'wine' ? '#4f111c' : theme.cardBg, flexDirection: 'column', alignItems: 'flex-start' }]}
+                                    style={[styles.card, { backgroundColor: themeType === 'wine' ? '#4f111c' : theme.cardBg }]}
                                 >
-                                    {/* Top Row: Avatar, Name, Menu Button */}
-                                    <View style={{ flexDirection: 'row', alignItems: 'center', width: '100%' }}>
-                                        <Pressable
-                                            style={{ flexDirection: 'row', alignItems: 'center', flex: 1 }}
-                                            onPress={() => router.push({ pathname: '/chat/[id]', params: { id: match.chatId, participantId: match.id } })}
-                                        >
-                                            <Image
-                                                source={{ uri: Array.isArray(match.photos) ? match.photos[0] : (match.photo || match.photos) }}
-                                                style={styles.avatar}
-                                                contentFit="cover"
-                                                transition={200}
-                                            />
-                                            <View style={styles.info}>
-                                                <Text style={[styles.name, { color: theme.text }]} numberOfLines={1}>
-                                                    {(match.name || 'Пользователь')}{match.age ? `, ${match.age}` : ''}
-                                                </Text>
-                                                <Text style={[styles.details, { color: themeType === 'wine' ? '#ffd9d9' : '#4ade80' }]} numberOfLines={1}>
-                                                    {getHeritageString(match)}
-                                                </Text>
-                                                {renderBioDetails(match)}
-                                            </View>
-                                        </Pressable>
-                                    </View>
-
-
-                                    {/* Bottom Row: Message Preview */}
                                     <Pressable
-                                        style={{ width: '100%', marginTop: normalize(10) }}
+                                        style={{ flexDirection: 'row', alignItems: 'center', flex: 1, paddingVertical: normalize(12), paddingHorizontal: normalize(16) }}
                                         onPress={() => router.push({ pathname: '/chat/[id]', params: { id: match.chatId, participantId: match.id } })}
                                     >
-                                        <Text
-                                            style={{
-                                                fontSize: normalize(14),
-                                                color: match.hasUnread ? theme.text : (match.lastMessage ? theme.subText : theme.subText),
-                                                fontWeight: match.hasUnread ? '700' : '400',
-                                                fontStyle: !match.lastMessage ? 'italic' : 'normal',
-                                                lineHeight: normalize(20)
-                                            }}
-                                            numberOfLines={2}
-                                        >
-                                            {match.lastMessage || 'Какое сплетение создаст ваш Узор... Проверим?'}
-                                        </Text>
+                                        <Image
+                                            source={{ uri: Array.isArray(match.photos) ? match.photos[0] : (match.photo || match.photos) }}
+                                            style={styles.avatar}
+                                            contentFit="cover"
+                                            transition={200}
+                                        />
+
+                                        {/* Middle Column: Info & Message */}
+                                        <View style={[styles.info, { flex: 1, marginRight: normalize(10) }]}>
+                                            <Text style={[styles.name, { color: theme.text }]} numberOfLines={1}>
+                                                {(match.name || 'Пользователь')}{match.age ? `, ${match.age}` : ''}
+                                            </Text>
+                                            <Text style={[styles.details, { color: themeType === 'wine' ? '#ffd9d9' : '#4ade80' }]} numberOfLines={1}>
+                                                {getHeritageString(match)}
+                                            </Text>
+
+                                            {/* Separator Line */}
+                                            <View style={{ height: 1, backgroundColor: theme.border, marginVertical: normalize(8), width: '100%' }} />
+
+                                            <Text
+                                                style={{
+                                                    fontSize: normalize(13),
+                                                    color: match.unreadCount > 0 ? theme.text : theme.subText,
+                                                    fontWeight: match.unreadCount > 0 ? '600' : '400',
+                                                }}
+                                                numberOfLines={1}
+                                            >
+                                                {match.lastMessage || 'Напишите первое сообщение...'}
+                                            </Text>
+                                        </View>
+
+                                        {/* Right Column: Time & Badge */}
+                                        <View style={{ alignItems: 'flex-end', justifyContent: 'space-between', marginLeft: normalize(5), alignSelf: 'stretch', paddingVertical: normalize(5) }}>
+                                            <Text style={{ fontSize: normalize(11), color: theme.subText, marginBottom: normalize(5) }}>
+                                                {formatMessageTime(match.lastMessageTime)}
+                                            </Text>
+
+                                            {match.unreadCount > 0 && (
+                                                <View style={{
+                                                    backgroundColor: theme.accent || '#00b894',
+                                                    borderRadius: normalize(10),
+                                                    paddingHorizontal: normalize(6),
+                                                    paddingVertical: normalize(2),
+                                                    minWidth: normalize(18),
+                                                    alignItems: 'center',
+                                                    justifyContent: 'center'
+                                                }}>
+                                                    <Text style={{ color: '#fff', fontSize: normalize(10), fontWeight: 'bold' }}>
+                                                        {match.unreadCount}
+                                                    </Text>
+                                                </View>
+                                            )}
+                                        </View>
                                     </Pressable>
                                 </View>
                             ))
