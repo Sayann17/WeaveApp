@@ -322,10 +322,10 @@ export default function MatchesScreen() {
                                     key={match.id}
                                     style={[styles.card, { backgroundColor: themeType === 'wine' ? '#4f111c' : theme.cardBg, flexDirection: 'column', alignItems: 'flex-start' }]}
                                 >
-                                    {/* Top Row: Avatar, Name, Bio */}
+                                    {/* Top Row: Avatar, Name, Menu Button */}
                                     <View style={{ flexDirection: 'row', alignItems: 'center', width: '100%' }}>
                                         <Pressable
-                                            style={{ flexDirection: 'row', alignItems: 'center', flex: 1, padding: normalize(10) }}
+                                            style={{ flexDirection: 'row', alignItems: 'center', flex: 1 }}
                                             onPress={() => router.push({ pathname: '/chat/[id]', params: { id: match.chatId, participantId: match.id } })}
                                         >
                                             <Image
@@ -334,7 +334,6 @@ export default function MatchesScreen() {
                                                 contentFit="cover"
                                                 transition={200}
                                             />
-
                                             <View style={styles.info}>
                                                 <Text style={[styles.name, { color: theme.text }]} numberOfLines={1}>
                                                     {(match.name || 'Пользователь')}{match.age ? `, ${match.age}` : ''}
@@ -348,39 +347,36 @@ export default function MatchesScreen() {
                                     </View>
 
                                     {/* Separator Line */}
-                                    <View style={{ height: 1, backgroundColor: theme.border, marginHorizontal: normalize(16), opacity: 0.3 }} />
+                                    <View style={{ height: 1, backgroundColor: theme.border, marginHorizontal: normalize(16), marginTop: normalize(8), opacity: 0.3 }} />
 
                                     {/* Bottom Row: Message Preview */}
                                     <Pressable
-                                        style={{
-                                            flexDirection: 'row',
-                                            alignItems: 'center',
-                                            paddingHorizontal: normalize(16),
-                                            paddingBottom: normalize(12),
-                                            width: '100%'
-                                        }}
+                                        style={{ width: '100%', marginTop: normalize(10), flexDirection: 'row', paddingHorizontal: normalize(16) }}
                                         onPress={() => router.push({ pathname: '/chat/[id]', params: { id: match.chatId, participantId: match.id } })}
                                     >
                                         <View style={{ flex: 1, marginRight: normalize(10) }}>
                                             <Text
                                                 style={{
-                                                    fontSize: normalize(13),
-                                                    color: match.unreadCount > 0 ? theme.text : theme.subText,
-                                                    fontWeight: match.unreadCount > 0 ? '600' : '400',
+                                                    fontSize: normalize(14),
+                                                    color: match.hasUnread ? theme.text : (match.lastMessage ? theme.subText : theme.subText),
+                                                    fontWeight: match.hasUnread ? '700' : '400',
                                                     fontStyle: !match.lastMessage ? 'italic' : 'normal',
+                                                    lineHeight: normalize(20)
                                                 }}
-                                                numberOfLines={1}
+                                                numberOfLines={2}
                                             >
-                                                {match.lastMessage || 'Напишите первое сообщение...'}
+                                                {match.lastMessage || 'Какое сплетение создаст ваш Узор... Проверим?'}
                                             </Text>
                                         </View>
 
                                         {/* Right Column: Time & Badge */}
-                                        <View style={{ alignItems: 'flex-end', justifyContent: 'center' }}>
+                                        <View style={{ alignItems: 'flex-end', justifyContent: 'flex-start', minWidth: normalize(50) }}>
+                                            {/* Timestamp */}
                                             <Text style={{ fontSize: normalize(11), color: theme.subText, marginBottom: normalize(4) }}>
                                                 {formatMessageTime(match.lastMessageTime)}
                                             </Text>
 
+                                            {/* Unread Badge */}
                                             {match.unreadCount > 0 && (
                                                 <View style={{
                                                     backgroundColor: theme.accent || '#00b894',
@@ -389,8 +385,7 @@ export default function MatchesScreen() {
                                                     paddingVertical: normalize(2),
                                                     minWidth: normalize(18),
                                                     alignItems: 'center',
-                                                    justifyContent: 'center',
-                                                    marginTop: normalize(2)
+                                                    justifyContent: 'center'
                                                 }}>
                                                     <Text style={{ color: '#fff', fontSize: normalize(10), fontWeight: 'bold' }}>
                                                         {match.unreadCount}
@@ -490,9 +485,8 @@ export default function MatchesScreen() {
                                 <Text style={[styles.emptyText, { color: theme.subText }]}>Вы пока никого не лайкнули</Text>
                             </View>
                         )
-                    )
-                    }
-                </ScrollView >
+                    )}
+                </ScrollView>
             </View >
         </ThemedBackground >
     );
@@ -691,5 +685,3 @@ const styles = StyleSheet.create({
         fontWeight: '700'
     }
 });
-
-
