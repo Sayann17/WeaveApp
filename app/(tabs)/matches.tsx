@@ -398,7 +398,7 @@ export default function MatchesScreen() {
 
             <View style={{ flex: 1 }}>
                 {/* Таб-бар (Chip Style) */}
-                <View style={{ paddingTop: getPlatformPadding(insets, isMobile, 78), marginBottom: 15 }}>
+                <View style={{ paddingTop: getPlatformPadding(insets, isMobile, 92), marginBottom: 15 }}>
                     <ScrollView
                         horizontal
                         showsHorizontalScrollIndicator={false}
@@ -482,10 +482,10 @@ export default function MatchesScreen() {
                                                 <Text style={[styles.name, { color: theme.text }]} numberOfLines={1}>
                                                     {(match.name || 'Пользователь')}{match.age ? `, ${match.age}` : ''}
                                                 </Text>
-                                                {renderBioDetails(match)}
                                                 <Text style={[styles.details, { color: themeType === 'wine' ? '#ffd9d9' : '#4ade80' }]} numberOfLines={1}>
                                                     {getHeritageString(match)}
                                                 </Text>
+                                                {renderBioDetails(match)}
                                             </View>
                                         </Pressable>
 
@@ -547,10 +547,10 @@ export default function MatchesScreen() {
                                             <Text style={[styles.name, { color: theme.text }]} numberOfLines={1}>
                                                 {(profile.name || 'Пользователь')}{profile.age ? `, ${profile.age}` : ''}
                                             </Text>
-                                            {renderBioDetails(profile)}
                                             <Text style={[styles.details, { color: themeType === 'wine' ? '#ffd9d9' : '#4ade80' }]} numberOfLines={1}>
                                                 {getHeritageString(profile)}
                                             </Text>
+                                            {renderBioDetails(profile)}
                                         </View>
                                     </Pressable>
 
@@ -597,10 +597,10 @@ export default function MatchesScreen() {
                                             <Text style={[styles.name, { color: theme.text }]} numberOfLines={1}>
                                                 {(profile.name || 'Пользователь')}{profile.age ? `, ${profile.age}` : ''}
                                             </Text>
-                                            {renderBioDetails(profile)}
                                             <Text style={[styles.details, { color: themeType === 'wine' ? '#ffd9d9' : '#4ade80' }]} numberOfLines={1}>
                                                 {getHeritageString(profile)}
                                             </Text>
+                                            {renderBioDetails(profile)}
                                         </View>
                                     </Pressable>
                                 </View>
@@ -624,16 +624,15 @@ const styles = StyleSheet.create({
 
     // Chip-style tabs
     tabChip: {
-        paddingHorizontal: 16,
-        paddingVertical: 10,
+        paddingHorizontal: 12,
+        paddingVertical: 8,
         borderRadius: 20,
         borderWidth: 1.5,
-        minWidth: 100,
         alignItems: 'center',
         justifyContent: 'center',
     },
     tabChipText: {
-        fontSize: 14,
+        fontSize: 13,
         fontWeight: '600',
     },
 
