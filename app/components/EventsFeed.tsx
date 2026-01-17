@@ -49,9 +49,6 @@ export const EventsFeed = () => {
         // Optimistic update
         setEvents(prev => prev.map(e => e.id === eventId ? { ...e, isGoing: newIsGoing } : e));
 
-        // Don't actually call API for mock event
-        if (eventId.startsWith('mock-')) return;
-
         const success = await eventService.attendEvent(eventId);
         if (!success) {
             // Revert on failure
@@ -76,67 +73,21 @@ export const EventsFeed = () => {
                 <FlatList
                     data={events}
                     horizontal
-                    pagingEnabled={false} // Disable paging for smooth peeking or use carefully with snapToInterval
-                    snapToInterval={width * 0.9 + 15} // Card width + margin
+                    pagingEnabled={false}
+                    snapToInterval={width * 0.9 + 15}
                     decelerationRate="fast"
                     showsHorizontalScrollIndicator={false}
-                    contentContainerStyle={{ paddingHorizontal: 10 }} // Center initial item if needed
+                    contentContainerStyle={{ paddingHorizontal: 10 }}
                     onScroll={handleScroll}
                     scrollEventThrottle={16}
                     keyExtractor={(item) => item.id}
-                    renderItem={({ item: event }) => (
-                        <View style={styles.cardContainer}>
-                            {/* Visual Layer */}
-                            <View style={[styles.imageWrapper, { backgroundColor: isLight ? '#f0f0f0' : '#1a1a1a' }]}>
-                                <Image
-                                    source={EVENT_IMAGES[event.imageKey] || EVENT_IMAGES['uzor_love']}
-                                    style={styles.image}
-                                    resizeMode="cover"
-                                />
-                                {/* Overlay Gradientish View */}
-                                <View style={styles.overlay} />
-                            </View>
-
-                            {/* Content Layer - Overlapping */}
-                            <View style={styles.contentContainer}>
-                                <View style={styles.metaRow}>
-                                    <Text style={styles.dateText}>
-                                        {new Date(event.date).toLocaleDateString('ru-RU', { day: 'numeric', month: 'long' }).toUpperCase()}
-                                    </Text>
-                                    <View style={styles.dot} />
-                                    <Text style={styles.timeText}>19:00</Text>
-                                </View>
-
-                                <Text style={[styles.title, { color: theme.text }]}>{event.title}</Text>
-                                <Text style={[styles.description, { color: theme.subText }]}>{event.description}</Text>
-
-                                {/* Action Row */}
-                                <View style={styles.actionRow}>
-                                    {/* Facepile Mockup */}
-                                    <TouchableOpacity
-                                        onPress={() => Linking.openURL('https://forms.gle/uktQtqpxntwTo2Pb9')}
-                                        style={styles.detailsButton}
-                                    >
-                                        <Text style={[styles.detailsText, { color: Colors.primary }]}>Подробнее</Text>
-                                    </TouchableOpacity>
-
-                                    <TouchableOpacity
-                                        onPress={() => handleAttend(event.id)}
-                                        activeOpacity={0.8}
-                                        style={[
-                                            styles.attendButton,
-                                            { backgroundColor: event.isGoing ? (isLight ? '#F2F2F7' : 'rgba(255,255,255,0.1)') : Colors.primary }
-                                        ]}
-                                    >
-                                        {event.isGoing ? (
-                                            <Ionicons name="checkmark" size={20} color={isLight ? Colors.primary : '#fff'} />
-                                        ) : (
-                                            <Text style={[styles.buttonText, { color: '#fff' }]}>Пойду</Text>
-                                        )}
-                                    </TouchableOpacity>
-                                </View>
-                            </View>
-                        </View>
+                    renderItem={({ item }) => (
+                        <EventCard
+                            event={item}
+                            theme={theme}
+                            isLight={isLight}
+                            onAttend={handleAttend}
+                        />
                     )}
                 />
             </View>
@@ -157,6 +108,76 @@ export const EventsFeed = () => {
                     ))}
                 </View>
             )}
+        </View>
+    );
+};
+
+const EventCard = ({ event, theme, isLight, onAttend }: { event: WeaveEvent, theme: any, isLight: boolean, onAttend: (id: string) => void }) => {
+    const [expanded, setExpanded] = useState(false);
+
+    return (
+        <View style={styles.cardContainer}>
+            {/* Visual Layer */}
+            <View style={[styles.imageWrapper, { backgroundColor: isLight ? '#f0f0f0' : '#1a1a1a' }]}>
+                <Image
+                    source={EVENT_IMAGES[event.imageKey] || EVENT_IMAGES['uzor_love']}
+                    style={styles.image}
+                    resizeMode="cover"
+                />
+                <View style={styles.overlay} />
+            </View>
+
+            {/* Content Layer */}
+            <View style={styles.contentContainer}>
+                <View style={styles.metaRow}>
+                    <Text style={styles.dateText}>
+                        {new Date(event.date).toLocaleDateString('ru-RU', { day: 'numeric', month: 'long' }).toUpperCase()}
+                    </Text>
+                    <View style={styles.dot} />
+                    <Text style={styles.timeText}>19:00</Text>
+                </View>
+
+                <Text style={[styles.title, { color: theme.text }]}>{event.title}</Text>
+
+                <Text
+                    style={[styles.description, { color: theme.subText }]}
+                    numberOfLines={expanded ? undefined : 3}
+                >
+                    {event.description}
+                </Text>
+
+                {/* Show toggle only if text is likely long enough, but simple toggle is safer for UX here */}
+                <TouchableOpacity onPress={() => setExpanded(!expanded)} hitSlop={{ top: 10, bottom: 10 }}>
+                    <Text style={{ color: Colors.primary, marginBottom: 20, fontWeight: '600' }}>
+                        {expanded ? 'Свернуть' : 'Показать полностью'}
+                    </Text>
+                </TouchableOpacity>
+
+                {/* Action Row */}
+                <View style={styles.actionRow}>
+                    <TouchableOpacity
+                        onPress={() => Linking.openURL('https://forms.gle/uktQtqpxntwTo2Pb9')}
+                        style={styles.detailsButton}
+                    >
+                        <Text style={[styles.detailsText, { color: Colors.primary }]}>Подробнее</Text>
+                    </TouchableOpacity>
+
+                    <TouchableOpacity
+                        onPress={() => onAttend(event.id)}
+                        activeOpacity={0.8}
+                        style={[
+                            styles.attendButton,
+                            { backgroundColor: event.isGoing ? (isLight ? '#F2F2F7' : 'rgba(255,255,255,0.1)') : Colors.primary }
+                        ]}
+                    >
+                        {event.isGoing ? (
+                            <Ionicons name="checkmark" size={20} color={isLight ? Colors.primary : '#fff'} />
+                        ) : (
+                            <Text style={[styles.buttonText, { color: '#fff' }]}>Пойду</Text>
+                        )}
+                    </TouchableOpacity>
+                </View>
+            </View>
         </View>
     );
 };
