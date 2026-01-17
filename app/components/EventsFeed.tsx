@@ -10,6 +10,7 @@ const { width } = Dimensions.get('window');
 // Mapping imageKey to local assets
 const EVENT_IMAGES: Record<string, any> = {
     'uzor_love': require('../../assets/images/events/uzor_love.jpg'),
+    'tuva_culture': require('../../assets/images/events/tuva_culture.jpg'),
 };
 
 export const EventsFeed = () => {
@@ -29,17 +30,7 @@ export const EventsFeed = () => {
         // data from API
         const data = await eventService.getEvents();
 
-        // MOCK EVENT for demonstration (User Request: "Add one more event")
-        const mockEvent: WeaveEvent = {
-            id: 'mock-event-2',
-            title: 'Вечер Джаза',
-            description: 'Живая музыка, уютная атмосфера и знакомства в ритме джаза.',
-            date: new Date(Date.now() + 86400000 * 3).toISOString(), // +3 days
-            imageKey: 'uzor_love', // Reusing image as placeholder
-            isGoing: false
-        };
-
-        setEvents([...data, mockEvent]);
+        setEvents(data);
         setLoading(false);
     };
 
