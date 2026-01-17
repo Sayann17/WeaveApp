@@ -2,6 +2,7 @@ import { Ionicons } from '@expo/vector-icons';
 import React, { useEffect, useRef } from 'react';
 import { Animated, Dimensions, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { normalize } from '../utils/normalize';
 
 export type NotificationType = 'message' | 'match' | 'like';
 
@@ -28,7 +29,7 @@ export const NotificationToast: React.FC<NotificationToastProps> = ({
     useEffect(() => {
         if (visible) {
             Animated.spring(translateY, {
-                toValue: insets.top + 10,
+                toValue: insets.top + normalize(10),
                 useNativeDriver: true,
                 bounciness: 4,
             }).start();
@@ -45,7 +46,7 @@ export const NotificationToast: React.FC<NotificationToastProps> = ({
 
     const hide = () => {
         Animated.timing(translateY, {
-            toValue: -150,
+            toValue: normalize(-150),
             duration: 300,
             useNativeDriver: true,
         }).start(() => onClose());
@@ -82,7 +83,7 @@ export const NotificationToast: React.FC<NotificationToastProps> = ({
                 }}
             >
                 <View style={[styles.iconContainer, { backgroundColor: getColor() }]}>
-                    <Ionicons name={getIcon()} size={20} color="white" />
+                    <Ionicons name={getIcon()} size={normalize(20)} color="white" />
                 </View>
                 <View style={styles.textContainer}>
                     <Text style={styles.title}>
@@ -90,8 +91,8 @@ export const NotificationToast: React.FC<NotificationToastProps> = ({
                     </Text>
                     <Text style={styles.message} numberOfLines={2}>{message}</Text>
                 </View>
-                <TouchableOpacity onPress={hide} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
-                    <Ionicons name="close" size={18} color="#999" />
+                <TouchableOpacity onPress={hide} hitSlop={{ top: normalize(10), bottom: normalize(10), left: normalize(10), right: normalize(10) }}>
+                    <Ionicons name="close" size={normalize(18)} color="#999" />
                 </TouchableOpacity>
             </TouchableOpacity>
         </Animated.View>
@@ -102,43 +103,43 @@ const styles = StyleSheet.create({
     container: {
         position: 'absolute',
         top: 0,
-        left: 10,
-        right: 10,
+        left: normalize(10),
+        right: normalize(10),
         alignItems: 'center',
         zIndex: 9999,
     },
     content: {
         flexDirection: 'row',
         backgroundColor: 'white',
-        borderRadius: 16,
-        padding: 12,
-        width: width - 30,
+        borderRadius: normalize(16),
+        padding: normalize(12),
+        width: width - normalize(30),
         shadowColor: '#000',
-        shadowOffset: { width: 0, height: 4 },
+        shadowOffset: { width: 0, height: normalize(4) },
         shadowOpacity: 0.15,
         shadowRadius: 10,
         elevation: 8,
         alignItems: 'center',
     },
     iconContainer: {
-        width: 36,
-        height: 36,
-        borderRadius: 18,
+        width: normalize(36),
+        height: normalize(36),
+        borderRadius: normalize(18),
         justifyContent: 'center',
         alignItems: 'center',
-        marginRight: 12,
+        marginRight: normalize(12),
     },
     textContainer: {
         flex: 1,
     },
     title: {
         fontWeight: 'bold',
-        fontSize: 14,
+        fontSize: normalize(14),
         color: '#000',
-        marginBottom: 2,
+        marginBottom: normalize(2),
     },
     message: {
-        fontSize: 13,
+        fontSize: normalize(13),
         color: '#555',
     }
 });

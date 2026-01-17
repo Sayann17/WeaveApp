@@ -20,6 +20,7 @@ import { useTheme } from '../context/ThemeContext';
 import { yandexAuth } from '../services/yandex/AuthService';
 import { yandexMatch } from '../services/yandex/MatchService';
 import { getReligionById, getZodiacSignById } from '../utils/basic_info';
+import { normalize } from '../utils/normalize';
 import { getPlatformPadding } from '../utils/platformPadding';
 
 export default function MatchesScreen() {
@@ -144,7 +145,7 @@ export default function MatchesScreen() {
         if (profile.gender) {
             const genderText = profile.gender === 'female' ? 'Женщина' : 'Мужчина';
             items.push(
-                <Text key="gender" style={{ fontSize: 13, color: theme.subText }}>
+                <Text key="gender" style={{ fontSize: normalize(13), color: theme.subText }}>
                     {genderText}
                 </Text>
             );
@@ -155,7 +156,7 @@ export default function MatchesScreen() {
             const zodiac = getZodiacSignById(profile.zodiac);
             if (zodiac) {
                 items.push(
-                    <Text key="zodiac" style={{ fontSize: 13, color: theme.subText }}>
+                    <Text key="zodiac" style={{ fontSize: normalize(13), color: theme.subText }}>
                         {zodiac.emoji} {zodiac.name}
                     </Text>
                 );
@@ -179,7 +180,7 @@ export default function MatchesScreen() {
         const religionsText = getReligions();
         if (religionsText) {
             items.push(
-                <Text key="religion" style={{ fontSize: 13, color: theme.subText }}>
+                <Text key="religion" style={{ fontSize: normalize(13), color: theme.subText }}>
                     {religionsText}
                 </Text>
             );
@@ -189,18 +190,18 @@ export default function MatchesScreen() {
 
         // Render items with dots between them
         return (
-            <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 4, flexWrap: 'wrap' }}>
+            <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: normalize(4), flexWrap: 'wrap' }}>
                 {items.map((item, index) => (
                     <React.Fragment key={index}>
                         {item}
                         {index < items.length - 1 && (
                             <View
                                 style={{
-                                    width: 3,
-                                    height: 3,
-                                    borderRadius: 1.5,
+                                    width: normalize(3),
+                                    height: normalize(3),
+                                    borderRadius: normalize(1.5),
                                     backgroundColor: dotColor,
-                                    marginHorizontal: 6,
+                                    marginHorizontal: normalize(6),
                                 }}
                             />
                         )}
@@ -256,7 +257,7 @@ export default function MatchesScreen() {
                     <ScrollView
                         horizontal
                         showsHorizontalScrollIndicator={false}
-                        contentContainerStyle={{ paddingHorizontal: 20, gap: 2 }}
+                        contentContainerStyle={{ paddingHorizontal: normalize(20), gap: normalize(2) }}
                     >
                         <Pressable
                             style={[
@@ -347,16 +348,16 @@ export default function MatchesScreen() {
 
                                     {/* Bottom Row: Message Preview */}
                                     <Pressable
-                                        style={{ width: '100%', marginTop: 10 }}
+                                        style={{ width: '100%', marginTop: normalize(10) }}
                                         onPress={() => router.push({ pathname: '/chat/[id]', params: { id: match.chatId, participantId: match.id } })}
                                     >
                                         <Text
                                             style={{
-                                                fontSize: 14,
+                                                fontSize: normalize(14),
                                                 color: match.hasUnread ? theme.text : (match.lastMessage ? theme.subText : theme.subText),
                                                 fontWeight: match.hasUnread ? '700' : '400',
                                                 fontStyle: !match.lastMessage ? 'italic' : 'normal',
-                                                lineHeight: 20
+                                                lineHeight: normalize(20)
                                             }}
                                             numberOfLines={2}
                                         >
@@ -399,7 +400,7 @@ export default function MatchesScreen() {
                                     </Pressable>
 
                                     {/* Action Buttons for Likes */}
-                                    <View style={{ flexDirection: 'row', gap: 10 }}>
+                                    <View style={{ flexDirection: 'row', gap: normalize(10) }}>
                                         <Pressable
                                             style={[styles.iconBtn, { backgroundColor: isLight ? '#fff0f0' : 'rgba(255,0,0,0.1)' }]}
                                             onPress={() => handleDislike(profile)}
@@ -462,58 +463,58 @@ export default function MatchesScreen() {
 }
 
 const styles = StyleSheet.create({
-    tabContainer: { flexDirection: 'row', paddingHorizontal: 20, marginBottom: 10, marginTop: 10 },
-    tab: { paddingVertical: 10, marginRight: 20 },
-    tabText: { fontSize: 16, fontWeight: '500' },
+    tabContainer: { flexDirection: 'row', paddingHorizontal: normalize(20), marginBottom: normalize(10), marginTop: normalize(10) },
+    tab: { paddingVertical: normalize(10), marginRight: normalize(20) },
+    tabText: { fontSize: normalize(16), fontWeight: '500' },
 
     // Chip-style tabs
     tabChip: {
-        paddingHorizontal: 12,
-        paddingVertical: 8,
-        borderRadius: 20,
+        paddingHorizontal: normalize(12),
+        paddingVertical: normalize(8),
+        borderRadius: normalize(20),
         borderWidth: 1.5,
         alignItems: 'center',
         justifyContent: 'center',
     },
     tabChipText: {
-        fontSize: 13,
+        fontSize: normalize(13),
         fontWeight: '600',
     },
 
-    list: { padding: 20 },
+    list: { padding: normalize(20) },
     card: {
         flexDirection: 'row',
         alignItems: 'center',
-        padding: 15,
-        borderRadius: 20,
-        marginBottom: 15,
+        padding: normalize(15),
+        borderRadius: normalize(20),
+        marginBottom: normalize(15),
         elevation: 2,
         shadowColor: '#000',
         shadowOpacity: 0.1,
         shadowRadius: 10,
-        shadowOffset: { width: 0, height: 5 }
+        shadowOffset: { width: 0, height: normalize(5) }
     },
-    avatar: { width: 60, height: 60, borderRadius: 30, backgroundColor: '#ccc', overflow: 'hidden' },
-    info: { flex: 1, marginLeft: 15 },
-    name: { fontSize: 18, fontWeight: '600' },
-    details: { fontSize: 14, marginTop: 4 },
-    iconBtn: { padding: 10, borderRadius: 20 },
+    avatar: { width: normalize(60), height: normalize(60), borderRadius: normalize(30), backgroundColor: '#ccc', overflow: 'hidden' },
+    info: { flex: 1, marginLeft: normalize(15) },
+    name: { fontSize: normalize(18), fontWeight: '600' },
+    details: { fontSize: normalize(14), marginTop: normalize(4) },
+    iconBtn: { padding: normalize(10), borderRadius: normalize(20) },
 
-    empty: { alignItems: 'center', marginTop: 50 },
-    emptyText: { fontSize: 16 },
+    empty: { alignItems: 'center', marginTop: normalize(50) },
+    emptyText: { fontSize: normalize(16) },
 
     actionColumn: {
         alignItems: 'flex-end',
         justifyContent: 'center',
-        gap: 8,
-        minWidth: 100
+        gap: normalize(8),
+        minWidth: normalize(100)
     },
     actionButton: {
         flexDirection: 'row',
         alignItems: 'center',
-        paddingVertical: 8,
-        paddingHorizontal: 12,
-        borderRadius: 12,
+        paddingVertical: normalize(8),
+        paddingHorizontal: normalize(12),
+        borderRadius: normalize(12),
     },
     chatButton: {
         // backgroundColor handled dynamically
@@ -522,16 +523,16 @@ const styles = StyleSheet.create({
         backgroundColor: 'transparent',
     },
     actionButtonText: {
-        fontSize: 14,
+        fontSize: normalize(14),
         fontWeight: '600'
     },
     unreadDot: {
         position: 'absolute',
         top: -2,
         right: -2,
-        width: 8,
-        height: 8,
-        borderRadius: 4,
+        width: normalize(8),
+        height: normalize(8),
+        borderRadius: normalize(4),
         backgroundColor: '#ff4444',
         borderWidth: 1.5,
     },
@@ -544,20 +545,20 @@ const styles = StyleSheet.create({
         alignItems: 'center'
     },
     menuModal: {
-        width: 250,
+        width: normalize(250),
         backgroundColor: '#fff',
-        borderRadius: 16,
-        padding: 5,
+        borderRadius: normalize(16),
+        padding: normalize(5),
         elevation: 5
     },
     menuItem: {
         flexDirection: 'row',
         alignItems: 'center',
-        padding: 15,
-        gap: 12
+        padding: normalize(15),
+        gap: normalize(12)
     },
     menuText: {
-        fontSize: 16,
+        fontSize: normalize(16),
         fontWeight: '500'
     },
     divider: {
@@ -567,90 +568,90 @@ const styles = StyleSheet.create({
     },
     alertBox: {
         width: '85%',
-        padding: 20,
-        borderRadius: 20,
+        padding: normalize(20),
+        borderRadius: normalize(20),
         alignItems: 'center'
     },
     alertTitle: {
-        fontSize: 18,
+        fontSize: normalize(18),
         fontWeight: '700',
-        marginBottom: 10,
+        marginBottom: normalize(10),
         textAlign: 'center'
     },
     alertMessage: {
-        fontSize: 15,
+        fontSize: normalize(15),
         textAlign: 'center',
-        marginBottom: 20,
-        lineHeight: 22
+        marginBottom: normalize(20),
+        lineHeight: normalize(22)
     },
     alertButtons: {
         flexDirection: 'row',
-        gap: 15,
+        gap: normalize(15),
         width: '100%'
     },
     alertButton: {
         flex: 1,
-        padding: 12,
-        borderRadius: 12,
+        padding: normalize(12),
+        borderRadius: normalize(12),
         alignItems: 'center',
         justifyContent: 'center'
     },
     alertButtonText: {
-        fontSize: 16,
+        fontSize: normalize(16),
         fontWeight: '600'
     },
     reasonSheet: {
         width: '100%',
-        borderTopLeftRadius: 20,
-        borderTopRightRadius: 20,
-        padding: 20,
-        paddingBottom: 40,
+        borderTopLeftRadius: normalize(20),
+        borderTopRightRadius: normalize(20),
+        padding: normalize(20),
+        paddingBottom: normalize(40),
         maxHeight: '90%'
     },
     reasonHeader: {
         flexDirection: 'row',
         justifyContent: 'space-between',
         alignItems: 'center',
-        marginBottom: 20
+        marginBottom: normalize(20)
     },
     reasonTitle: {
-        fontSize: 20,
+        fontSize: normalize(20),
         fontWeight: '700'
     },
     reasonItem: {
         flexDirection: 'row',
         justifyContent: 'space-between',
         alignItems: 'center',
-        paddingVertical: 16,
+        paddingVertical: normalize(16),
         borderBottomWidth: 1,
     },
     reasonText: {
-        fontSize: 17,
+        fontSize: normalize(17),
         fontWeight: '500'
     },
     label: {
-        fontSize: 14,
-        marginBottom: 8,
+        fontSize: normalize(14),
+        marginBottom: normalize(8),
         fontWeight: '600'
     },
     inputContainer: {
-        borderRadius: 12,
-        padding: 12,
-        marginBottom: 15
+        borderRadius: normalize(12),
+        padding: normalize(12),
+        marginBottom: normalize(15)
     },
     input: {
-        fontSize: 16,
-        minHeight: 60,
+        fontSize: normalize(16),
+        minHeight: normalize(60),
         textAlignVertical: 'top'
     },
     submitButton: {
-        padding: 15,
-        borderRadius: 15,
+        padding: normalize(15),
+        borderRadius: normalize(15),
         alignItems: 'center',
-        marginTop: 10
+        marginTop: normalize(10)
     },
     submitButtonText: {
-        fontSize: 16,
+        fontSize: normalize(16),
         fontWeight: '700'
     }
 });

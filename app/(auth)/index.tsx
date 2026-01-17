@@ -11,6 +11,7 @@ import {
 } from 'react-native';
 import { useTelegram } from '../context/TelegramProvider';
 import { yandexAuth } from '../services/yandex/AuthService';
+import { normalize } from '../utils/normalize';
 
 const { width, height } = Dimensions.get('window');
 
@@ -100,43 +101,43 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    padding: 24,
+    padding: normalize(24),
     zIndex: 10,
   },
   header: {
     alignItems: 'center',
-    marginBottom: 80,
+    marginBottom: normalize(80),
   },
   titleMain: {
     fontFamily: 'CormorantGaramond_700Bold',
-    fontSize: 64,
+    fontSize: normalize(64),
     color: '#ffffff',
     marginBottom: 0,
     includeFontPadding: false,
-    lineHeight: 70,
+    lineHeight: normalize(70),
   },
   titleSlogan: {
     fontFamily: 'CormorantGaramond_400Regular_Italic',
-    fontSize: 24,
+    fontSize: normalize(24),
     color: '#ffffff',
     opacity: 0.9,
-    marginTop: -5,
+    marginTop: normalize(-5),
   },
   statusContainer: {
     alignItems: 'center',
-    padding: 20,
+    padding: normalize(20),
     backgroundColor: 'rgba(0,0,0,0.5)',
-    borderRadius: 16,
+    borderRadius: normalize(16),
   },
   statusText: {
     color: '#fff',
-    fontSize: 16,
+    fontSize: normalize(16),
     textAlign: 'center',
     fontFamily: 'Inter_400Regular', // if available, else standard
   },
   errorText: {
     color: '#ff4444',
-    fontSize: 16,
+    fontSize: normalize(16),
     textAlign: 'center',
     fontWeight: 'bold',
   }
