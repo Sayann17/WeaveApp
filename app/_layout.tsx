@@ -11,12 +11,10 @@ import { ThemeProvider } from './context/ThemeContext';
 import './global.css'; // Import global CSS for pinch-zoom prevention
 import { User } from './services/interfaces/IAuthService';
 import { yandexAuth } from './services/yandex/AuthService';
-import SplashScreen from './splash';
 
 export default function RootLayout() {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [isSplashComplete, setIsSplashComplete] = useState(false);
   const segments = useSegments();
   const router = useRouter();
 
@@ -33,7 +31,7 @@ export default function RootLayout() {
 
   // Навигация после загрузки
   useEffect(() => {
-    if (isLoading || !isSplashComplete) return;
+    if (isLoading) return;
 
     const inAuthGroup = segments[0] === '(auth)';
     const inTabsGroup = segments[0] === '(tabs)';
@@ -43,17 +41,12 @@ export default function RootLayout() {
       if (!user.profile_completed && !inOnboarding && !inAuthGroup) {
         router.replace('/onboarding/welcome');
       } else if (user.profile_completed && (inAuthGroup || inOnboarding)) {
-        router.replace('/(tabs)/profile');
+        router.replace('/(tabs)');
       }
     } else if (!user && (inTabsGroup || inOnboarding)) {
       router.replace('/(auth)');
     }
-  }, [user, segments, isLoading, isSplashComplete]);
-
-  // Показываем сплеш-скрин
-  if (!isSplashComplete) {
-    return <SplashScreen onFinish={() => setIsSplashComplete(true)} />;
-  }
+  }, [user, segments, isLoading]);
 
   // Индикатор загрузки
   if (isLoading) {

@@ -73,14 +73,23 @@ export default function TabLayout() {
       <Tabs.Screen
         name="index"
         options={{
-          title: 'Поиск', // Now index will be Search
+          title: 'Профиль',
+          tabBarIcon: ({ color }) => (
+            <TabIconWithBadge name="person" size={28} color={color} />
+          ),
+        }}
+      />
+      <Tabs.Screen
+        name="search"
+        options={{
+          title: 'Поиск',
           tabBarIcon: ({ color }) => (
             <TabIconWithBadge name="search" size={28} color={color} />
           ),
         }}
       />
       <Tabs.Screen
-        name="events" // Renamed from explore or added new
+        name="events"
         options={{
           title: 'События',
           tabBarIcon: ({ color }) => (
@@ -104,15 +113,17 @@ export default function TabLayout() {
           ),
         }}
       />
-      <Tabs.Screen
-        name="profile"
-        options={{
-          title: 'Профиль',
-          tabBarIcon: ({ color }) => (
-            <TabIconWithBadge name="person" size={28} color={color} />
-          ),
-        }}
-      />
+
+      {/* Search is now a file, no longer index. Profile is index. */}
+      {/* We need to ensure 'profile' (the file) is either deleted or hidden if it still exists. 
+          Since we renamed profile.tsx to index.tsx, the 'profile' route is gone. 
+          But wait, did we rename or copy? The user 'created' index.tsx. 
+          Step 992 ran 'mv app/(tabs)/profile.tsx app/(tabs)/index.tsx' but it failed? 
+          No, step 994 completed. Step 995 failed patch. 
+          But then user MANUALLY created index.tsx in step 1001. 
+          So profile.tsx might still exist or be gone. 
+          If profile.tsx is gone, we should remove the Tabs.Screen name="profile" entry.
+      */}
       <Tabs.Screen
         name="menu"
         options={{

@@ -49,7 +49,7 @@ export default function AuthScreen() {
     <View style={styles.container}>
       {/* Фон - Логотип */}
       <Image
-        source={require('../../assets/images/logo.jpg')}
+        source={require('../../assets/images/weave-splash.png')}
         style={[StyleSheet.absoluteFill, styles.backgroundImage]}
         resizeMode="cover"
       />
@@ -60,7 +60,7 @@ export default function AuthScreen() {
       <View style={styles.content}>
         {/* ЗАГОЛОВОК */}
         <View style={styles.header}>
-          <Text style={styles.titleMain}>Weave</Text>
+          {/* <Text style={styles.titleMain}>Weave</Text> */ /* Removing duplicate title */}
           <Text style={styles.titleSlogan}>Переплетая судьбы...</Text>
         </View>
 
