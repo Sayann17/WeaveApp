@@ -259,7 +259,7 @@ export default function ExploreScreen() {
                 <View style={[styles.safeArea, { paddingTop: getPlatformPadding(insets, isMobile) }]}>
                     <StatusBar barStyle={isLight ? "dark-content" : "light-content"} />
 
-                    <View style={[styles.center, { paddingHorizontal: 30, flex: 1, paddingBottom: 80 }]}>
+                    <View style={[styles.center, { paddingHorizontal: 30, flex: 1, paddingBottom: 20 }]}>
                         <Ionicons name="earth-outline" size={80} color={theme.subText} />
                         <Text style={[styles.emptyText, { color: theme.text, textAlign: 'center', lineHeight: 28 }]}>
                             Мы пока не нашли подходящих людей. Попробуйте изменить фильтры или заглянуть позже!

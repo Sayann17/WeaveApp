@@ -127,16 +127,26 @@ export const EventsCarousel = ({
             </View>
 
             {showDots && (
-                <View style={[styles.paginationContainer, { backgroundColor: isLight ? 'rgba(0,0,0,0.05)' : 'rgba(255,255,255,0.1)' }]}>
-                    {dotsArray.map((_, index) => (
-                        <View
-                            key={index}
-                            style={[
-                                styles.paginationDot,
-                                { backgroundColor: index === activeDotIndex ? '#FFF' : '#888' }
-                            ]}
-                        />
-                    ))}
+                <View style={[styles.paginationContainer, {
+                    backgroundColor: isLight ? 'rgba(0,0,0,0.05)' : 'rgba(255,255,255,0.1)',
+                    marginTop: 0 // Reduced from 20 to 0 (or close to 0) as requested "almost flush"
+                }]}>
+                    {dotsArray.map((_, index) => {
+                        const isActive = index === activeDotIndex;
+                        const dotColor = isActive
+                            ? (isLight ? '#000' : '#FFF')
+                            : '#888';
+
+                        return (
+                            <View
+                                key={index}
+                                style={[
+                                    styles.paginationDot,
+                                    { backgroundColor: dotColor }
+                                ]}
+                            />
+                        );
+                    })}
                 </View>
             )}
         </View>

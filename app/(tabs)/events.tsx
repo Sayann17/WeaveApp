@@ -23,7 +23,7 @@ export default function HomeScreen() {
       <View style={[styles.container, { paddingTop: getPlatformPadding(insets, isMobile) }]}>
         <ScrollView
           ref={scrollViewRef}
-          contentContainerStyle={{ paddingBottom: 80 }}
+          contentContainerStyle={{ paddingBottom: 20 }}
           showsVerticalScrollIndicator={false}
         >
           <Text style={[styles.headerTitle, { color: theme.text }]}>События</Text>
