@@ -312,8 +312,7 @@ export default function ExploreScreen() {
                 {/* 🔥 ПЛАВАЮЩИЕ КНОПКИ ДЕЙСТВИЙ */}
                 <View style={[
                     styles.floatingActions,
-                    isLight ? styles.lightShadow : styles.darkShadow,
-                    { bottom: 20 }
+                    isLight ? styles.lightShadow : styles.darkShadow
                 ]}>
                     <Pressable style={[styles.btn, styles.filterBtnFloating, { backgroundColor: '#00b894' }]} onPress={openFilters}>
                         <Ionicons name="options" size={22} color="#fff" />
