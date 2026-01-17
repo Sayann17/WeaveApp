@@ -6,12 +6,14 @@ import {
   FlatList,
   Image,
   KeyboardAvoidingView,
+  Modal,
   Platform,
   Pressable,
   StatusBar,
   StyleSheet,
   Text,
   TextInput,
+  TouchableWithoutFeedback,
   View
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -21,6 +23,7 @@ import { useTelegram } from '../context/TelegramProvider';
 import { useTheme } from '../context/ThemeContext';
 import { yandexAuth } from '../services/yandex/AuthService';
 import { yandexChat, type Message } from '../services/yandex/ChatService';
+import { yandexMatch } from '../services/yandex/MatchService';
 import { YandexUserService } from '../services/yandex/UserService';
 import { getPlatformPadding } from '../utils/platformPadding';
 
@@ -48,6 +51,17 @@ export default function ChatScreen() {
   // Custom Menu State
   const [menuVisible, setMenuVisible] = useState(false);
   const [selectedMessage, setSelectedMessage] = useState<Message | null>(null);
+
+  // Block State
+  const [blockConfirmVisible, setBlockConfirmVisible] = useState(false);
+  const [reasonModalVisible, setReasonModalVisible] = useState(false);
+  const [customReason, setCustomReason] = useState('');
+
+  const BLOCK_REASONS = [
+    'Мошенничество (Скам)',
+    'Неприемлемый контент',
+    'Нецензурная брань'
+  ];
 
   const flatListRef = useRef<FlatList>(null);
   const inputRef = useRef<TextInput>(null);
@@ -248,6 +262,41 @@ export default function ChatScreen() {
     setNewMessage('');
   };
 
+  // Block Functions
+  const handleBlockInit = () => {
+    setBlockConfirmVisible(true);
+  };
+
+  const confirmBlockInit = () => {
+    setBlockConfirmVisible(false);
+    setTimeout(() => {
+      setReasonModalVisible(true);
+    }, 100);
+  };
+
+  const submitBlock = async (reason: string) => {
+    setReasonModalVisible(false);
+    setCustomReason('');
+
+    if (!participantId || typeof participantId !== 'string') return;
+
+    try {
+      // Call Backend
+      if (yandexMatch.blockUser) {
+        await yandexMatch.blockUser(participantId, reason);
+      } else {
+        console.warn('blockUser method not implemented in MatchService yet');
+      }
+
+      Alert.alert('Успешно', 'Пользователь заблокирован.', [
+        { text: 'OK', onPress: () => router.back() }
+      ]);
+    } catch (e) {
+      Alert.alert('Ошибка', 'Не удалось заблокировать пользователя');
+      console.error(e);
+    }
+  };
+
   const formatMessageTime = (date: Date) => {
     return date.toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' });
   };
@@ -376,6 +425,96 @@ export default function ChatScreen() {
       >
         <View style={{ flex: 1, paddingTop: getPlatformPadding(insets, isMobile, 78) }}>
 
+          {/* Block Модалы */}
+          {/* 1. Block Confirmation Modal */}
+          <Modal
+            transparent
+            visible={blockConfirmVisible}
+            animationType="fade"
+            onRequestClose={() => setBlockConfirmVisible(false)}
+          >
+            <View style={[styles.modalOverlay, { backgroundColor: 'rgba(0,0,0,0.7)' }]}>
+              <View style={[styles.alertBox, { backgroundColor: theme.cardBg }]}>
+                <Text style={[styles.alertTitle, { color: theme.text }]}>Заблокировать пользователя?</Text>
+                <Text style={[styles.alertMessage, { color: theme.subText }]}>
+                  Это безвозвратное действие, которое приведет к полному удалению мэтча и истории переписки. Вы больше не увидите друг друга в поиске.
+                </Text>
+                <View style={styles.alertButtons}>
+                  <Pressable
+                    style={[styles.alertButton, { backgroundColor: theme.cardBg, borderColor: theme.border, borderWidth: 1 }]}
+                    onPress={() => setBlockConfirmVisible(false)}
+                  >
+                    <Text style={[styles.alertButtonText, { color: theme.text }]}>Нет</Text>
+                  </Pressable>
+                  <Pressable
+                    style={[styles.alertButton, { backgroundColor: '#ff4444' }]}
+                    onPress={confirmBlockInit}
+                  >
+                    <Text style={[styles.alertButtonText, { color: '#ffffff' }]}>Да</Text>
+                  </Pressable>
+                </View>
+              </View>
+            </View>
+          </Modal>
+
+          {/* 2. Reason Selection Modal */}
+          <Modal
+            transparent
+            visible={reasonModalVisible}
+            animationType="slide"
+            onRequestClose={() => setReasonModalVisible(false)}
+          >
+            <TouchableWithoutFeedback onPress={() => setReasonModalVisible(false)}>
+              <View style={[styles.modalOverlay, { backgroundColor: 'rgba(0,0,0,0.7)', justifyContent: 'flex-end' }]}>
+                <TouchableWithoutFeedback>
+                  <View style={[styles.reasonSheet, { backgroundColor: theme.cardBg }]}>
+                    <View style={styles.reasonHeader}>
+                      <Text style={[styles.reasonTitle, { color: theme.text }]}>Укажите причину</Text>
+                      <Pressable onPress={() => setReasonModalVisible(false)}>
+                        <Ionicons name="close" size={24} color={theme.subText} />
+                      </Pressable>
+                    </View>
+
+                    {BLOCK_REASONS.map((reason) => (
+                      <Pressable
+                        key={reason}
+                        style={[styles.reasonItem, { borderBottomColor: theme.border }]}
+                        onPress={() => submitBlock(reason)}
+                      >
+                        <Text style={[styles.reasonText, { color: theme.text }]}>{reason}</Text>
+                        <Ionicons name="chevron-forward" size={20} color={theme.subText} />
+                      </Pressable>
+                    ))}
+
+                    {/* Custom Reason */}
+                    <View style={{ marginTop: 20 }}>
+                      <Text style={[styles.label, { color: theme.subText }]}>Своя причина</Text>
+                      <View style={[styles.inputContainerReason, { backgroundColor: isLight ? '#f5f5f5' : '#2a2a2a' }]}>
+                        <TextInput
+                          style={[styles.input, { color: theme.text }]}
+                          value={customReason}
+                          onChangeText={setCustomReason}
+                          placeholder="Опишите причину..."
+                          placeholderTextColor={theme.subText}
+                          multiline
+                        />
+                      </View>
+                      <Pressable
+                        style={[styles.submitButton, { backgroundColor: customReason.trim() ? '#ff4444' : (isLight ? '#eee' : '#333') }]}
+                        disabled={!customReason.trim()}
+                        onPress={() => submitBlock(customReason.trim())}
+                      >
+                        <Text style={[styles.submitButtonText, { color: customReason.trim() ? '#fff' : theme.subText }]}>
+                          Подтвердить
+                        </Text>
+                      </Pressable>
+                    </View>
+                  </View>
+                </TouchableWithoutFeedback>
+              </View>
+            </TouchableWithoutFeedback>
+          </Modal>
+
           <MessageActionModal
             visible={menuVisible}
             onClose={handleModalClose}
@@ -403,6 +542,14 @@ export default function ChatScreen() {
               <Text style={[styles.participantName, { color: theme.text }]} numberOfLines={1}>
                 {participant?.name || 'Собеседник'}
               </Text>
+            </Pressable>
+
+            {/* Block Button */}
+            <Pressable
+              style={{ padding: 10 }}
+              onPress={handleBlockInit}
+            >
+              <Ionicons name="ban-outline" size={24} color="#ff4444" />
             </Pressable>
           </View>
 
@@ -617,5 +764,95 @@ const styles = StyleSheet.create({
   },
   sendButtonDisabled: {
     opacity: 0.5,
+  },
+
+  // BLOCK MODALS
+  modalOverlay: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'rgba(0,0,0,0.5)',
+  },
+  alertBox: {
+    width: '80%',
+    maxWidth: 400,
+    padding: 20,
+    borderRadius: 12,
+  },
+  alertTitle: {
+    fontSize: 18,
+    fontWeight: '700',
+    marginBottom: 10,
+    textAlign: 'center',
+  },
+  alertMessage: {
+    fontSize: 14,
+    lineHeight: 20,
+    marginBottom: 20,
+    textAlign: 'center',
+  },
+  alertButtons: {
+    flexDirection: 'row',
+    gap: 10,
+  },
+  alertButton: {
+    flex: 1,
+    paddingVertical: 12,
+    borderRadius: 8,
+    alignItems: 'center',
+  },
+  alertButtonText: {
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  reasonSheet: {
+    width: '100%',
+    maxHeight: '80%',
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    padding: 20,
+  },
+  reasonHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 20,
+  },
+  reasonTitle: {
+    fontSize: 18,
+    fontWeight: '700',
+  },
+  reasonItem: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingVertical: 15,
+    borderBottomWidth: 1,
+  },
+  reasonText: {
+    fontSize: 16,
+  },
+  label: {
+    fontSize: 14,
+    marginBottom: 8,
+  },
+  inputContainerReason: {
+    borderRadius: 10,
+    padding: 10,
+    minHeight: 80,
+  },
+  input: {
+    fontSize: 14,
+    lineHeight: 20,
+  },
+  submitButton: {
+    marginTop: 15,
+    paddingVertical: 12,
+    borderRadius: 8,
+    alignItems: 'center',
+  },
+  submitButtonText: {
+    fontSize: 16,
+    fontWeight: '600',
   },
 });
