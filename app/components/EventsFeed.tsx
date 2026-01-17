@@ -29,6 +29,9 @@ export const EventsFeed = () => {
         setLoading(true);
         // data from API
         const data = await eventService.getEvents();
+        // Client-side sort: Nearest future event first
+        // If sorting DESC (newest first), swap a and b. Here assuming ASC (earliest first).
+        data.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
 
         setEvents(data);
         setLoading(false);
@@ -53,7 +56,9 @@ export const EventsFeed = () => {
 
     const handleScroll = (e: any) => {
         const contentOffsetX = e.nativeEvent.contentOffset.x;
-        const index = Math.round(contentOffsetX / width);
+        // Adjusted for new card width + margin
+        const cardWidth = width * 0.9 + 10;
+        const index = Math.round(contentOffsetX / cardWidth);
         setCurrentSlide(index);
     };
 
@@ -66,8 +71,11 @@ export const EventsFeed = () => {
                 <FlatList
                     data={events}
                     horizontal
-                    pagingEnabled
+                    pagingEnabled={false} // Disable paging for smooth peeking or use carefully with snapToInterval
+                    snapToInterval={width * 0.9 + 15} // Card width + margin
+                    decelerationRate="fast"
                     showsHorizontalScrollIndicator={false}
+                    contentContainerStyle={{ paddingHorizontal: 10 }} // Center initial item if needed
                     onScroll={handleScroll}
                     scrollEventThrottle={16}
                     keyExtractor={(item) => item.id}
@@ -152,12 +160,18 @@ const styles = StyleSheet.create({
     container: { flex: 1 },
     center: { padding: 20, alignItems: 'center' },
 
-    cardContainer: { width: width, marginBottom: 0 },
+    cardContainer: {
+        width: width * 0.9,
+        marginRight: 15, // Space between cards
+        marginBottom: 0
+    },
 
     imageWrapper: {
-        width: width,
-        height: width * 1.0, // Reduced height for carousel feel
+        width: '100%',
+        height: width * 0.9, // Square-ish aspect ratio relative to card width
         position: 'relative',
+        borderRadius: 20, // Add more rounding for card look
+        overflow: 'hidden',
     },
     image: { width: '100%', height: '100%' },
     overlay: {

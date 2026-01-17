@@ -17,7 +17,7 @@ export default function HomeScreen() {
     <ThemedBackground>
       <View style={[styles.container, { paddingTop: getPlatformPadding(insets, isMobile) }]}>
         <ScrollView contentContainerStyle={{ paddingBottom: 100 }} showsVerticalScrollIndicator={false}>
-          <Text style={[styles.headerTitle, { color: theme.text }]}>Мероприятия</Text>
+          <Text style={[styles.headerTitle, { color: theme.text }]}>События</Text>
           <EventsFeed />
         </ScrollView>
       </View>
