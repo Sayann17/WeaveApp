@@ -347,11 +347,11 @@ export default function MatchesScreen() {
                                     </View>
 
                                     {/* Separator Line */}
-                                    <View style={{ height: 1, backgroundColor: theme.border, marginHorizontal: normalize(16), marginTop: normalize(8) }} />
+                                    <View style={{ height: 0.5, backgroundColor: themeType === 'light' ? 'rgba(0,0,0,0.1)' : 'rgba(255,255,255,0.2)', marginHorizontal: normalize(16), marginTop: normalize(8) }} />
 
                                     {/* Bottom Row: Message Preview */}
                                     <Pressable
-                                        style={{ width: '100%', marginTop: normalize(10), flexDirection: 'row', alignItems: 'center' }}
+                                        style={{ width: '100%', marginTop: normalize(10), flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}
                                         onPress={() => router.push({ pathname: '/chat/[id]', params: { id: match.chatId, participantId: match.id } })}
                                     >
                                         <View style={{ flex: 1, marginRight: normalize(10) }}>
@@ -370,7 +370,8 @@ export default function MatchesScreen() {
                                         </View>
 
                                         {/* Right Column: Time & Badge */}
-                                        <View style={{ flexDirection: 'row', alignItems: 'center', marginRight: normalize(16), gap: normalize(6) }}>
+                                        {/* Right Column: Time & Badge */}
+                                        <View style={{ flexDirection: 'column', alignItems: 'flex-end', justifyContent: 'center', marginRight: normalize(4), gap: normalize(2), minWidth: normalize(40) }}>
                                             {/* Timestamp */}
                                             <Text style={{ fontSize: normalize(11), color: theme.subText }}>
                                                 {formatMessageTime(match.lastMessageTime) || (match.lastMessageTime ? String(match.lastMessageTime).substring(0, 10) : '')}
