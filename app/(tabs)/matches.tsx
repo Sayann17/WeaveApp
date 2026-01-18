@@ -14,6 +14,7 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { ThemedBackground } from '../components/ThemedBackground';
+import { useData } from '../context/DataContext';
 import { useNotifications } from '../context/NotificationContext';
 import { useTelegram } from '../context/TelegramProvider';
 import { useTheme } from '../context/ThemeContext';
@@ -28,11 +29,18 @@ export default function MatchesScreen() {
     const router = useRouter();
     const { theme, themeType } = useTheme();
     const { resetNewLikes } = useNotifications();
+    const {
+        matches: preloadedMatches,
+        likesYou: preloadedLikes,
+        yourLikes: preloadedSent,
+        isLoading: isContextLoading
+    } = useData();
+
     const [matches, setMatches] = useState<any[]>([]);
     const [likesYou, setLikesYou] = useState<any[]>([]);
     const [yourLikes, setYourLikes] = useState<any[]>([]);
     const [activeTab, setActiveTab] = useState<'matches' | 'likes' | 'sent'>('matches');
-    const [loading, setLoading] = useState(true);
+
     const insets = useSafeAreaInsets();
     const { isMobile, hideBackButton } = useTelegram();
 
@@ -49,34 +57,20 @@ export default function MatchesScreen() {
 
     useFocusEffect(
         useCallback(() => {
-            loadMatches();
             resetNewLikes();
         }, [])
     );
 
-    const loadMatches = async () => {
-        try {
-            const user = yandexAuth.getCurrentUser();
-            if (!user) {
-                setLoading(false);
-                return;
-            }
-            const [matchesData, likesData, sentLikesData] = await Promise.all([
-                yandexMatch.getMatches(),
-                yandexMatch.getLikesYou(),
-                yandexMatch.getYourLikes()
-            ]);
-            setMatches(matchesData || []);
-            setLikesYou(likesData || []);
-            setYourLikes(sentLikesData || []);
-        } catch (e) {
-            console.error(e);
-        } finally {
-            setLoading(false);
+    // Sync with preloaded data
+    React.useEffect(() => {
+        if (!isContextLoading) {
+            setMatches(preloadedMatches);
+            setLikesYou(preloadedLikes);
+            setYourLikes(preloadedSent);
         }
-    };
+    }, [isContextLoading, preloadedMatches, preloadedLikes, preloadedSent]);
 
-    if (loading) {
+    if (isContextLoading) {
         return (
             <View style={{ flex: 1, backgroundColor: theme.background, justifyContent: 'center', alignItems: 'center' }}>
                 <ActivityIndicator color={theme.text} />

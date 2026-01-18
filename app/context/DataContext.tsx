@@ -2,12 +2,16 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { eventService, WeaveEvent } from '../services/EventService';
 import { yandexAuth } from '../services/yandex/AuthService';
+import { yandexMatch } from '../services/yandex/MatchService';
 import { YandexUserService } from '../services/yandex/UserService';
 
 interface DataContextType {
     userProfile: any | null;
     discoveryProfiles: any[];
     events: WeaveEvent[];
+    matches: any[];
+    likesYou: any[];
+    yourLikes: any[];
     isLoading: boolean;
     refreshData: () => Promise<void>;
 }
@@ -16,6 +20,9 @@ const DataContext = createContext<DataContextType>({
     userProfile: null,
     discoveryProfiles: [],
     events: [],
+    matches: [],
+    likesYou: [],
+    yourLikes: [],
     isLoading: true,
     refreshData: async () => { },
 });
@@ -28,6 +35,9 @@ export const DataProvider = ({ children }: { children: React.ReactNode }) => {
     const [userProfile, setUserProfile] = useState<any>(null);
     const [discoveryProfiles, setDiscoveryProfiles] = useState<any[]>([]);
     const [events, setEvents] = useState<WeaveEvent[]>([]);
+    const [matches, setMatches] = useState<any[]>([]);
+    const [likesYou, setLikesYou] = useState<any[]>([]);
+    const [yourLikes, setYourLikes] = useState<any[]>([]);
     const [isLoading, setIsLoading] = useState(true);
 
     const loadAll = async () => {
@@ -40,9 +50,12 @@ export const DataProvider = ({ children }: { children: React.ReactNode }) => {
             }
 
             // Parallel fetching
-            const [profile, eventsData] = await Promise.all([
-                userService.getCurrentUser(), // or yandexAuth.getCurrentUser() but userService might have more details
-                eventService.getEvents()
+            const [profile, eventsData, matchesData, likesData, sentLikesData] = await Promise.all([
+                userService.getCurrentUser(),
+                eventService.getEvents(),
+                yandexMatch.getMatches(),
+                yandexMatch.getLikesYou(),
+                yandexMatch.getYourLikes()
             ]);
 
             if (profile) {
@@ -90,6 +103,10 @@ export const DataProvider = ({ children }: { children: React.ReactNode }) => {
                 setEvents(eventsData);
             }
 
+            setMatches(matchesData || []);
+            setLikesYou(likesData || []);
+            setYourLikes(sentLikesData || []);
+
         } catch (e) {
             console.error('DataProvider load error:', e);
         } finally {
@@ -106,6 +123,9 @@ export const DataProvider = ({ children }: { children: React.ReactNode }) => {
                 setUserProfile(null);
                 setDiscoveryProfiles([]);
                 setEvents([]);
+                setMatches([]);
+                setLikesYou([]);
+                setYourLikes([]);
             }
         });
         return unsubscribe;
@@ -116,6 +136,9 @@ export const DataProvider = ({ children }: { children: React.ReactNode }) => {
             userProfile,
             discoveryProfiles,
             events,
+            matches,
+            likesYou,
+            yourLikes,
             isLoading,
             refreshData: loadAll
         }}>
