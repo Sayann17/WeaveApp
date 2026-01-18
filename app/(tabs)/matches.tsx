@@ -153,7 +153,6 @@ export default function MatchesScreen() {
         }
 
         // 2. Zodiac (emoji + name)
-        // 2. Zodiac (emoji + name)
         if (profile.zodiac && profile.zodiac !== '[]') {
             const zodiac = getZodiacSignById(profile.zodiac);
             if (zodiac) {

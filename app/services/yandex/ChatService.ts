@@ -41,6 +41,7 @@ export interface Message {
     timestamp: Date;
     type: 'text' | 'system' | 'image';
     replyToId?: string | null;
+    isRead?: boolean;
     isEdited?: boolean;
     editedAt?: Date;
 }
@@ -301,6 +302,7 @@ class YandexChatService {
             timestamp: new Date(m.timestamp),
             type: m.type as 'text' | 'system' | 'image',
             replyToId: m.replyToId,
+            isRead: m.is_read || m.isRead || false,
             isEdited: m.isEdited,
             editedAt: m.editedAt ? new Date(m.editedAt) : undefined
         }));

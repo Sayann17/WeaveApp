@@ -398,6 +398,14 @@ export default function ChatScreen() {
               ]}>
                 {formatMessageTime(item.timestamp)}
               </Text>
+              {isMine && (
+                <Ionicons
+                  name={item.isRead ? "checkmark-done" : "checkmark"}
+                  size={normalize(16)}
+                  color={item.isRead ? '#4ade80' : 'rgba(255,255,255,0.6)'} // Green for read (or just white?), Telegram uses standard double ticks. Let's make 'read' ticks distinct or just white. Telegram uses Blue (accent) for read in clean themes, or white in dark/colored bubbles.
+                  style={{ marginLeft: normalize(4) }}
+                />
+              )}
             </View>
           </View>
         </Pressable>
@@ -674,9 +682,10 @@ const styles = StyleSheet.create({
   theirMessage: { justifyContent: 'flex-start' },
 
   messageBubble: {
-    maxWidth: '75%',
-    padding: normalize(12),
-    borderRadius: normalize(18),
+    maxWidth: '80%',
+    padding: normalize(10),
+    paddingHorizontal: normalize(12),
+    borderRadius: normalize(16),
   },
   myBubble: {
     borderBottomRightRadius: normalize(4),
