@@ -25,6 +25,7 @@ export interface UserProfile {
     socialVk?: string;
     socialInstagram?: string;
     lastActive?: number;
+    events?: any[];
     // Preferences
     preferences?: {
         ageRange?: [number, number];

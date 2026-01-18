@@ -1,0 +1,127 @@
+const { Driver, getCredentialsFromEnv, TypedValues } = require('ydb-sdk');
+const TelegramBot = require('node-telegram-bot-api');
+
+const YDB_ENDPOINT = process.env.YDB_ENDPOINT;
+const YDB_DATABASE = process.env.YDB_DATABASE;
+const BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN;
+
+const bot = new TelegramBot(BOT_TOKEN, { polling: false });
+
+async function handler(event, context) {
+    console.log('Starting retention check...');
+
+    const driver = new Driver({
+        endpoint: YDB_ENDPOINT,
+        database: YDB_DATABASE,
+        authService: getCredentialsFromEnv(),
+    });
+
+    try {
+        if (!await driver.ready(10000)) {
+            throw new Error('Driver not ready!');
+        }
+
+        await driver.tableClient.withSession(async (session) => {
+            const now = new Date();
+            const sevenDaysAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+            const twentyFourHoursAgo = new Date(now.getTime() - 24 * 60 * 60 * 1000);
+
+            // 1. Inactive Users (Last login > 7 days ago)
+            const queryInactive = `
+                DECLARE $seven_days_ago AS Timestamp;
+                
+                SELECT id, telegram_id, name 
+                FROM users 
+                WHERE last_login < $seven_days_ago 
+                AND (last_notified_at IS NULL OR last_notified_at < $seven_days_ago)
+                AND telegram_id IS NOT NULL;
+            `;
+
+            const { resultSets: inactiveSets } = await session.executeQuery(queryInactive, {
+                '$seven_days_ago': TypedValues.timestamp(sevenDaysAgo)
+            });
+
+            const inactiveUsers = this.mapResult(inactiveSets[0]);
+            console.log(`Found ${inactiveUsers.length} inactive users.`);
+
+            for (const user of inactiveUsers) {
+                if (user.telegram_id) {
+                    try {
+                        await bot.sendMessage(user.telegram_id, `Привет, ${user.name || 'друг'}! 👋\nМы соскучились! Загляни в Weave, там появилось много новых людей, с которыми у тебя может сложиться Узор.`);
+                        await this.updateLastNotified(session, user.id);
+                        console.log(`Sent inactive notification to user ${user.id}`);
+                    } catch (e) {
+                        console.error(`Failed to notify inactive user ${user.id}:`, e.message);
+                    }
+                }
+            }
+
+            // 2. Incomplete Onboarding (Created > 24h ago, profile_completed = 0/false)
+            const queryIncomplete = `
+                DECLARE $twenty_four_hours_ago AS Datetime; 
+                
+                SELECT id, telegram_id, name 
+                FROM users 
+                WHERE created_at < $twenty_four_hours_ago 
+                AND (profile_completed = 0 OR profile_completed IS NULL)
+                AND (last_notified_at IS NULL)
+                AND telegram_id IS NOT NULL;
+            `;
+
+            const { resultSets: incompleteSets } = await session.executeQuery(queryIncomplete, {
+                '$twenty_four_hours_ago': TypedValues.datetime(twentyFourHoursAgo)
+            });
+
+            const incompleteUsers = this.mapResult(incompleteSets[0]);
+            console.log(`Found ${incompleteUsers.length} users with incomplete profile.`);
+
+            for (const user of incompleteUsers) {
+                if (user.telegram_id) {
+                    try {
+                        await bot.sendMessage(user.telegram_id, `Привет! ✨\nТвой профиль в Weave почти готов. Осталось всего пара шагов, чтобы начать знакомиться. Заверши настройку прямо сейчас!`);
+                        await this.updateLastNotified(session, user.id);
+                        console.log(`Sent incomplete notification to user ${user.id}`);
+                    } catch (e) {
+                        console.error(`Failed to notify incomplete user ${user.id}:`, e.message);
+                    }
+                }
+            }
+        });
+
+    } catch (err) {
+        console.error(err);
+        return { statusCode: 500, body: err.message };
+    } finally {
+        await driver.destroy();
+    }
+
+    return {
+        statusCode: 200,
+        body: 'Retention check completed',
+    };
+}
+
+// Helper to map YDB results
+handler.mapResult = (resultSet) => {
+    return resultSet.rows.map(row => {
+        const obj = {};
+        resultSet.columns.forEach((col, i) => {
+            obj[col.name] = row.items[i].textValue || row.items[i].int64Value || row.items[i].uint64Value;
+        });
+        return obj;
+    });
+};
+
+// Helper to update last_notified_at
+handler.updateLastNotified = async (session, userId) => {
+    await session.executeQuery(`
+        DECLARE $id AS Utf8;
+        DECLARE $now AS Timestamp;
+        UPSERT INTO users (id, last_notified_at) VALUES ($id, $now);
+    `, {
+        '$id': TypedValues.utf8(userId),
+        '$now': TypedValues.timestamp(new Date())
+    });
+};
+
+module.exports.handler = handler;

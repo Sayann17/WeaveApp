@@ -465,9 +465,10 @@ async function telegramLogin(driver, data, headers) {
                 DECLARE $created_at AS Datetime;
                 DECLARE $photo AS Utf8;
                 DECLARE $telegram_id AS Utf8;
+                DECLARE $last_login AS Timestamp;
 
-                INSERT INTO users (id, email, password_hash, name, age, created_at, photos, telegram_id)
-                VALUES ($id, $email, $password_hash, $name, $age, $created_at, $photo, $telegram_id);
+                INSERT INTO users (id, email, password_hash, name, age, created_at, photos, telegram_id, last_login)
+                VALUES ($id, $email, $password_hash, $name, $age, $created_at, $photo, $telegram_id, $last_login);
             `;
 
             await session.executeQuery(insertQuery, {
@@ -478,7 +479,8 @@ async function telegramLogin(driver, data, headers) {
                 '$age': TypedValues.uint32(18),
                 '$created_at': TypedValues.datetime(new Date(createdAt)),
                 '$photo': TypedValues.utf8(photoJson),
-                '$telegram_id': TypedValues.utf8(String(id))
+                '$telegram_id': TypedValues.utf8(String(id)),
+                '$last_login': TypedValues.timestamp(new Date())
             });
         } else {
             // Step 2b: Update existing user's telegram_id
@@ -488,11 +490,13 @@ async function telegramLogin(driver, data, headers) {
             const updateQuery = `
                 DECLARE $id AS Utf8;
                 DECLARE $telegram_id AS Utf8;
-                UPDATE users SET telegram_id = $telegram_id WHERE id = $id;
+                DECLARE $last_login AS Timestamp;
+                UPDATE users SET telegram_id = $telegram_id, last_login = $last_login WHERE id = $id;
             `;
             await session.executeQuery(updateQuery, {
                 '$id': TypedValues.utf8(userId),
-                '$telegram_id': TypedValues.utf8(String(id))
+                '$telegram_id': TypedValues.utf8(String(id)),
+                '$last_login': TypedValues.timestamp(new Date())
             });
         }
 
