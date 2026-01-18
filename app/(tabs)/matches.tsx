@@ -153,7 +153,8 @@ export default function MatchesScreen() {
         }
 
         // 2. Zodiac (emoji + name)
-        if (profile.zodiac) {
+        // 2. Zodiac (emoji + name)
+        if (profile.zodiac && profile.zodiac !== '[]') {
             const zodiac = getZodiacSignById(profile.zodiac);
             if (zodiac) {
                 items.push(
@@ -171,7 +172,7 @@ export default function MatchesScreen() {
                     const rel = getReligionById(id);
                     return rel ? rel.name : id;
                 }).join(', ');
-            } else if (profile.religion) {
+            } else if (profile.religion && profile.religion !== '[]') {
                 const rel = getReligionById(profile.religion);
                 return rel ? rel.name : profile.religion;
             }
