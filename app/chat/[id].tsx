@@ -774,12 +774,12 @@ const styles = StyleSheet.create({
   textInput: {
     flex: 1,
     paddingHorizontal: normalize(15),
-    paddingVertical: Platform.OS === 'ios' ? normalize(10) : normalize(8),
+    paddingVertical: normalize(10),
     fontSize: normalize(16),
     lineHeight: normalize(20),
-    maxHeight: normalize(140), // ~6 lines (20 * 6 + padding)
+    maxHeight: normalize(150),
     textAlignVertical: 'center',
-    minHeight: normalize(40) // Standard touch target height
+    // Removed minHeight to let it collapse to line height + padding
   },
   sendButton: {
     width: normalize(40),
