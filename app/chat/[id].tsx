@@ -384,28 +384,34 @@ export default function ChatScreen() {
               </View>
             )}
 
-            <Text style={[
-              styles.messageText,
-              isMine ? styles.myMessageText : { color: theme.text }
-            ]}>
-              {item.text}
-            </Text>
-            <View style={styles.metaContainer}>
-              {item.isEdited && <Text style={[styles.editedLabel, { color: isMine ? 'rgba(255,255,255,0.6)' : theme.subText }]}>изм.</Text>}
+            <View>
               <Text style={[
-                styles.messageTime,
-                isMine ? styles.myMessageTime : { color: theme.subText }
+                styles.messageText,
+                isMine ? styles.myMessageText : { color: theme.text }
               ]}>
-                {formatMessageTime(item.timestamp)}
+                {item.text}
+                {/* Spacer to reserve width for absolute positioned time/ticks on the last line */}
+                <Text style={{ color: 'transparent', fontSize: normalize(10) }}>
+                  {"\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0"}
+                </Text>
               </Text>
-              {isMine && (
-                <Ionicons
-                  name={item.isRead ? "checkmark-done" : "checkmark"}
-                  size={normalize(16)}
-                  color={item.isRead ? '#4ade80' : 'rgba(255,255,255,0.6)'} // Green for read (or just white?), Telegram uses standard double ticks. Let's make 'read' ticks distinct or just white. Telegram uses Blue (accent) for read in clean themes, or white in dark/colored bubbles.
-                  style={{ marginLeft: normalize(4) }}
-                />
-              )}
+              <View style={styles.metaContainerFloating}>
+                {item.isEdited && <Text style={[styles.editedLabel, { color: isMine ? 'rgba(255,255,255,0.6)' : theme.subText }]}>изм.</Text>}
+                <Text style={[
+                  styles.messageTime,
+                  isMine ? styles.myMessageTime : { color: theme.subText }
+                ]}>
+                  {formatMessageTime(item.timestamp)}
+                </Text>
+                {isMine && (
+                  <Ionicons
+                    name={item.isRead ? "checkmark-done" : "checkmark"}
+                    size={normalize(16)}
+                    color={item.isRead ? '#4ade80' : 'rgba(255,255,255,0.6)'}
+                    style={{ marginLeft: normalize(4) }}
+                  />
+                )}
+              </View>
             </View>
           </View>
         </Pressable>
@@ -605,7 +611,7 @@ export default function ChatScreen() {
                   placeholderTextColor={theme.subText}
                   multiline
                   blurOnSubmit={false}
-                  maxLength={500}
+                  maxLength={1000}
                   selectionColor={themeType === 'light' ? '#000000' : '#FFFFFF'}
                   underlineColorAndroid="transparent"
                   // @ts-ignore
@@ -698,6 +704,14 @@ const styles = StyleSheet.create({
   myMessageText: { color: '#ffffff' },
 
   metaContainer: { flexDirection: 'row', justifyContent: 'flex-end', marginTop: normalize(4), alignItems: 'center' },
+  metaContainerFloating: {
+    position: 'absolute',
+    bottom: normalize(2),
+    right: 0,
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'transparent' // Ensure no background blocking
+  },
   messageTime: { fontSize: normalize(11), textAlign: 'right' },
   myMessageTime: { color: 'rgba(255,255,255,0.6)' },
   editedLabel: { fontSize: normalize(10), marginRight: normalize(4) },
@@ -758,11 +772,12 @@ const styles = StyleSheet.create({
   textInput: {
     flex: 1,
     paddingHorizontal: normalize(15),
-    paddingVertical: normalize(10),
+    paddingVertical: normalize(8), // Reduced from 10 to fit 1 line better
     fontSize: normalize(16),
-    lineHeight: normalize(22),
-    maxHeight: normalize(145), // ~6 lines
-    textAlignVertical: 'center',
+    lineHeight: normalize(20), // Slight adjustment
+    maxHeight: normalize(160), // Increased for ~6 lines
+    textAlignVertical: 'center', // Keep center for 1 line, works OK for multi if lineHeight matches
+    minHeight: normalize(36) // Ensure 1 line height is reasonable
   },
   sendButton: {
     width: normalize(40),
