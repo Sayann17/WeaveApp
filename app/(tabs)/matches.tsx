@@ -352,7 +352,7 @@ export default function MatchesScreen() {
                                     </View>
 
                                     {/* Separator Line */}
-                                    <View style={{ height: 1, backgroundColor: themeType === 'light' ? '#E5E5EA' : 'rgba(255,255,255,0.15)', marginHorizontal: normalize(16), marginTop: normalize(8) }} />
+                                    <View style={{ height: 1, backgroundColor: themeType === 'light' ? 'rgba(0,0,0,0.15)' : 'rgba(255,255,255,0.2)', marginTop: normalize(8), width: '100%' }} />
 
                                     {/* Bottom Row: Message Preview */}
                                     <Pressable
