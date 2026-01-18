@@ -123,22 +123,23 @@ export default function ChatScreen() {
     loadHistory();
 
     const unsubscribe = yandexChat.onMessage((msg, eventType) => {
-      console.log('[ChatScreen] Received WebSocket message:', msg);
-      console.log('[ChatScreen] Current chatId:', chatId);
-      console.log('[ChatScreen] Message chatId:', msg.chatId);
-      console.log('[ChatScreen] Match:', msg.chatId === chatId);
+      // ... logs ...
 
       if (msg.chatId === chatId) {
-        console.log('[ChatScreen] Message matches current chat, updating UI');
         if (eventType !== 'messageEdited') {
-          yandexChat.markAsRead(chatId);
-          refreshNotifications(); // Updates global badge
+          // Only mark as read if it's an INCOMING message
+          const myId = yandexAuth.getCurrentUser()?.uid;
+          if (msg.senderId !== myId) {
+            yandexChat.markAsRead(chatId);
+          }
+          refreshNotifications();
         }
         setMessages(prev => {
           if (eventType === 'messageEdited') {
             return prev.map(m => m.id === msg.id ? { ...m, ...msg, text: msg.text, isEdited: true, editedAt: msg.editedAt } : m);
           }
           if (prev.some(m => m.id === msg.id)) return prev;
+
           const myId = yandexAuth.getCurrentUser()?.uid;
           if (msg.senderId === myId) {
             const tempIndex = prev.findIndex(m => m.id.startsWith('temp-') && m.text === msg.text);
@@ -150,20 +151,22 @@ export default function ChatScreen() {
           }
           return [...prev, msg].sort((a, b) => a.timestamp.getTime() - b.timestamp.getTime());
         });
-      } else {
-        console.log('[ChatScreen] Message does NOT match current chat, ignoring');
       }
     });
 
     const unsubscribeRead = yandexChat.onRead((eventChatId, readerId) => {
       if (eventChatId === chatId) {
-        console.log('[ChatScreen] Messages read by', readerId);
-        setMessages(prev => prev.map(m => {
-          if (m.senderId === yandexAuth.getCurrentUser()?.uid && !m.isRead) {
-            return { ...m, isRead: true };
-          }
-          return m;
-        }));
+        const myId = yandexAuth.getCurrentUser()?.uid;
+        // Only update "isRead" on MY messages if the READER is NOT me (i.e. it's the partner)
+        if (readerId !== myId) {
+          console.log('[ChatScreen] Partner read the chat, updating ticks');
+          setMessages(prev => prev.map(m => {
+            if (m.senderId === myId && !m.isRead) {
+              return { ...m, isRead: true };
+            }
+            return m;
+          }));
+        }
       }
     });
 
