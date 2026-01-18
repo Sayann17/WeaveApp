@@ -570,6 +570,42 @@ async function markAsRead(driver, requestHeaders, body, responseHeaders) {
         });
     });
 
+    // Notify users about read status via WebSocket
+    try {
+        // Determine the "other" user (who sent the messages that are now read)
+        // ChatID is usually "id1_id2" (sorted)
+        const parts = chatId.split('_');
+        const otherUserId = parts.find(p => p !== userId);
+
+        if (otherUserId) {
+            const readEvent = {
+                type: 'messagesRead',
+                chatId,
+                readerId: userId,
+                timeframe: new Date()
+            };
+
+            // 1. Notify the OTHER user (so they see blue ticks)
+            const otherConnectionId = await getConnectionIdByUserId(driver, otherUserId);
+            if (otherConnectionId) {
+                await sendToConnection(driver, otherConnectionId, readEvent);
+            }
+
+            // 2. Notify MY connections (so my other devices/tabs see it's read)
+            // We need to find ALL my connections, not just one. 
+            // For now, let's just find "a" connection or assume we treat this as a broadcast if we had a list.
+            // Our getConnectionIdByUserId only returns ONE (last?) connection. 
+            // Ideally we'd broadcast to all, but let's stick to simple "last active" for now as per existing helpers.
+            const myConnectionId = await getConnectionIdByUserId(driver, userId);
+            if (myConnectionId) {
+                await sendToConnection(driver, myConnectionId, readEvent);
+            }
+        }
+    } catch (e) {
+        console.error('[markAsRead] Failed to broadcast read event:', e);
+        // Don't fail the request, just log error
+    }
+
     return { statusCode: 200, headers: responseHeaders, body: JSON.stringify({ success: true }) };
 }
 

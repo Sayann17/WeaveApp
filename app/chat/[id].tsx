@@ -155,8 +155,21 @@ export default function ChatScreen() {
       }
     });
 
+    const unsubscribeRead = yandexChat.onRead((eventChatId, readerId) => {
+      if (eventChatId === chatId) {
+        console.log('[ChatScreen] Messages read by', readerId);
+        setMessages(prev => prev.map(m => {
+          if (m.senderId === yandexAuth.getCurrentUser()?.uid && !m.isRead) {
+            return { ...m, isRead: true };
+          }
+          return m;
+        }));
+      }
+    });
+
     return () => {
       unsubscribe();
+      unsubscribeRead();
     };
   }, [chatId]);
 

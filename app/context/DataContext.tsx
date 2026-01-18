@@ -2,6 +2,7 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { eventService, WeaveEvent } from '../services/EventService';
 import { yandexAuth } from '../services/yandex/AuthService';
+import { yandexChat } from '../services/yandex/ChatService';
 import { yandexMatch } from '../services/yandex/MatchService';
 import { YandexUserService } from '../services/yandex/UserService';
 
@@ -116,9 +117,10 @@ export const DataProvider = ({ children }: { children: React.ReactNode }) => {
 
     useEffect(() => {
         // Listen for auth changes to trigger load
-        const unsubscribe = yandexAuth.onAuthStateChanged((u) => {
+        const unsubscribeAuth = yandexAuth.onAuthStateChanged((u) => {
             if (u) {
                 loadAll();
+                yandexChat.connect().catch(() => { }); // Ensure chat connection
             } else {
                 setUserProfile(null);
                 setDiscoveryProfiles([]);
@@ -128,7 +130,58 @@ export const DataProvider = ({ children }: { children: React.ReactNode }) => {
                 setYourLikes([]);
             }
         });
-        return unsubscribe;
+
+        // Real-time Chat Updates for Matches List
+        const unsubscribeMsg = yandexChat.onMessage((msg, type) => {
+            if (type === 'newMessage') {
+                setMatches(prev => {
+                    const index = prev.findIndex(m => m.chatId === msg.chatId);
+                    if (index === -1) return prev;
+
+                    const isMine = msg.senderId === yandexAuth.getCurrentUser()?.uid;
+                    const updatedMatch = {
+                        ...prev[index],
+                        lastMessage: msg.text,
+                        lastMessageTime: msg.timestamp,
+                        isOwnMessage: isMine,
+                        isRead: false, // New message is unread by default
+                        unreadCount: isMine ? prev[index].unreadCount : (prev[index].unreadCount || 0) + 1,
+                        hasUnread: !isMine
+                    };
+
+                    const newMatches = [...prev];
+                    newMatches.splice(index, 1);
+                    newMatches.unshift(updatedMatch);
+                    return newMatches;
+                });
+            }
+        });
+
+        const unsubscribeRead = yandexChat.onRead((chatId, readerId) => {
+            const myId = yandexAuth.getCurrentUser()?.uid;
+            setMatches(prev => {
+                return prev.map(m => {
+                    if (m.chatId !== chatId) return m;
+
+                    if (readerId === myId) {
+                        // I read the chat (e.g. on another device/tab)
+                        return { ...m, unreadCount: 0, hasUnread: false };
+                    } else {
+                        // Partner read the chat
+                        if (m.isOwnMessage) {
+                            return { ...m, isRead: true };
+                        }
+                        return m;
+                    }
+                });
+            });
+        });
+
+        return () => {
+            unsubscribeAuth();
+            unsubscribeMsg();
+            unsubscribeRead();
+        };
     }, []);
 
     return (

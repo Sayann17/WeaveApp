@@ -65,6 +65,7 @@ class YandexChatService {
     private socket: WebSocket | null = null;
     private messageListeners: ((message: Message, eventType?: 'newMessage' | 'messageEdited') => void)[] = [];
     private likeListeners: ((fromUserId: string) => void)[] = [];
+    private readListeners: ((chatId: string, readerId: string) => void)[] = [];
 
     private manuallyClosed = false;
     private reconnectTimer: NodeJS.Timeout | null = null;
@@ -141,6 +142,8 @@ class YandexChatService {
                                 editedAt: new Date(data.message.editedAt)
                             };
                             this.messageListeners.forEach(listener => listener(message, 'messageEdited'));
+                        } else if (data.type === 'messagesRead') {
+                            this.readListeners.forEach(listener => listener(data.chatId, data.readerId));
                         } else if (data.type === 'newLike' || data.type === 'newMatch') {
                             this.likeListeners.forEach(listener => listener(data.fromUserId));
                         }
@@ -215,6 +218,13 @@ class YandexChatService {
         this.likeListeners.push(callback);
         return () => {
             this.likeListeners = this.likeListeners.filter(l => l !== callback);
+        };
+    }
+
+    onRead(callback: (chatId: string, readerId: string) => void) {
+        this.readListeners.push(callback);
+        return () => {
+            this.readListeners = this.readListeners.filter(l => l !== callback);
         };
     }
 
