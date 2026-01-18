@@ -706,11 +706,11 @@ const styles = StyleSheet.create({
   metaContainer: { flexDirection: 'row', justifyContent: 'flex-end', marginTop: normalize(4), alignItems: 'center' },
   metaContainerFloating: {
     position: 'absolute',
-    bottom: normalize(2),
-    right: 0,
+    bottom: -normalize(6),
+    right: -normalize(4),
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: 'transparent' // Ensure no background blocking
+    backgroundColor: 'transparent'
   },
   messageTime: { fontSize: normalize(11), textAlign: 'right' },
   myMessageTime: { color: 'rgba(255,255,255,0.6)' },
