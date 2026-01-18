@@ -782,12 +782,13 @@ const styles = StyleSheet.create({
     includeFontPadding: false, // Remove extra Android padding
   },
   sendButton: {
-    width: normalize(40),
-    height: normalize(40),
-    borderRadius: normalize(20),
+    width: normalize(32),
+    height: normalize(32),
+    borderRadius: normalize(16),
     justifyContent: 'center',
     alignItems: 'center',
     marginBottom: normalize(2),
+    marginLeft: normalize(2),
   },
   sendButtonDisabled: {
     opacity: 0.5,
