@@ -390,9 +390,8 @@ export default function ChatScreen() {
                 isMine ? styles.myMessageText : { color: theme.text }
               ]}>
                 {item.text}
-                {/* Spacer to reserve width for absolute positioned time/ticks on the last line */}
-                <Text style={{ color: 'transparent', fontSize: normalize(10) }}>
-                  {"\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0"}
+                <Text style={{ color: 'transparent', fontSize: normalize(16) }}>
+                  {"\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0"}
                 </Text>
               </Text>
               <View style={styles.metaContainerFloating}>
@@ -772,12 +771,12 @@ const styles = StyleSheet.create({
   textInput: {
     flex: 1,
     paddingHorizontal: normalize(15),
-    paddingVertical: normalize(8), // Reduced from 10 to fit 1 line better
+    paddingVertical: Platform.OS === 'ios' ? normalize(10) : normalize(8),
     fontSize: normalize(16),
-    lineHeight: normalize(20), // Slight adjustment
-    maxHeight: normalize(160), // Increased for ~6 lines
-    textAlignVertical: 'center', // Keep center for 1 line, works OK for multi if lineHeight matches
-    minHeight: normalize(36) // Ensure 1 line height is reasonable
+    lineHeight: normalize(20),
+    maxHeight: normalize(140), // ~6 lines (20 * 6 + padding)
+    textAlignVertical: 'center',
+    minHeight: normalize(40) // Standard touch target height
   },
   sendButton: {
     width: normalize(40),
