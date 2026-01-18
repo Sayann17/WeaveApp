@@ -374,22 +374,30 @@ export default function MatchesScreen() {
                                             </Text>
                                         </View>
 
-                                        {/* Right Column: Badge Only */}
+                                        {/* Right Column: Badge OR Ticks */}
                                         <View style={{ justifyContent: 'center', marginRight: normalize(0) }}>
-                                            {(match.unreadCount > 0 || match.hasUnread) && (
-                                                <View style={{
-                                                    backgroundColor: themeType === 'light' ? (theme.accent || '#00b894') : '#fff',
-                                                    borderRadius: normalize(10),
-                                                    paddingHorizontal: normalize(6),
-                                                    paddingVertical: normalize(2),
-                                                    minWidth: normalize(18),
-                                                    alignItems: 'center',
-                                                    justifyContent: 'center'
-                                                }}>
-                                                    <Text style={{ color: themeType === 'light' ? '#fff' : '#000', fontSize: normalize(10), fontWeight: 'bold' }}>
-                                                        {match.unreadCount || 1}
-                                                    </Text>
-                                                </View>
+                                            {match.isOwnMessage ? (
+                                                <Ionicons
+                                                    name={match.isRead ? "checkmark-done" : "checkmark"}
+                                                    size={normalize(16)}
+                                                    color={match.isRead ? '#4ade80' : (themeType === 'light' ? theme.subText : 'rgba(255,255,255,0.5)')}
+                                                />
+                                            ) : (
+                                                (match.unreadCount > 0 || match.hasUnread) && (
+                                                    <View style={{
+                                                        backgroundColor: themeType === 'light' ? (theme.accent || '#00b894') : '#fff',
+                                                        borderRadius: normalize(10),
+                                                        paddingHorizontal: normalize(6),
+                                                        paddingVertical: normalize(2),
+                                                        minWidth: normalize(18),
+                                                        alignItems: 'center',
+                                                        justifyContent: 'center'
+                                                    }}>
+                                                        <Text style={{ color: themeType === 'light' ? '#fff' : '#000', fontSize: normalize(10), fontWeight: 'bold' }}>
+                                                            {match.unreadCount || 1}
+                                                        </Text>
+                                                    </View>
+                                                )
                                             )}
                                         </View>
                                     </Pressable>

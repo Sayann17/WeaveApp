@@ -435,7 +435,8 @@ async function getMatches(driver, requestHeaders, responseHeaders) {
             };
         });
 
-        // 3. Fetch Last Message Time from Chats
+        // 3. Fetch Last Message Details from Messages Table directly
+        // This gives us sender_id (to know if it's ours) and is_read status
         // We can do this efficiently? Or just iterate.
         // Let's iterate for safety and simplicity as we have chatId. 
         // A bulk IN query would be better but let's stick to safe logic first.
@@ -447,8 +448,13 @@ async function getMatches(driver, requestHeaders, responseHeaders) {
                 DECLARE $chatId AS Utf8;
                 DECLARE $userId AS Utf8;
 
-                SELECT last_message_time, last_message FROM chats WHERE id = $chatId;
+                -- Get actual last message details
+                SELECT sender_id, is_read, text, timestamp 
+                FROM messages 
+                WHERE chat_id = $chatId 
+                ORDER BY timestamp DESC LIMIT 1;
                 
+                -- Get unread count (incoming only)
                 SELECT COUNT(*) as unread_count 
                 FROM messages 
                 WHERE chat_id = $chatId 
@@ -459,22 +465,27 @@ async function getMatches(driver, requestHeaders, responseHeaders) {
                 '$chatId': TypedValues.utf8(m.chatId),
                 '$userId': TypedValues.utf8(userId)
             });
-            const chatRow = res[0] ? TypedData.createNativeObjects(res[0])[0] : null;
+            const lastMsgRow = res[0] ? TypedData.createNativeObjects(res[0])[0] : null;
             const unreadRow = res[1] ? TypedData.createNativeObjects(res[1])[0] : null;
 
             let sortTime = m.matchCreatedAt;
             let lastMessage = null;
+            let isOwnMessage = false;
+            let isRead = false;
+            let lastMessageTime = null;
 
-            if (chatRow) {
-                if (chatRow.last_message_time) {
-                    // If last message is newer than match creation (it should be), use it
-                    const lastMsg = new Date(chatRow.last_message_time);
-                    const matchTime = new Date(m.matchCreatedAt);
-                    if (lastMsg > matchTime) {
-                        sortTime = chatRow.last_message_time;
-                    }
+            if (lastMsgRow) {
+                lastMessage = lastMsgRow.text;
+                lastMessageTime = lastMsgRow.timestamp;
+                isOwnMessage = lastMsgRow.sender_id === userId;
+                isRead = lastMsgRow.is_read;
+
+                // If last message is newer than match creation, use it for sorting
+                const msgDate = new Date(lastMessageTime);
+                const matchDate = new Date(m.matchCreatedAt);
+                if (msgDate > matchDate) {
+                    sortTime = lastMessageTime;
                 }
-                lastMessage = chatRow.last_message;
             }
 
             const unreadCount = unreadRow ? (unreadRow.unread_count || unreadRow.count || 0) : 0;
@@ -483,11 +494,14 @@ async function getMatches(driver, requestHeaders, responseHeaders) {
 
             sortedMatches.push({
                 ...m,
+                ...m,
                 sortTime,
-                lastMessageTime: chatRow?.last_message_time || null,
+                lastMessageTime,
                 unreadCount: Number(unreadCount),
                 hasUnread,
-                lastMessage
+                lastMessage,
+                isOwnMessage,
+                isRead
             });
         }
 
@@ -552,7 +566,11 @@ async function getMatches(driver, requestHeaders, responseHeaders) {
                     lastMessageTime: m.lastMessageTime,
                     unreadCount: m.unreadCount,
                     hasUnread: m.hasUnread,
-                    lastMessage: m.lastMessage
+                    unreadCount: m.unreadCount,
+                    hasUnread: m.hasUnread,
+                    lastMessage: m.lastMessage,
+                    isOwnMessage: m.isOwnMessage,
+                    isRead: m.isRead
                 });
             }
         }
