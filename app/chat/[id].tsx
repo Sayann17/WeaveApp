@@ -774,12 +774,12 @@ const styles = StyleSheet.create({
   textInput: {
     flex: 1,
     paddingHorizontal: normalize(15),
-    paddingVertical: normalize(10),
+    paddingVertical: normalize(6), // Reduced to 6 to ensure 1 line
     fontSize: normalize(16),
     lineHeight: normalize(20),
     maxHeight: normalize(150),
-    textAlignVertical: 'center',
-    // Removed minHeight to let it collapse to line height + padding
+    textAlignVertical: 'center', // Center text for 1-line appearance
+    includeFontPadding: false, // Remove extra Android padding
   },
   sendButton: {
     width: normalize(40),
