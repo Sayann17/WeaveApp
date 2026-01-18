@@ -14,24 +14,27 @@ const EVENT_IMAGES: Record<string, any> = {
     'tuva_culture': require('../../assets/images/events/tuva_culture.jpg'),
 };
 
+import { useData } from '../context/DataContext';
+
 export const EventsFeed = ({ onScrollToTop }: { onScrollToTop?: () => void }) => {
     const { theme, themeType } = useTheme();
+    const { events: contextEvents, isLoading: contextLoading } = useData();
+    // Maintain local state for optimistic updates (attend/unattend)
     const [events, setEvents] = useState<WeaveEvent[]>([]);
     const [loading, setLoading] = useState(true);
+
     const isLight = themeType === 'light';
 
     useEffect(() => {
-        loadEvents();
-    }, []);
+        if (!contextLoading) {
+            setEvents(contextEvents);
+            setLoading(false);
+        }
+    }, [contextEvents, contextLoading]);
 
-    const loadEvents = async () => {
-        setLoading(true);
-        const data = await eventService.getEvents();
-        // Client-side sort
-        data.sort((a, b) => (a.sortOrder ?? 9999) - (b.sortOrder ?? 9999));
-        setEvents(data);
-        setLoading(false);
-    };
+    // loadEvents is handled by DataContext globally now
+    // We just keep handleAttend locally or via service
+
 
     const handleAttend = async (eventId: string) => {
         const currentEvent = events.find(e => e.id === eventId);

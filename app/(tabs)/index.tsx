@@ -11,51 +11,27 @@ import { MenuModal } from '../components/MenuModal';
 import { ProfileView } from '../components/ProfileView';
 import { ThemedBackground } from '../components/ThemedBackground';
 import { Colors } from '../constants/colors';
+import { useData } from '../context/DataContext';
 import { useNotifications } from '../context/NotificationContext';
 import { useTelegram } from '../context/TelegramProvider';
 import { useTheme } from '../context/ThemeContext';
-import { User } from '../services/interfaces/IAuthService';
-import { yandexAuth } from '../services/yandex/AuthService';
 import { getPlatformPadding } from '../utils/platformPadding';
 
 export default function ProfileScreen() {
   const router = useRouter();
   const { theme, themeType, setTheme } = useTheme();
   const { unreadMessagesCount, newLikesCount } = useNotifications();
-  const [userData, setUserData] = useState<any>(null);
-  const [isLoading, setIsLoading] = useState(true);
+  const { userProfile: userData, isLoading } = useData();
   const insets = useSafeAreaInsets();
   const { isMobile, hideBackButton } = useTelegram();
 
   const [isMenuVisible, setMenuVisible] = useState(false);
   const [settingsVisible, setSettingsVisible] = useState(false);
 
-  // Refresh user data whenever screen comes into focus
+  // Ensure Back Button is hidden
   useFocusEffect(
     useCallback(() => {
       hideBackButton();
-
-      const loadFullProfile = async () => {
-        const currentUser = yandexAuth.getCurrentUser();
-        if (currentUser) {
-          console.log('[ProfileScreen] currentUser.events:', (currentUser as any).events);
-          setUserData(currentUser);
-          setIsLoading(false);
-        }
-      };
-
-      loadFullProfile();
-
-      // Also listen for auth state changes
-      const unsubscribe = yandexAuth.onAuthStateChanged((u: User | null) => {
-        if (u) {
-          console.log('[ProfileScreen] Auth state changed, updating user data');
-          setUserData(u);
-          setIsLoading(false);
-        }
-      });
-
-      return unsubscribe;
     }, [])
   );
 

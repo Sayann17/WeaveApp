@@ -17,6 +17,7 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { ProfileView } from '../components/ProfileView';
 import { ThemedBackground } from '../components/ThemedBackground';
+import { useData } from '../context/DataContext';
 import { useTelegram } from '../context/TelegramProvider';
 import { useTheme } from '../context/ThemeContext';
 import { enhancedMatchService } from '../services/head_match';
@@ -72,6 +73,7 @@ export default function ExploreScreen() {
     const [profiles, setProfiles] = useState<UserProfile[]>([]);
     const [currentProfileIndex, setCurrentProfileIndex] = useState(0);
     const [isLoading, setIsLoading] = useState(true);
+    const { discoveryProfiles: preloadedProfiles, isLoading: isContextLoading } = useData();
 
     // UI States
     const [showFilters, setShowFilters] = useState(false);
@@ -131,6 +133,18 @@ export default function ExploreScreen() {
             setIsLoading(false);
         }
     };
+
+    // Preload Effect
+    React.useEffect(() => {
+        if (!filtersInitialized && preloadedProfiles.length > 0 && offset === 0) {
+            console.log('[Explore] Using preloaded profiles');
+            setProfiles(preloadedProfiles);
+            setIsLoading(false);
+        }
+    }, [preloadedProfiles, filtersInitialized]);
+
+    // Offset for pagination
+    const offset = profiles.length;
 
     const loadProfiles = async (currentUserData: any, currentFilters: Filters, mode: 'smart' | 'custom', offset: number = 0) => {
         try {

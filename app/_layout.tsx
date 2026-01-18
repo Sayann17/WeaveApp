@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { ActivityIndicator, View } from 'react-native';
 import { DisableZoom } from './components/DisableZoom';
 import { MenuModal } from './components/MenuModal';
+import { DataProvider } from './context/DataContext';
 import { MenuProvider, useMenu } from './context/MenuContext';
 import { NotificationProvider } from './context/NotificationContext';
 import { TelegramProvider } from './context/TelegramProvider';
@@ -62,19 +63,21 @@ export default function RootLayout() {
       <DisableZoom />
       <ThemeProvider>
         <NotificationProvider>
-          <MenuProvider>
-            <Stack screenOptions={{ headerShown: false, animation: 'fade' }}>
-              <Stack.Screen name="splash" />
-              <Stack.Screen name="(auth)" />
-              <Stack.Screen name="onboarding" />
-              <Stack.Screen name="(tabs)" />
-              <Stack.Screen name="chat/[id]" />
-              <Stack.Screen name="profile/[id]" />
-              <Stack.Screen name="profile/edit" />
-              <Stack.Screen name="notifications" />
-            </Stack>
-            <MenuModalWrapper />
-          </MenuProvider>
+          <DataProvider>
+            <MenuProvider>
+              <Stack screenOptions={{ headerShown: false, animation: 'fade' }}>
+                <Stack.Screen name="splash" />
+                <Stack.Screen name="(auth)" />
+                <Stack.Screen name="onboarding" />
+                <Stack.Screen name="(tabs)" />
+                <Stack.Screen name="chat/[id]" />
+                <Stack.Screen name="profile/[id]" />
+                <Stack.Screen name="profile/edit" />
+                <Stack.Screen name="notifications" />
+              </Stack>
+              <MenuModalWrapper />
+            </MenuProvider>
+          </DataProvider>
         </NotificationProvider>
       </ThemeProvider>
     </TelegramProvider>

@@ -1,5 +1,5 @@
-// app/(tabs)/index.tsx
-import React, { useRef } from 'react';
+import { useFocusEffect } from 'expo-router';
+import React, { useCallback, useRef } from 'react';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { EventsFeed } from '../components/EventsFeed';
@@ -12,8 +12,14 @@ import { getPlatformPadding } from '../utils/platformPadding';
 export default function HomeScreen() {
   const { theme } = useTheme();
   const insets = useSafeAreaInsets();
-  const { isMobile } = useTelegram();
+  const { isMobile, hideBackButton } = useTelegram();
   const scrollViewRef = useRef<ScrollView>(null);
+
+  useFocusEffect(
+    useCallback(() => {
+      hideBackButton();
+    }, [])
+  );
 
   const handleScrollToTop = () => {
     scrollViewRef.current?.scrollTo({ y: 0, animated: true });
