@@ -334,10 +334,15 @@ export default function MatchesScreen() {
                                                 contentFit="cover"
                                                 transition={200}
                                             />
-                                            <View style={styles.info}>
-                                                <Text style={[styles.name, { color: theme.text }]} numberOfLines={1}>
-                                                    {(match.name || 'Пользователь')}{match.age ? `, ${match.age}` : ''}
-                                                </Text>
+                                            <View style={[styles.info, { flex: 1 }]}>
+                                                <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', width: '100%' }}>
+                                                    <Text style={[styles.name, { color: theme.text, flex: 1, marginRight: normalize(8) }]} numberOfLines={1}>
+                                                        {(match.name || 'Пользователь')}{match.age ? `, ${match.age}` : ''}
+                                                    </Text>
+                                                    <Text style={{ fontSize: normalize(12), color: theme.subText }}>
+                                                        {formatMessageTime(match.lastMessageTime) || ''}
+                                                    </Text>
+                                                </View>
                                                 <Text style={[styles.details, { color: themeType === 'wine' ? '#ffd9d9' : '#4ade80' }]} numberOfLines={1}>
                                                     {getHeritageString(match)}
                                                 </Text>
@@ -347,7 +352,7 @@ export default function MatchesScreen() {
                                     </View>
 
                                     {/* Separator Line */}
-                                    <View style={{ height: 0.5, backgroundColor: themeType === 'light' ? 'rgba(0,0,0,0.1)' : 'rgba(255,255,255,0.2)', marginHorizontal: normalize(16), marginTop: normalize(8) }} />
+                                    <View style={{ height: 1, backgroundColor: themeType === 'light' ? '#E5E5EA' : 'rgba(255,255,255,0.15)', marginHorizontal: normalize(16), marginTop: normalize(8) }} />
 
                                     {/* Bottom Row: Message Preview */}
                                     <Pressable
@@ -369,15 +374,8 @@ export default function MatchesScreen() {
                                             </Text>
                                         </View>
 
-                                        {/* Right Column: Time & Badge */}
-                                        {/* Right Column: Time & Badge */}
-                                        <View style={{ flexDirection: 'column', alignItems: 'flex-end', justifyContent: 'center', marginRight: normalize(4), gap: normalize(2), minWidth: normalize(40) }}>
-                                            {/* Timestamp */}
-                                            <Text style={{ fontSize: normalize(11), color: theme.subText }}>
-                                                {formatMessageTime(match.lastMessageTime) || (match.lastMessageTime ? String(match.lastMessageTime).substring(0, 10) : '')}
-                                            </Text>
-
-                                            {/* Unread Badge */}
+                                        {/* Right Column: Badge Only */}
+                                        <View style={{ justifyContent: 'center', marginRight: normalize(0) }}>
                                             {(match.unreadCount > 0 || match.hasUnread) && (
                                                 <View style={{
                                                     backgroundColor: themeType === 'light' ? (theme.accent || '#00b894') : '#fff',
