@@ -390,8 +390,9 @@ export default function ChatScreen() {
                 isMine ? styles.myMessageText : { color: theme.text }
               ]}>
                 {item.text}
-                <Text style={{ color: 'transparent', fontSize: normalize(16) }}>
-                  {"\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0"}
+                {/* Dynamic Spacer: Uses actual time string + padding for ticks to reserve exact width */}
+                <Text style={{ color: 'transparent', fontSize: normalize(12) }}>
+                  {`\u00A0${formatMessageTime(item.timestamp)}\u00A0\u00A0\u00A0\u00A0\u00A0`}
                 </Text>
               </Text>
               <View style={styles.metaContainerFloating}>
