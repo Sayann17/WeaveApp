@@ -254,7 +254,7 @@ export default function MatchesScreen() {
 
             <View style={{ flex: 1 }}>
                 {/* Таб-бар (Chip Style) */}
-                <View style={{ paddingTop: getPlatformPadding(insets, isMobile, 110), marginBottom: 5 }}>
+                <View style={{ paddingTop: getPlatformPadding(insets, isMobile, 102), marginBottom: 5 }}>
                     <ScrollView
                         horizontal
                         showsHorizontalScrollIndicator={false}
