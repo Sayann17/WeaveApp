@@ -4,6 +4,7 @@ import { useRouter } from 'expo-router';
 import React from 'react';
 import {
     Alert,
+    Linking,
     Modal,
     Pressable,
     ScrollView,
@@ -28,6 +29,7 @@ export const MenuModal = ({ visible, onClose }: MenuModalProps) => {
     const insets = useSafeAreaInsets();
     const isLight = themeType === 'light';
     const [isVisibleProfile, setIsVisibleProfile] = React.useState(true);
+    const [showFeedback, setShowFeedback] = React.useState(false);
 
     React.useEffect(() => {
         if (visible) {
@@ -212,11 +214,56 @@ export const MenuModal = ({ visible, onClose }: MenuModalProps) => {
                                 </Pressable>
                             </View>
 
-
+                            {/* Feedback Button */}
+                            <Pressable
+                                style={[styles.menuItem, { backgroundColor: isLight ? '#ffffff' : theme.cardBg }]}
+                                onPress={() => setShowFeedback(true)}
+                            >
+                                <View style={[styles.iconContainer, { backgroundColor: isLight ? '#f0f0f0' : 'rgba(255,255,255,0.1)' }]}>
+                                    <Ionicons name="chatbubble-outline" size={24} color={theme.text} />
+                                </View>
+                                <View style={styles.menuTextContainer}>
+                                    <Text style={[styles.menuText, { color: theme.text }]}>Оставить отзыв</Text>
+                                    <Text style={[styles.menuSubtext, { color: theme.subText }]}>Помогите нам стать лучше</Text>
+                                </View>
+                                <Ionicons name="chevron-forward" size={20} color={theme.subText} />
+                            </Pressable>
                         </ScrollView>
                     </View>
                 </Pressable>
             </Pressable >
+
+            {/* Feedback Modal */}
+            <Modal
+                transparent
+                visible={showFeedback}
+                animationType="fade"
+                onRequestClose={() => setShowFeedback(false)}
+            >
+                <View style={styles.feedbackBackdrop}>
+                    <View style={[styles.feedbackModal, { backgroundColor: theme.cardBg, borderColor: theme.border }]}>
+                        <Pressable style={styles.feedbackClose} onPress={() => setShowFeedback(false)}>
+                            <Ionicons name="close" size={24} color={theme.subText} />
+                        </Pressable>
+
+                        <Text style={[styles.feedbackText, { color: theme.text }]}>
+                            Привет! Это команда Weave :) нам очень важно сейчас получать обратную связь от пользователей. Удели нам немного времени и помоги нам сделать классный и зрелый продукт :)
+                            {'\n\n'}
+                            Ссылка приведет тебя к гугл формам )
+                        </Text>
+
+                        <Pressable
+                            style={[styles.feedbackButton, { backgroundColor: '#4A9EFF' }]}
+                            onPress={() => {
+                                Linking.openURL('https://docs.google.com/forms/d/e/1FAIpQLSe2cf9HUeawptj1_qyEyUVk-0sjGyF3t4NE1QiZIwcpCjRw2g/viewform');
+                                setShowFeedback(false);
+                            }}
+                        >
+                            <Text style={styles.feedbackButtonText}>Перейти</Text>
+                        </Pressable>
+                    </View>
+                </View>
+            </Modal>
         </Modal >
     );
 };
@@ -305,5 +352,54 @@ const styles = StyleSheet.create({
     deleteItem: {
         marginTop: 8,
         opacity: 0.8,
+    },
+    feedbackBackdrop: {
+        flex: 1,
+        backgroundColor: 'rgba(0,0,0,0.6)',
+        justifyContent: 'center',
+        alignItems: 'center',
+        padding: 20
+    },
+    feedbackModal: {
+        width: '100%',
+        maxWidth: 340,
+        borderRadius: 24,
+        padding: 24,
+        borderWidth: 1,
+        alignItems: 'center',
+        // Shadow
+        shadowColor: "#000",
+        shadowOffset: {
+            width: 0,
+            height: 4,
+        },
+        shadowOpacity: 0.30,
+        shadowRadius: 4.65,
+        elevation: 8,
+    },
+    feedbackClose: {
+        position: 'absolute',
+        top: 16,
+        right: 16,
+        padding: 4
+    },
+    feedbackText: {
+        fontSize: 16,
+        lineHeight: 22,
+        textAlign: 'center',
+        marginBottom: 24,
+        marginTop: 12
+    },
+    feedbackButton: {
+        paddingVertical: 12,
+        paddingHorizontal: 32,
+        borderRadius: 16,
+        minWidth: 140,
+        alignItems: 'center'
+    },
+    feedbackButtonText: {
+        color: '#fff',
+        fontWeight: '600',
+        fontSize: 16
     }
 });
