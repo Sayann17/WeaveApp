@@ -30,6 +30,7 @@ export const MenuModal = ({ visible, onClose }: MenuModalProps) => {
     const isLight = themeType === 'light';
     const [isVisibleProfile, setIsVisibleProfile] = React.useState(true);
     const [showFeedback, setShowFeedback] = React.useState(false);
+    const [showSupport, setShowSupport] = React.useState(false);
 
     React.useEffect(() => {
         if (visible) {
@@ -214,6 +215,21 @@ export const MenuModal = ({ visible, onClose }: MenuModalProps) => {
                                 </Pressable>
                             </View>
 
+                            {/* Support Button */}
+                            <Pressable
+                                style={[styles.menuItem, { backgroundColor: isLight ? '#ffffff' : theme.cardBg }]}
+                                onPress={() => setShowSupport(true)}
+                            >
+                                <View style={[styles.iconContainer, { backgroundColor: isLight ? '#f0f0f0' : 'rgba(255,255,255,0.1)' }]}>
+                                    <Ionicons name="help-buoy-outline" size={24} color={theme.text} />
+                                </View>
+                                <View style={styles.menuTextContainer}>
+                                    <Text style={[styles.menuText, { color: theme.text }]}>Обратиться в поддержку</Text>
+                                    <Text style={[styles.menuSubtext, { color: theme.subText }]}>Сообщить о проблеме</Text>
+                                </View>
+                                <Ionicons name="chevron-forward" size={20} color={theme.subText} />
+                            </Pressable>
+
                             {/* Feedback Button */}
                             <Pressable
                                 style={[styles.menuItem, { backgroundColor: isLight ? '#ffffff' : theme.cardBg }]}
@@ -257,6 +273,37 @@ export const MenuModal = ({ visible, onClose }: MenuModalProps) => {
                             onPress={() => {
                                 Linking.openURL('https://docs.google.com/forms/d/e/1FAIpQLSe2cf9HUeawptj1_qyEyUVk-0sjGyF3t4NE1QiZIwcpCjRw2g/viewform');
                                 setShowFeedback(false);
+                            }}
+                        >
+                            <Text style={styles.feedbackButtonText}>Перейти</Text>
+                        </Pressable>
+                    </View>
+                </View>
+            </Modal>
+
+            {/* Support Modal */}
+            <Modal
+                transparent
+                visible={showSupport}
+                animationType="fade"
+                onRequestClose={() => setShowSupport(false)}
+            >
+                <View style={styles.feedbackBackdrop}>
+                    <View style={[styles.feedbackModal, { backgroundColor: theme.cardBg, borderColor: theme.border }]}>
+                        <Pressable style={styles.feedbackClose} onPress={() => setShowSupport(false)}>
+                            <Ionicons name="close" size={24} color={theme.subText} />
+                        </Pressable>
+
+                        <Text style={[styles.feedbackText, { color: theme.text }]}>
+                            Привет! Жаль, что ты столкнулся с каким-то неполадками :({'\n'}
+                            Пожалуйста, опишите вашу проблему по ссылке снизу и мы ее обязательно исправим!
+                        </Text>
+
+                        <Pressable
+                            style={[styles.feedbackButton, { backgroundColor: '#4A9EFF' }]}
+                            onPress={() => {
+                                Linking.openURL('https://docs.google.com/forms/d/e/1FAIpQLSeNOJr72muL9Ox2cwJ8H3qX649O9JhSV2owft-brLVYyV5_Zg/viewform?usp=publish-editor');
+                                setShowSupport(false);
                             }}
                         >
                             <Text style={styles.feedbackButtonText}>Перейти</Text>
