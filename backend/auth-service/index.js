@@ -372,7 +372,9 @@ async function me(driver, requestHeaders, headers) {
             socialTelegram: user.social_telegram,
             socialVk: user.social_vk,
             socialInstagram: user.social_instagram,
-            events: tryParse(user.events)
+            socialInstagram: user.social_instagram,
+            events: tryParse(user.events),
+            is_admin: user.is_admin
         };
 
         console.log('[/me] Returning user:', {
@@ -579,7 +581,11 @@ async function telegramLogin(driver, data, headers) {
                 socialTelegram: fullUser.social_telegram,
                 socialVk: fullUser.social_vk,
                 socialInstagram: fullUser.social_instagram,
-                events: tryParse(fullUser.events)
+                socialTelegram: fullUser.social_telegram,
+                socialVk: fullUser.social_vk,
+                socialInstagram: fullUser.social_instagram,
+                events: tryParse(fullUser.events),
+                is_admin: fullUser.is_admin
             }
         })
     };

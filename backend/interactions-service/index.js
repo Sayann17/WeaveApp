@@ -4,9 +4,6 @@ const jwt = require('jsonwebtoken');
 
 const JWT_SECRET = process.env.JWT_SECRET || 'dev-secret-key-change-me';
 
-// Admin IDs - comma separated in env var, or hardcoded fallback
-const ADMIN_IDS = (process.env.ADMIN_IDS || 'bf7ed056-a8e2-4f5f-9ed8-b9cbccfadc7c').split(',');
-
 async function handler(event, context) {
     const { httpMethod, headers, body, path } = event;
     const responseHeaders = {
@@ -56,8 +53,8 @@ async function handler(event, context) {
 
         if (httpMethod === 'POST' && (path === '/admin/ban' || path.endsWith('/admin/ban'))) {
             if (!userId) return { statusCode: 401, headers: responseHeaders, body: JSON.stringify({ error: 'Unauthorized' }) };
-            if (!ADMIN_IDS.includes(userId)) return { statusCode: 403, headers: responseHeaders, body: JSON.stringify({ error: 'Forbidden: Admin only' }) };
 
+            // NOTE: We check admin status inside banUser via DB for security
             const data = JSON.parse(body);
             return await banUser(driver, userId, data, responseHeaders);
         }
@@ -256,9 +253,22 @@ async function banUser(driver, adminId, data, headers) {
     const { userId, reason } = data;
     if (!userId) return { statusCode: 400, headers, body: JSON.stringify({ error: 'userId is required' }) };
 
-    console.log(`[Admin] User ${adminId} is banning ${userId} for: ${reason}`);
+    let isAdmin = false;
 
     await driver.tableClient.withSession(async (session) => {
+        // 1. Check if requester IS admin
+        const checkQuery = `
+            DECLARE $id AS Utf8;
+            SELECT is_admin FROM users WHERE id = $id LIMIT 1;
+        `;
+        const { resultSets: checkRes } = await session.executeQuery(checkQuery, { '$id': TypedValues.utf8(adminId) });
+        const rows = TypedData.createNativeObjects(checkRes[0]);
+        if (rows.length > 0 && rows[0].is_admin) {
+            isAdmin = true;
+        }
+
+        if (!isAdmin) return; // Exit logic if not admin
+
         const query = `
             DECLARE $id AS Utf8;
             DECLARE $is_banned AS Bool;
@@ -275,6 +285,12 @@ async function banUser(driver, adminId, data, headers) {
             '$ban_reason': TypedValues.utf8(reason || 'Violation of terms')
         }, { commitTx: true, beginTx: { serializableReadWrite: {} } });
     });
+
+    if (!isAdmin) {
+        return { statusCode: 403, headers, body: JSON.stringify({ error: 'Forbidden: Not an admin' }) };
+    }
+
+    console.log(`[Admin] User ${adminId} banned ${userId}`);
 
     return {
         statusCode: 200,

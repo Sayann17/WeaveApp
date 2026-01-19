@@ -10,6 +10,8 @@ export interface User {
     };
     profile_completed?: number;
     name?: string;
+    events?: any[];
+    is_admin?: boolean; // Admin flag
     age?: number;
     gender?: 'male' | 'female';
     ethnicity?: string;

@@ -104,7 +104,9 @@ export const ProfileView = ({ userData, isOwnProfile = false, isMatch = false, b
     const [isFullScreenPhoto, setIsFullScreenPhoto] = useState(false);
     const [showBanModal, setShowBanModal] = useState(false);
     const [banReason, setBanReason] = useState('');
-    const isAdmin = yandexAuth.user?.uid === ADMIN_ID;
+
+    // Check dynamic admin flag
+    const isAdmin = yandexAuth.user?.is_admin === true;
 
     const handleBanUser = async () => {
         if (!banReason.trim()) {
