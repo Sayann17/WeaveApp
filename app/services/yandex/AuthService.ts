@@ -16,6 +16,14 @@ class YandexAuthService implements IAuthService {
         this._loadSession();
     }
 
+    get user(): User | null {
+        return this._currentUser;
+    }
+
+    async getToken(): Promise<string | null> {
+        return AsyncStorage.getItem('auth_token');
+    }
+
     async telegramLogin(tgUser: any): Promise<void> {
         try {
             console.log('Authenticating with backend via Telegram...', tgUser);
