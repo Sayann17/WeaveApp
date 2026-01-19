@@ -4,6 +4,7 @@ import { Image } from 'expo-image';
 import { useRouter } from 'expo-router';
 import React, { useEffect, useState } from 'react';
 import {
+    Alert,
     Dimensions,
     FlatList,
     Modal,
@@ -21,8 +22,11 @@ import { Colors } from '../constants/colors';
 import { useTelegram } from '../context/TelegramProvider';
 import { useTheme } from '../context/ThemeContext';
 import { eventService } from '../services/EventService';
+import { yandexAuth } from '../services/yandex/AuthService';
 import { getReligionById, getZodiacSignById } from '../utils/basic_info';
 import { normalize } from '../utils/normalize';
+
+const ADMIN_ID = 'bf7ed056-a8e2-4f5f-9ed8-b9cbccfadc7c';
 
 const { width } = Dimensions.get('window');
 
@@ -98,6 +102,40 @@ export const ProfileView = ({ userData, isOwnProfile = false, isMatch = false, b
 
     const [activePhotoIndex, setActivePhotoIndex] = useState(0);
     const [isFullScreenPhoto, setIsFullScreenPhoto] = useState(false);
+    const [showBanModal, setShowBanModal] = useState(false);
+    const [banReason, setBanReason] = useState('');
+    const isAdmin = yandexAuth.user?.uid === ADMIN_ID;
+
+    const handleBanUser = async () => {
+        if (!banReason.trim()) {
+            Alert.alert('Ошибка', 'Укажите причину бана');
+            return;
+        }
+
+        try {
+            // Call API
+            // Note: InteractionService needs to be updated to support this method or call directly
+            const response = await fetch(`${process.env.EXPO_PUBLIC_API_URL || 'https://d5d9r07431e779813-interactions-service.functions.yandexcloud.net'}/admin/ban`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${await yandexAuth.getToken()}`
+                },
+                body: JSON.stringify({ userId: userData.uid || userData.id, reason: banReason })
+            });
+
+            if (response.ok) {
+                Alert.alert('Успех', 'Пользователь забанен');
+                setShowBanModal(false);
+                if (router.canGoBack()) router.back();
+            } else {
+                Alert.alert('Ошибка', 'Не удалось забанить пользователя');
+            }
+        } catch (e) {
+            Alert.alert('Ошибка', 'Произошла ошибка при бане');
+        }
+    };
+
 
     const isLight = themeType === 'light';
     const textColor = isLight ? '#1a1a1a' : Colors.text;
@@ -303,7 +341,17 @@ export const ProfileView = ({ userData, isOwnProfile = false, isMatch = false, b
                         <Text style={[styles.nameText, { color: textColor }]}>
                             {userData?.name}, {userData?.age}
                         </Text>
+                        {/* ADMIN BAN BUTTON */}
+                        {isAdmin && !isOwnProfile && (
+                            <TouchableOpacity
+                                onPress={() => setShowBanModal(true)}
+                                style={{ marginLeft: 10, padding: 5 }}
+                            >
+                                <Ionicons name="shield-half" size={24} color="#FF3B30" />
+                            </TouchableOpacity>
+                        )}
                     </View>
+
 
                     {getFullHeritageString() && (
                         <Text style={[styles.rootsText, { color: themeType === 'wine' ? '#ffd9d9' : GREEN_ACCENT }]}>
@@ -580,6 +628,9 @@ export const ProfileView = ({ userData, isOwnProfile = false, isMatch = false, b
         </>
     );
 };
+
+// ... existing code ...
+
 
 const styles = StyleSheet.create({
     scrollContent: { paddingBottom: normalize(20), alignItems: 'center' },

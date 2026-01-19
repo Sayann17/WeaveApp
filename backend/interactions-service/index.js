@@ -4,6 +4,9 @@ const jwt = require('jsonwebtoken');
 
 const JWT_SECRET = process.env.JWT_SECRET || 'dev-secret-key-change-me';
 
+// Admin IDs - comma separated in env var, or hardcoded fallback
+const ADMIN_IDS = (process.env.ADMIN_IDS || 'bf7ed056-a8e2-4f5f-9ed8-b9cbccfadc7c').split(',');
+
 async function handler(event, context) {
     const { httpMethod, headers, body, path } = event;
     const responseHeaders = {
@@ -49,6 +52,14 @@ async function handler(event, context) {
             if (!userId) return { statusCode: 401, headers: responseHeaders, body: JSON.stringify({ error: 'Unauthorized' }) };
             const data = JSON.parse(body);
             return await attendEvent(driver, userId, data, responseHeaders);
+        }
+
+        if (httpMethod === 'POST' && (path === '/admin/ban' || path.endsWith('/admin/ban'))) {
+            if (!userId) return { statusCode: 401, headers: responseHeaders, body: JSON.stringify({ error: 'Unauthorized' }) };
+            if (!ADMIN_IDS.includes(userId)) return { statusCode: 403, headers: responseHeaders, body: JSON.stringify({ error: 'Forbidden: Admin only' }) };
+
+            const data = JSON.parse(body);
+            return await banUser(driver, userId, data, responseHeaders);
         }
 
         return { statusCode: 404, headers: responseHeaders, body: JSON.stringify({ error: 'Not found' }) };
@@ -238,6 +249,37 @@ async function attendEvent(driver, userId, body, responseHeaders) {
         statusCode: 200,
         headers: responseHeaders,
         body: JSON.stringify({ success: true, isGoing })
+    };
+}
+
+async function banUser(driver, adminId, data, headers) {
+    const { userId, reason } = data;
+    if (!userId) return { statusCode: 400, headers, body: JSON.stringify({ error: 'userId is required' }) };
+
+    console.log(`[Admin] User ${adminId} is banning ${userId} for: ${reason}`);
+
+    await driver.tableClient.withSession(async (session) => {
+        const query = `
+            DECLARE $id AS Utf8;
+            DECLARE $is_banned AS Bool;
+            DECLARE $ban_reason AS Utf8;
+            
+            UPDATE users 
+            SET is_banned = $is_banned, ban_reason = $ban_reason 
+            WHERE id = $id;
+        `;
+
+        await session.executeQuery(query, {
+            '$id': TypedValues.utf8(userId),
+            '$is_banned': TypedValues.bool(true),
+            '$ban_reason': TypedValues.utf8(reason || 'Violation of terms')
+        }, { commitTx: true, beginTx: { serializableReadWrite: {} } });
+    });
+
+    return {
+        statusCode: 200,
+        headers,
+        body: JSON.stringify({ success: true, message: 'User banned' })
     };
 }
 

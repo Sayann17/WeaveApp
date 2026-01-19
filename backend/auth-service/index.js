@@ -315,6 +315,18 @@ async function me(driver, requestHeaders, headers) {
             }
         });
 
+        if (user && user.is_banned) {
+            return {
+                statusCode: 403,
+                headers,
+                body: JSON.stringify({
+                    error: 'Account banned',
+                    isBanned: true,
+                    reason: user.ban_reason
+                })
+            };
+        }
+
         if (!user) {
             return { statusCode: 404, headers, body: JSON.stringify({ error: 'User not found' }) };
         }
@@ -511,6 +523,18 @@ async function telegramLogin(driver, data, headers) {
         const profiles = decodeYdbResults(profileResults[0]);
         fullUser = profiles[0];
     });
+
+    if (fullUser && fullUser.is_banned) {
+        return {
+            statusCode: 403,
+            headers,
+            body: JSON.stringify({
+                error: 'Account banned',
+                isBanned: true,
+                reason: fullUser.ban_reason
+            })
+        };
+    }
 
     // Generate JWT
     token = jwt.sign({ uid: fullUser.id, email: fullUser.email }, JWT_SECRET, { expiresIn: '30d' });
