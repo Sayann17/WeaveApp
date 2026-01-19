@@ -84,19 +84,32 @@ async function getUserProfile(driver, requestHeaders, userId, responseHeaders) {
     if (!requesterId) return { statusCode: 401, headers: responseHeaders, body: JSON.stringify({ error: 'Unauthorized' }) };
 
     let user = null;
+    let isAdmin = false;
+
     await driver.tableClient.withSession(async (session) => {
         const query = `
             DECLARE $userId AS Utf8;
+            DECLARE $requesterId AS Utf8;
             SELECT * FROM users WHERE id = $userId LIMIT 1;
+            SELECT is_admin FROM users WHERE id = $requesterId LIMIT 1;
         `;
         const { resultSets } = await session.executeQuery(query, {
-            '$userId': TypedValues.utf8(userId)
+            '$userId': TypedValues.utf8(userId),
+            '$requesterId': TypedValues.utf8(requesterId)
         });
         const rows = TypedData.createNativeObjects(resultSets[0]);
         if (rows.length > 0) user = rows[0];
+
+        const requesterRows = TypedData.createNativeObjects(resultSets[1]);
+        if (requesterRows.length > 0) isAdmin = requesterRows[0].is_admin === true;
     });
 
     if (!user) return { statusCode: 404, headers: responseHeaders, body: JSON.stringify({ error: 'User not found' }) };
+
+    // Banned user check: Only admins can view banned profiles
+    if (user.is_banned && !isAdmin) {
+        return { statusCode: 404, headers: responseHeaders, body: JSON.stringify({ error: 'User not found' }) };
+    }
 
     const tryParse = (val) => {
         if (!val) return [];
@@ -198,7 +211,7 @@ async function getDiscovery(driver, requestHeaders, queryParams, responseHeaders
         };
 
         // Fetch CANDIDATES (Limit 1000 for performance safety)
-        let usersQuery = `SELECT * FROM users WHERE profile_completed = 1`;
+        let usersQuery = `SELECT * FROM users WHERE profile_completed = 1 AND (is_banned IS NULL OR is_banned = false)`;
         const params = {};
 
         if (filters) {
@@ -513,7 +526,7 @@ async function getMatches(driver, requestHeaders, responseHeaders) {
             const userQuery = `
                 DECLARE $id AS Utf8;
                 SELECT id, name, age, photos, about, gender, ethnicity, religion, zodiac, macro_groups
-                FROM users WHERE id = $id;
+                FROM users WHERE id = $id AND (is_banned IS NULL OR is_banned = false);
             `;
             const { resultSets: userResults } = await session.executeQuery(userQuery, {
                 '$id': TypedValues.utf8(m.otherId)
@@ -635,7 +648,7 @@ async function getLikesYou(driver, requestHeaders, responseHeaders) {
                 DECLARE $likeId AS Utf8;
                 SELECT id, name, age, photos, about, gender, ethnicity, religion, macro_groups, zodiac, interests, culture_pride, love_language, family_memory, stereotype_true, stereotype_false, events
                 FROM users
-                WHERE id = $likeId;
+                WHERE id = $likeId AND (is_banned IS NULL OR is_banned = false);
             `;
             const { resultSets: userResults } = await session.executeQuery(userQuery, {
                 '$likeId': TypedValues.utf8(likeId)
@@ -729,7 +742,7 @@ async function getYourLikes(driver, requestHeaders, responseHeaders) {
                 DECLARE $likeId AS Utf8;
                 SELECT id, name, age, photos, about, gender, ethnicity, religion, macro_groups, zodiac, interests, culture_pride, love_language, family_memory, stereotype_true, stereotype_false, events
                 FROM users
-                WHERE id = $likeId;
+                WHERE id = $likeId AND (is_banned IS NULL OR is_banned = false);
             `;
             const { resultSets: userResults } = await session.executeQuery(userQuery, {
                 '$likeId': TypedValues.utf8(likeId)
