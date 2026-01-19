@@ -35,10 +35,14 @@ export default function AuthScreen() {
         try {
           await yandexAuth.telegramLogin(tgUser);
           router.replace('/(tabs)');
-        } catch (e) {
+        } catch (e: any) {
           console.error('Telegram auto-login failed:', e);
-          const errorMessage = e instanceof Error ? e.message : JSON.stringify(e);
-          setError(`Ошибка входа через Telegram: ${errorMessage}`);
+          if (e.isBanned) {
+            setError(`Ваш аккаунт заблокирован в связи с нарушением условий пользования сервисом.\nПричина: ${e.reason || 'Не указана'}\n\nЗа подробностями обратитесь в поддержку.`);
+          } else {
+            const errorMessage = e instanceof Error ? e.message : JSON.stringify(e);
+            setError(`Ошибка входа через Telegram: ${errorMessage}`);
+          }
         }
       }
     };

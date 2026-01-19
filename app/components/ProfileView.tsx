@@ -15,6 +15,7 @@ import {
     ScrollView,
     StyleSheet,
     Text,
+    TextInput,
     TouchableOpacity,
     View
 } from 'react-native';
@@ -116,8 +117,7 @@ export const ProfileView = ({ userData, isOwnProfile = false, isMatch = false, b
 
         try {
             // Call API
-            // Note: InteractionService needs to be updated to support this method or call directly
-            const response = await fetch(`${process.env.EXPO_PUBLIC_API_URL || 'https://d5d9r07431e779813-interactions-service.functions.yandexcloud.net'}/admin/ban`, {
+            const response = await fetch(`https://d5dg37j92h7tg2f7sf87.o2p3jdjj.apigw.yandexcloud.net/admin/ban`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -627,6 +627,76 @@ export const ProfileView = ({ userData, isOwnProfile = false, isMatch = false, b
                     )}
                 </View>
             </Modal >
+            {/* BAN CONFIRMATION MODAL */}
+            <Modal
+                visible={showBanModal}
+                transparent={true}
+                animationType="fade"
+                onRequestClose={() => setShowBanModal(false)}
+            >
+                <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'center', alignItems: 'center' }}>
+                    <View style={{
+                        width: '80%',
+                        backgroundColor: isLight ? '#fff' : '#1c1c1e',
+                        borderRadius: 20,
+                        padding: 20,
+                        alignItems: 'center'
+                    }}>
+                        <Text style={{
+                            fontSize: 18,
+                            fontWeight: 'bold',
+                            color: isLight ? '#000' : '#fff',
+                            marginBottom: 15
+                        }}>
+                            Забанить пользователя?
+                        </Text>
+
+                        <TextInput
+                            style={{
+                                width: '100%',
+                                height: 50,
+                                backgroundColor: isLight ? '#f2f2f2' : '#2c2c2e',
+                                borderRadius: 10,
+                                paddingHorizontal: 15,
+                                color: isLight ? '#000' : '#fff',
+                                marginBottom: 20
+                            }}
+                            placeholder="Причина бана..."
+                            placeholderTextColor={isLight ? '#999' : '#666'}
+                            value={banReason}
+                            onChangeText={setBanReason}
+                        />
+
+                        <View style={{ flexDirection: 'row', gap: 10 }}>
+                            <TouchableOpacity
+                                onPress={() => setShowBanModal(false)}
+                                style={{
+                                    flex: 1,
+                                    padding: 15,
+                                    borderRadius: 12,
+                                    backgroundColor: isLight ? '#e5e5e5' : '#3a3a3c',
+                                    alignItems: 'center'
+                                }}
+                            >
+                                <Text style={{ color: isLight ? '#000' : '#fff', fontWeight: 'bold' }}>Отмена</Text>
+                            </TouchableOpacity>
+
+                            <TouchableOpacity
+                                onPress={handleBanUser}
+                                style={{
+                                    flex: 1,
+                                    padding: 15,
+                                    borderRadius: 12,
+                                    backgroundColor: '#FF3B30',
+                                    alignItems: 'center'
+                                }}
+                            >
+                                <Text style={{ color: '#fff', fontWeight: 'bold' }}>ЗАБАНИТЬ</Text>
+                            </TouchableOpacity>
+                        </View>
+                    </View>
+                </View>
+            </Modal>
         </>
     );
 };

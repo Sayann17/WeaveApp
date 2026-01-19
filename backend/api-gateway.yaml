@@ -159,3 +159,9 @@ paths:
         type: cloud_functions
         function_id: d4esa663s3sph2k3ohh2
       operationId: blockUser
+  /admin/ban:
+    post:
+      x-yc-apigateway-integration:
+        type: cloud_functions
+        function_id: d4esa663s3sph2k3ohh2
+      operationId: banUser

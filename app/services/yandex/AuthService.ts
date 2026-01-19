@@ -39,6 +39,14 @@ class YandexAuthService implements IAuthService {
             const data = await response.json();
 
             if (!response.ok) {
+                if (data.isBanned) {
+                    const error = new Error(data.error || 'Account banned');
+                    // @ts-ignore
+                    error.isBanned = true;
+                    // @ts-ignore
+                    error.reason = data.reason;
+                    throw error;
+                }
                 throw new Error(data.error || 'Telegram auth failed on server');
             }
 
