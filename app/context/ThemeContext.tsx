@@ -28,7 +28,7 @@ export const THEMES = {
     background: '#0b0d15',
     text: '#ffffff',
     subText: '#a0a0a0',
-    cardBg: 'rgba(255, 255, 255, 0)', // Darker glass effect (reduced from 0.08 to 0.05)
+    cardBg: '#1a1f3a', // Dark blue for space cards
     sheetBg: '#1a1d2d', // Solid dark for space sheets
     border: 'rgba(255,255,255,0.1)',
     accent: '#ffffff',
