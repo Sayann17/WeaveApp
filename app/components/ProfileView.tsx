@@ -259,7 +259,7 @@ export const ProfileView = ({ userData, isOwnProfile = false, isMatch = false, b
             ? { backgroundColor: '#fff', borderWidth: 1, borderColor: '#e5e5e5' }
             : isWineTheme
                 ? {
-                    backgroundColor: theme.cardBg,
+                    backgroundColor: 'rgba(79, 17, 28, 0.65)', // Wine color with above-medium transparency
                     borderWidth: 1.5,
                     borderColor: 'rgba(139, 111, 71, 0.3)', // Wine-toned border
                     shadowColor: '#4a0e1c',
@@ -274,14 +274,14 @@ export const ProfileView = ({ userData, isOwnProfile = false, isMatch = false, b
                     borderColor: themeType === 'space' ? 'rgba(255,255,255,0.08)' : theme.border
                 };
 
-        // Wine theme: warm brown with subtle gradient effect
+        // Wine theme: revert to original styling for icons and titles
         const wineAccentColor = '#8B6F47';
-        const titleColor = isLight ? '#222' : (isWineTheme ? '#6B5635' : color);
+        const titleColor = isLight ? '#222' : color; // Original: just use color
         const textColorHook = (isLight || isWineTheme) ? (isWineTheme ? '#2B0806' : '#333') : '#f4f4f5';
-        const iconColor = isWineTheme ? wineAccentColor : color;
+        const iconColor = color; // Original: just use color
         const iconBg = isLight
             ? color + '30'
-            : (isWineTheme ? 'rgba(139, 111, 71, 0.15)' : color + '20');
+            : color + '20'; // Original: no special wine handling
 
         return (
             <View style={[
@@ -297,28 +297,16 @@ export const ProfileView = ({ userData, isOwnProfile = false, isMatch = false, b
                     <View style={[
                         styles.iconCircle,
                         { backgroundColor: iconBg },
-                        isWineTheme && {
-                            width: normalize(36),
-                            height: normalize(36),
-                            borderRadius: normalize(18),
-                            borderWidth: 1,
-                            borderColor: 'rgba(139, 111, 71, 0.2)',
-                        }
                     ]}>
                         <Ionicons
                             name={icon}
-                            size={isWineTheme ? 18 : 16}
+                            size={16}
                             color={iconColor}
                         />
                     </View>
                     <Text style={[
                         styles.hookTitle,
                         { color: titleColor },
-                        isWineTheme && {
-                            fontSize: normalize(10.5),
-                            fontWeight: '800',
-                            letterSpacing: 1.2,
-                        }
                     ]}>{title}</Text>
                 </View>
                 <Text style={[
