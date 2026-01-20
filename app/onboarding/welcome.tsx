@@ -205,6 +205,15 @@ export default function WelcomeScreen() {
   );
 }
 
+// Calculate card size
+const SLIDE_PADDING = 20;
+const CARD_GAP = 10;
+const AVAILABLE_WIDTH = width - (SLIDE_PADDING * 2);
+const CARD_WIDTH = (AVAILABLE_WIDTH - (CARD_GAP * 2)) / 3;
+const CARD_HEIGHT = CARD_WIDTH * (19.5 / 9); // Aspect ratio of modern phones (roughly 9:19.5) to prevent cropping
+
+// ...
+
 const styles = StyleSheet.create({
   container: {
     flex: 1,
@@ -213,14 +222,14 @@ const styles = StyleSheet.create({
   slide: {
     width: width,
     flex: 1,
-    paddingHorizontal: 20,
-    paddingTop: 120, // Reduced from 250 to raise content
+    paddingHorizontal: SLIDE_PADDING,
+    paddingTop: 80, // Reduced further to allow space for taller cards
   },
 
   // Визуальная часть (Иконка или Карточки)
   visualContainer: {
     flex: 1,
-    justifyContent: 'flex-start', // Align to top of container (which starts after paddingTop)
+    justifyContent: 'flex-start',
     alignItems: 'center',
     paddingBottom: 20,
     marginTop: 20,
@@ -229,21 +238,20 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'center',
     alignItems: 'center',
-    gap: 10,
+    gap: CARD_GAP,
     width: '100%',
   },
   cardWrapper: {
-    width: 100, // Smaller to fit 3 in row
-    height: 150,
-    borderRadius: 14,
-    // Removed absolute position to allow flow
+    width: CARD_WIDTH,
+    height: CARD_HEIGHT,
+    borderRadius: 10,
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.2,
     shadowRadius: 8,
     elevation: 5,
     backgroundColor: '#fff',
-    borderWidth: 2,
+    borderWidth: 1.5,
     borderColor: '#1c1c1e',
     overflow: 'hidden',
   },
@@ -260,42 +268,43 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     backgroundColor: 'rgba(255, 255, 255, 0.5)',
-    marginTop: 60, // Add some spacing for non-card slides getting pulled up
+    marginTop: 60,
   },
 
   // Текстовая часть
   textContainer: {
     justifyContent: 'flex-end',
-    marginBottom: 20, // Отступ от текста до футера
+    paddingTop: 30,
+    marginBottom: 10, // Closer to footer
   },
   title: {
-    fontSize: 36, // Крупный, журнальный заголовок
-    fontWeight: '300', // Тонкое начертание (Elegant)
+    fontSize: 34, // Slightly adjusted for balance
+    fontWeight: '300',
     color: THEME.text,
-    textAlign: 'left', // Выравнивание по левому краю для стиля
-    lineHeight: 44,
+    textAlign: 'left',
+    lineHeight: 40,
     fontFamily: 'System',
   },
   separator: {
     width: 40,
     height: 2,
     backgroundColor: THEME.text,
-    marginTop: 20,
-    marginBottom: 20,
+    marginTop: 15,
+    marginBottom: 15,
     opacity: 0.2,
   },
   subtitle: {
-    fontSize: 17,
+    fontSize: 16,
     color: THEME.subText,
     textAlign: 'left',
-    lineHeight: 26,
+    lineHeight: 24,
     fontWeight: '400',
   },
 
   // Футер
   footer: {
     paddingHorizontal: 30,
-    paddingBottom: 50, // Оставляем хороший отступ снизу
+    paddingBottom: 50,
     justifyContent: 'flex-end',
   },
 
@@ -307,7 +316,7 @@ const styles = StyleSheet.create({
   },
   progressBar: {
     height: 2,
-    flex: 1, // Растягиваются равномерно
+    flex: 1,
     borderRadius: 1,
   },
   progressBarActive: {
@@ -319,7 +328,7 @@ const styles = StyleSheet.create({
 
   // Кнопка
   mainButton: {
-    backgroundColor: THEME.accent, // Темный строгий цвет
+    backgroundColor: THEME.accent,
     paddingVertical: 18,
     borderRadius: 14,
     flexDirection: 'row',
@@ -336,6 +345,6 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '600',
     letterSpacing: 0.5,
-    textTransform: 'uppercase', // Делает текст кнопки более стильным
+    textTransform: 'uppercase',
   },
 });
