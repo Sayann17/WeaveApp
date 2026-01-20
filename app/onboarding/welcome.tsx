@@ -1,5 +1,6 @@
 // app/onboarding/welcome.tsx
 import { Ionicons } from '@expo/vector-icons';
+import { Image } from 'expo-image';
 import { useRouter } from 'expo-router';
 import React, { useEffect, useRef, useState } from 'react';
 import {
@@ -96,11 +97,40 @@ export default function WelcomeScreen() {
 
   const renderItem = ({ item }: { item: typeof SLIDES[0] }) => (
     <View style={styles.slide}>
-      {/* Верхняя часть с "воздухом" и иконкой */}
+      {/* Верхняя часть с "воздухом" и карточками/иконками */}
       <View style={styles.visualContainer}>
-        <View style={styles.iconCircle}>
-          <Ionicons name={item.icon as any} size={48} color={THEME.text} style={{ opacity: 0.8 }} />
-        </View>
+        {item.id === 'welcome' ? (
+          <View style={styles.cardsContainer}>
+            {/* Card 3 (Back) */}
+            <View style={[styles.cardWrapper, { transform: [{ rotate: '12deg' }, { translateX: 20 }, { translateY: 10 }] }]}>
+              <Image
+                source={require('../../assets/images/onboarding_card_3.jpg')}
+                style={styles.cardImage}
+                contentFit="cover"
+              />
+            </View>
+            {/* Card 2 (Middle) */}
+            <View style={[styles.cardWrapper, { transform: [{ rotate: '-6deg' }, { translateX: -15 }, { translateY: 5 }] }]}>
+              <Image
+                source={require('../../assets/images/onboarding_card_2.jpg')}
+                style={styles.cardImage}
+                contentFit="cover"
+              />
+            </View>
+            {/* Card 1 (Front) */}
+            <View style={[styles.cardWrapper, { transform: [{ rotate: '0deg' }], zIndex: 10 }]}>
+              <Image
+                source={require('../../assets/images/onboarding_card_1.jpg')}
+                style={styles.cardImage}
+                contentFit="cover"
+              />
+            </View>
+          </View>
+        ) : (
+          <View style={styles.iconCircle}>
+            <Ionicons name={item.icon as any} size={48} color={THEME.text} style={{ opacity: 0.8 }} />
+          </View>
+        )}
       </View>
 
       {/* Нижняя часть с текстом */}
@@ -187,12 +217,40 @@ const styles = StyleSheet.create({
     paddingTop: 250, // 🔥 User specified padding
   },
 
-  // Визуальная часть (Иконка)
+  // Визуальная часть (Иконка или Карточки)
   visualContainer: {
     flex: 1, // Занимает всё пространство до текста
     justifyContent: 'center', // Центр свободного места
     alignItems: 'center',
     paddingBottom: 20,
+  },
+  cardsContainer: {
+    width: 200,
+    height: 250,
+    justifyContent: 'center',
+    alignItems: 'center',
+    position: 'relative',
+    marginTop: 20,
+  },
+  cardWrapper: {
+    width: 150,
+    height: 220,
+    borderRadius: 20,
+    position: 'absolute',
+    backfaceVisibility: 'hidden',
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.25,
+    shadowRadius: 12,
+    elevation: 8,
+    backgroundColor: '#fff',
+    borderWidth: 4,     // Phone bezel simulation
+    borderColor: '#1c1c1e',
+    overflow: 'hidden', // Mask the image with border
+  },
+  cardImage: {
+    width: '100%',
+    height: '100%',
   },
   iconCircle: {
     width: 120,
