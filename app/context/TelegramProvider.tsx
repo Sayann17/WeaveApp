@@ -116,7 +116,6 @@ export function TelegramProvider({ children }: { children: React.ReactNode }) {
 
                         // User can still manually expand if we provide a button, or via gesture.
 
-                        /* 
                         // 1. Immediate call
                         expandApp();
 
@@ -127,7 +126,7 @@ export function TelegramProvider({ children }: { children: React.ReactNode }) {
                             expandApp();
                         }
 
-                        // 3. Persistent expansion (Interval)
+                        // 3. Persistent expansion (Interval) - helps with some loading states
                         const expandInterval = setInterval(() => {
                             expandApp();
                         }, 100);
@@ -138,7 +137,6 @@ export function TelegramProvider({ children }: { children: React.ReactNode }) {
                             // Final attempt
                             expandApp();
                         }, 2000);
-                        */
 
                         // 4. Event Listeners
                         // Re-expand on visibility change (e.g. switching back to app) - Keeping this disabled as well
