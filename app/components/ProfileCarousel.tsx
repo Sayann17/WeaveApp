@@ -5,6 +5,7 @@ import { Dimensions, StyleSheet, View } from 'react-native';
 import Animated, {
     Extrapolate,
     interpolate,
+    SharedValue,
     useAnimatedScrollHandler,
     useAnimatedStyle,
     useSharedValue
@@ -22,6 +23,53 @@ const PROFILE_IMAGES = [
     require('../../assets/images/onboarding_card_2.jpg'),
     require('../../assets/images/onboarding_card_3.jpg'),
 ];
+
+// Separate component for each card - this allows proper hook usage
+interface CarouselCardProps {
+    source: any;
+    cardIndex: number;
+    scrollX: SharedValue<number>;
+}
+
+const CarouselCard = ({ source, cardIndex, scrollX }: CarouselCardProps) => {
+    const inputRange = [
+        (cardIndex - 1) * CARD_WIDTH,
+        cardIndex * CARD_WIDTH,
+        (cardIndex + 1) * CARD_WIDTH,
+    ];
+
+    const animatedStyle = useAnimatedStyle(() => {
+        const scale = interpolate(
+            scrollX.value,
+            inputRange,
+            [0.85, 1, 0.85],
+            Extrapolate.CLAMP
+        );
+        const opacity = interpolate(
+            scrollX.value,
+            inputRange,
+            [0.5, 1, 0.5],
+            Extrapolate.CLAMP
+        );
+        return {
+            transform: [{ scale }],
+            opacity,
+        };
+    });
+
+    return (
+        <Animated.View style={[styles.cardWrapper, animatedStyle]}>
+            <View style={styles.innerCard}>
+                <View style={styles.notch} />
+                <Image
+                    source={source}
+                    style={styles.cardImage}
+                    contentFit="cover"
+                />
+            </View>
+        </Animated.View>
+    );
+};
 
 export const ProfileCarousel = () => {
     const scrollX = useSharedValue(0);
@@ -49,43 +97,12 @@ export const ProfileCarousel = () => {
                         return <View style={{ width: SPACER_WIDTH }} />;
                     }
 
-                    const cardIndex = index - 1;
-                    const inputRange = [
-                        (cardIndex - 1) * CARD_WIDTH,
-                        cardIndex * CARD_WIDTH,
-                        (cardIndex + 1) * CARD_WIDTH,
-                    ];
-
-                    const animatedStyle = useAnimatedStyle(() => {
-                        const scale = interpolate(
-                            scrollX.value,
-                            inputRange,
-                            [0.85, 1, 0.85],
-                            Extrapolate.CLAMP
-                        );
-                        const opacity = interpolate(
-                            scrollX.value,
-                            inputRange,
-                            [0.5, 1, 0.5],
-                            Extrapolate.CLAMP
-                        );
-                        return {
-                            transform: [{ scale }],
-                            opacity,
-                        };
-                    });
-
                     return (
-                        <Animated.View style={[styles.cardWrapper, animatedStyle]}>
-                            <View style={styles.innerCard}>
-                                <View style={styles.notch} />
-                                <Image
-                                    source={item}
-                                    style={styles.cardImage}
-                                    contentFit="cover"
-                                />
-                            </View>
-                        </Animated.View>
+                        <CarouselCard
+                            source={item}
+                            cardIndex={index - 1}
+                            scrollX={scrollX}
+                        />
                     );
                 }}
             />
