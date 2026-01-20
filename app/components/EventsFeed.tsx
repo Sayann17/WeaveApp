@@ -122,7 +122,6 @@ export const EventsCarousel = ({
                     contentContainerStyle={{ paddingHorizontal: width * 0.05 }}
                     onScroll={handleScroll}
                     scrollEventThrottle={16}
-                    scrollEventThrottle={16}
                     keyExtractor={(item) => item.id}
                     renderItem={({ item }) => (
                         <EventCard
