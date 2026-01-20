@@ -252,31 +252,85 @@ export const ProfileView = ({ userData, isOwnProfile = false, isMatch = false, b
 
     // --- HookItem ---
     const HookItem = ({ title, text, color, icon }: any) => {
+        // Wine theme: sophisticated design with wine-toned accents
+        const isWineTheme = themeType === 'wine';
+
         const containerStyle = isLight
             ? { backgroundColor: '#fff', borderWidth: 1, borderColor: '#e5e5e5' }
-            : {
-                backgroundColor: themeType === 'space' ? 'rgba(18, 22, 40, 0.9)' : theme.cardBg,
-                borderWidth: 1,
-                borderColor: themeType === 'space' ? 'rgba(255,255,255,0.08)' : theme.border
-            };
+            : isWineTheme
+                ? {
+                    backgroundColor: theme.cardBg,
+                    borderWidth: 1.5,
+                    borderColor: 'rgba(139, 111, 71, 0.3)', // Wine-toned border
+                    shadowColor: '#4a0e1c',
+                    shadowOffset: { width: 0, height: 4 },
+                    shadowOpacity: 0.15,
+                    shadowRadius: 12,
+                    elevation: 6,
+                }
+                : {
+                    backgroundColor: themeType === 'space' ? 'rgba(18, 22, 40, 0.9)' : theme.cardBg,
+                    borderWidth: 1,
+                    borderColor: themeType === 'space' ? 'rgba(255,255,255,0.08)' : theme.border
+                };
 
-        // Wine theme: warm brown for titles and icons to complement beige cards
-        const wineAccentColor = '#8B6F47'; // Warm brown that harmonizes with beige
-        const titleColor = isLight ? '#222' : (themeType === 'wine' ? wineAccentColor : color);
-        // FIX: Wine theme uses light cards, so needs dark text
-        const textColorHook = (isLight || themeType === 'wine') ? '#333' : '#f4f4f5';
-        const iconColor = themeType === 'wine' ? wineAccentColor : color;
-        const iconBg = isLight ? color + '30' : (themeType === 'wine' ? wineAccentColor + '20' : color + '20');
+        // Wine theme: warm brown with subtle gradient effect
+        const wineAccentColor = '#8B6F47';
+        const titleColor = isLight ? '#222' : (isWineTheme ? '#6B5635' : color);
+        const textColorHook = (isLight || isWineTheme) ? '#2c2c2c' : '#f4f4f5';
+        const iconColor = isWineTheme ? wineAccentColor : color;
+        const iconBg = isLight
+            ? color + '30'
+            : (isWineTheme ? 'rgba(139, 111, 71, 0.15)' : color + '20');
 
         return (
-            <View style={[styles.hookContainer, containerStyle]}>
+            <View style={[
+                styles.hookContainer,
+                containerStyle,
+                isWineTheme && {
+                    paddingHorizontal: normalize(20),
+                    paddingVertical: normalize(18),
+                    borderRadius: normalize(20),
+                }
+            ]}>
                 <View style={styles.hookHeader}>
-                    <View style={[styles.iconCircle, { backgroundColor: iconBg }]}>
-                        <Ionicons name={icon} size={16} color={iconColor} />
+                    <View style={[
+                        styles.iconCircle,
+                        { backgroundColor: iconBg },
+                        isWineTheme && {
+                            width: normalize(36),
+                            height: normalize(36),
+                            borderRadius: normalize(18),
+                            borderWidth: 1,
+                            borderColor: 'rgba(139, 111, 71, 0.2)',
+                        }
+                    ]}>
+                        <Ionicons
+                            name={icon}
+                            size={isWineTheme ? 18 : 16}
+                            color={iconColor}
+                        />
                     </View>
-                    <Text style={[styles.hookTitle, { color: titleColor }]}>{title}</Text>
+                    <Text style={[
+                        styles.hookTitle,
+                        { color: titleColor },
+                        isWineTheme && {
+                            fontSize: normalize(10.5),
+                            fontWeight: '800',
+                            letterSpacing: 1.2,
+                        }
+                    ]}>{title}</Text>
                 </View>
-                <Text style={[styles.hookText, { color: textColorHook }]}>{text}</Text>
+                <Text style={[
+                    styles.hookText,
+                    { color: textColorHook },
+                    isWineTheme && {
+                        fontSize: normalize(15.5),
+                        lineHeight: normalize(23),
+                        fontWeight: '400',
+                        letterSpacing: 0.2,
+                    }
+                ]}>{text}</Text>
             </View>
         );
     };
