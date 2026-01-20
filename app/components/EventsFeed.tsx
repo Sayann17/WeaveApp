@@ -113,11 +113,11 @@ export const EventsCarousel = ({
                 <FlatList
                     data={events}
                     horizontal
-                    pagingEnabled={false} // pagingEnabled can be buggy with gaps, sticking to snapToInterval
+                    pagingEnabled={true}
                     snapToInterval={width * 0.9 + normalize(15)}
-                    snapToAlignment="start"
-                    decelerationRate="fast"
-                    disableIntervalMomentum={true} // This helps stop exactly on the item
+                    snapToAlignment="center"
+                    decelerationRate={0}
+                    disableIntervalMomentum={true}
                     showsHorizontalScrollIndicator={false}
                     contentContainerStyle={{ paddingHorizontal: normalize(10) }}
                     onScroll={handleScroll}
@@ -175,14 +175,13 @@ const EventCard = ({ event, theme, isLight, themeType, onAttend, onCollapse }: {
         }
     };
 
-    // Colors for Passion theme
-    const isWine = themeType === 'wine';
-    const dateColor = isWine ? '#fbdac9' : Colors.primary;
-    const linkColor = isWine ? '#4A90D9' : Colors.primary; // Blue for links
+    // Colors for ALL themes - unified styling
+    const dateColor = '#fbdac9'; // Peachy date for all themes
+    const linkColor = '#4A90D9'; // Blue for links in all themes
     const attendBgColor = event.isGoing
         ? (isLight ? '#F2F2F7' : 'rgba(255,255,255,0.1)')
-        : (isWine ? '#fbdac9' : Colors.primary);
-    const attendTextColor = isWine ? '#1c1c1e' : '#fff'; // Black text on peachy button
+        : '#fbdac9'; // Peachy attend button for all themes
+    const attendTextColor = '#1c1c1e'; // Black text on peachy button
 
     return (
         <View style={styles.cardContainer}>
@@ -226,18 +225,17 @@ const EventCard = ({ event, theme, isLight, themeType, onAttend, onCollapse }: {
                 {expanded && (
                     <>
                         <View style={styles.actionRow}>
-                            {/* Detail Button - Blue link with underline for wine theme */}
+                            {/* Detail Button - Blue with underline */}
                             <TouchableOpacity
                                 onPress={() => Linking.openURL('https://forms.gle/uktQtqpxntwTo2Pb9')}
                                 style={[
                                     styles.detailsButton,
-                                    isWine && { borderColor: linkColor, backgroundColor: linkColor }
+                                    { borderColor: linkColor, backgroundColor: linkColor }
                                 ]}
                             >
                                 <Text style={[
                                     styles.detailsText,
-                                    { color: isWine ? '#fff' : Colors.primary },
-                                    isWine && { textDecorationLine: 'underline' }
+                                    { color: '#fff', textDecorationLine: 'underline' }
                                 ]}>Подробнее</Text>
                             </TouchableOpacity>
 
