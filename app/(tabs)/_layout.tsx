@@ -65,7 +65,7 @@ export default function TabLayout() {
           left: 0,
           right: 0,
         },
-        tabBarActiveTintColor: themeType === 'wine' ? '#efc2a3' : (isLight ? '#2a2a2a' : '#81B29A'),
+        tabBarActiveTintColor: themeType === 'wine' ? '#fbdac9' : (isLight ? '#2a2a2a' : '#81B29A'),
         tabBarInactiveTintColor: isLight ? '#999' : '#666',
         tabBarIconStyle: { marginBottom: -2 },
         tabBarLabelStyle: { fontSize: 11, marginBottom: 5 },
