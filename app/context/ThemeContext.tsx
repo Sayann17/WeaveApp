@@ -11,11 +11,11 @@ export type ThemeType = 'light' | 'space' | 'wine';
 export const THEMES = {
   light: {
     type: 'light' as ThemeType,
-    background: '#f4f4e7',
+    background: '#fbdac9', // Experiment: peachy background
     text: '#1c1c1e',
     subText: '#555555',
     cardBg: '#fafaf2',
-    sheetBg: '#f4f4e7', // Beige like main background
+    sheetBg: '#fbdac9', // Match main background
     border: '#e0e0e0',
     accent: '#000000',
     accentText: '#ffffff',
