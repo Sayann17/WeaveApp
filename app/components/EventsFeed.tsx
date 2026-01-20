@@ -104,11 +104,23 @@ export const EventsCarousel = ({
 
     const dotsArray = Array.from({ length: visibleDotsCount });
 
+    const [expandedId, setExpandedId] = useState<string | null>(null);
+
+    const toggleExpand = (id: string) => {
+        if (expandedId === id) {
+            setExpandedId(null);
+            if (onScrollToTop) onScrollToTop();
+        } else {
+            setExpandedId(id);
+        }
+    };
+
     return (
         <View style={styles.container}>
             <View>
                 <FlatList
                     data={events}
+                    extraData={expandedId} // Force re-render when expanded changes
                     horizontal
                     pagingEnabled={false}
                     snapToInterval={width * 0.9 + normalize(15)}
@@ -125,8 +137,9 @@ export const EventsCarousel = ({
                             event={item}
                             theme={theme}
                             isLight={isLight}
+                            expanded={expandedId === item.id}
+                            onToggleExpand={() => toggleExpand(item.id)}
                             onAttend={onAttend}
-                            onCollapse={onScrollToTop}
                         />
                     )}
                 />
@@ -159,17 +172,21 @@ export const EventsCarousel = ({
     );
 };
 
-const EventCard = ({ event, theme, isLight, onAttend, onCollapse }: { event: WeaveEvent, theme: any, isLight: boolean, onAttend: (id: string) => void, onCollapse?: () => void }) => {
-    const [expanded, setExpanded] = useState(false);
-
-    const toggleExpand = () => {
-        if (expanded) {
-            setExpanded(false);
-            if (onCollapse) onCollapse();
-        } else {
-            setExpanded(true);
-        }
-    };
+const EventCard = ({
+    event,
+    theme,
+    isLight,
+    expanded,
+    onToggleExpand,
+    onAttend
+}: {
+    event: WeaveEvent,
+    theme: any,
+    isLight: boolean,
+    expanded: boolean,
+    onToggleExpand: () => void,
+    onAttend: (id: string) => void
+}) => {
 
     // Colors based on theme
     const dateColor = isLight ? '#000000' : '#ffffff'; // Black for light, white for wine/space
@@ -207,7 +224,7 @@ const EventCard = ({ event, theme, isLight, onAttend, onCollapse }: { event: Wea
 
                 {/* Collapsed State: Show 'Show More' Toggle */}
                 {!expanded && (
-                    <TouchableOpacity onPress={toggleExpand} hitSlop={{ top: 10, bottom: 10 }}>
+                    <TouchableOpacity onPress={onToggleExpand} hitSlop={{ top: 10, bottom: 10 }}>
                         <Text style={[styles.toggleText, { color: mintColor }]}>
                             Показать полностью
                         </Text>
@@ -243,7 +260,7 @@ const EventCard = ({ event, theme, isLight, onAttend, onCollapse }: { event: Wea
                             </TouchableOpacity>
                         </View>
 
-                        <TouchableOpacity onPress={toggleExpand} hitSlop={{ top: 10, bottom: 10 }} style={{ marginTop: 20 }}>
+                        <TouchableOpacity onPress={onToggleExpand} hitSlop={{ top: 10, bottom: 10 }} style={{ marginTop: 20 }}>
                             <Text style={[styles.toggleText, { color: mintColor }]}>
                                 Свернуть
                             </Text>
@@ -295,7 +312,7 @@ const styles = StyleSheet.create({
     toggleText: {
         fontSize: normalize(16),
         fontWeight: '700', // Bold as requested
-        marginBottom: normalize(20)
+        marginBottom: normalize(8)
     },
 
     actionRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
@@ -329,8 +346,8 @@ const styles = StyleSheet.create({
         justifyContent: 'center',
         alignItems: 'center',
         alignSelf: 'center', // Center it
-        marginTop: normalize(20),
-        marginBottom: normalize(30),
+        marginTop: normalize(8),
+        marginBottom: normalize(15),
         paddingHorizontal: normalize(12),
         paddingVertical: normalize(8),
         borderRadius: normalize(20), // Rounded container logic

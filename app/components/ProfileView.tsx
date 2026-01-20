@@ -559,7 +559,7 @@ export const ProfileView = ({ userData, isOwnProfile = false, isMatch = false, b
                             <View style={[
                                 styles.dotsContainer,
                                 {
-                                    marginTop: 15,
+                                    marginTop: 8,
                                     alignSelf: 'center',
                                     paddingHorizontal: 12,
                                     paddingVertical: 8,
@@ -597,7 +597,7 @@ export const ProfileView = ({ userData, isOwnProfile = false, isMatch = false, b
                             </View>
                         )}
 
-                        <View style={{ height: 10 }} />
+
                     </View>
                 )}
 
