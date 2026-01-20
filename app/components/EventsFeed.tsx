@@ -175,13 +175,14 @@ const EventCard = ({ event, theme, isLight, themeType, onAttend, onCollapse }: {
         }
     };
 
-    // Colors for ALL themes - unified styling
-    const dateColor = '#fbdac9'; // Peachy date for all themes
-    const linkColor = '#4A90D9'; // Blue for links in all themes
+    // Colors based on theme
+    const dateColor = isLight ? '#000000' : '#ffffff'; // Black for light, white for wine/space
+    const mintColor = '#81B29A'; // Mint color matching Space theme tab icons
+    const linkColor = '#4A90D9'; // Blue for "Подробнее" button
     const attendBgColor = event.isGoing
         ? (isLight ? '#F2F2F7' : 'rgba(255,255,255,0.1)')
-        : '#fbdac9'; // Peachy attend button for all themes
-    const attendTextColor = '#1c1c1e'; // Black text on peachy button
+        : mintColor; // Mint attend button for all themes
+    const attendTextColor = '#1c1c1e'; // Black text on mint button
 
     return (
         <View style={styles.cardContainer}>
@@ -215,7 +216,7 @@ const EventCard = ({ event, theme, isLight, themeType, onAttend, onCollapse }: {
                 {/* Collapsed State: Show 'Show More' Toggle */}
                 {!expanded && (
                     <TouchableOpacity onPress={toggleExpand} hitSlop={{ top: 10, bottom: 10 }}>
-                        <Text style={[styles.toggleText, { color: linkColor }]}>
+                        <Text style={[styles.toggleText, { color: mintColor }]}>
                             Показать полностью
                         </Text>
                     </TouchableOpacity>
@@ -257,7 +258,7 @@ const EventCard = ({ event, theme, isLight, themeType, onAttend, onCollapse }: {
                         </View>
 
                         <TouchableOpacity onPress={toggleExpand} hitSlop={{ top: 10, bottom: 10 }} style={{ marginTop: 20 }}>
-                            <Text style={[styles.toggleText, { color: linkColor }]}>
+                            <Text style={[styles.toggleText, { color: mintColor }]}>
                                 Свернуть
                             </Text>
                         </TouchableOpacity>
