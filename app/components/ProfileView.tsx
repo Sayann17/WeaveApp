@@ -140,10 +140,8 @@ export const ProfileView = ({ userData, isOwnProfile = false, isMatch = false, b
 
 
     const isLight = themeType === 'light';
-    // Wine theme uses light cards, so needs dark text like light theme
-    const useDarkText = isLight || themeType === 'wine';
-    const textColor = useDarkText ? '#1a1a1a' : Colors.text;
-    const subTextColor = useDarkText ? 'rgba(0,0,0,0.6)' : 'rgba(255,255,255,0.6)';
+    const textColor = isLight ? '#1a1a1a' : Colors.text;
+    const subTextColor = isLight ? 'rgba(0,0,0,0.6)' : 'rgba(255,255,255,0.6)';
 
     // --- Хелперы ---
     const capitalizeFirst = (str: string) => {
@@ -263,7 +261,8 @@ export const ProfileView = ({ userData, isOwnProfile = false, isMatch = false, b
             };
 
         const titleColor = isLight ? '#222' : color;
-        const textColorHook = isLight ? '#333' : '#f4f4f5';
+        // FIX: Wine theme uses light cards, so needs dark text
+        const textColorHook = (isLight || themeType === 'wine') ? '#333' : '#f4f4f5';
         const iconBg = isLight ? color + '30' : color + '20';
 
         return (
