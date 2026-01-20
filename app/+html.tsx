@@ -61,5 +61,13 @@ input, textarea {
   -webkit-user-select: text;
   user-select: text;
   touch-action: manipulation;
+  /* Fix cursor color - default to black for light theme */
+  caret-color: #000000 !important;
+}
+/* Dark theme cursor color */
+@media (prefers-color-scheme: dark) {
+  input, textarea {
+    caret-color: #ffffff !important;
+  }
 }
 `;
