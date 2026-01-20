@@ -410,7 +410,7 @@ export const ProfileView = ({ userData, isOwnProfile = false, isMatch = false, b
 
                     {/* Vitals Color Logic */}
                     {(() => {
-                        const vitalsColor = isLight ? subTextColor : '#E2E8F0';
+                        const vitalsColor = isLight ? subTextColor : (themeType === 'wine' ? '#ffffff' : '#E2E8F0');
                         return (
                             <View style={styles.statusRow}>
                                 <Text style={[styles.statusText, { color: vitalsColor }]}>
