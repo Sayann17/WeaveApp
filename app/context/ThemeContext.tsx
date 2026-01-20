@@ -49,7 +49,7 @@ export const THEMES = {
     accentText: '#000000',
     icon: '#ffffff',
     tint: 'rgba(255,255,255,0.3)',
-    selectionColor: '#000000' // Black cursor for light cards
+    selectionColor: '#ffffff' // White cursor for wine theme
   }
 };
 
