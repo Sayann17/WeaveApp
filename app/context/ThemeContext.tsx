@@ -40,9 +40,9 @@ export const THEMES = {
   wine: {
     type: 'wine' as ThemeType,
     background: '#4a0e1c',
-    text: '#1c1c1e', // Dark text for light cards
-    subText: '#555555', // Dark subtext for light cards
-    cardBg: '#fafaf2', // Same as light theme card background
+    text: '#ffffff', // White text for wine theme
+    subText: 'rgba(255,255,255,0.7)',
+    cardBg: 'rgba(79, 17, 28, 0.65)', // Wine color with transparency
     sheetBg: '#591c2b', // Solid wine color for sheets/modals
     border: 'rgba(255, 255, 255, 0.2)',
     accent: '#ffffff',
