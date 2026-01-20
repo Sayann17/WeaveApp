@@ -628,8 +628,8 @@ export const ProfileView = ({ userData, isOwnProfile = false, isMatch = false, b
                                         isLight && { backgroundColor: '#fff', borderWidth: 1, borderColor: '#ccc' },
                                         { backgroundColor: theme.cardBg },
                                         !isLight && themeType !== 'space' && { backgroundColor: theme.cardBg, borderColor: theme.border, borderWidth: 1 },
-                                        // Passion theme: beige background for interests
-                                        themeType === 'wine' && { backgroundColor: '#fafaf2', borderWidth: 0 }
+                                        // Passion theme: light theme background for interests
+                                        themeType === 'wine' && { backgroundColor: '#f4f4e7', borderWidth: 0 }
                                     ]}
                                 >
                                     <Text style={[
