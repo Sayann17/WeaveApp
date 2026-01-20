@@ -106,7 +106,7 @@ export default function WelcomeScreen() {
               <Image
                 source={require('../../assets/images/onboarding_card_1.jpg')}
                 style={styles.cardImage}
-                contentFit="cover"
+                contentFit="contain"
               />
             </View>
             {/* Card 2 */}
@@ -114,7 +114,7 @@ export default function WelcomeScreen() {
               <Image
                 source={require('../../assets/images/onboarding_card_2.jpg')}
                 style={styles.cardImage}
-                contentFit="cover"
+                contentFit="contain"
               />
             </View>
             {/* Card 3 */}
@@ -122,7 +122,7 @@ export default function WelcomeScreen() {
               <Image
                 source={require('../../assets/images/onboarding_card_3.jpg')}
                 style={styles.cardImage}
-                contentFit="cover"
+                contentFit="contain"
               />
             </View>
           </View>
@@ -210,7 +210,7 @@ const SLIDE_PADDING = 20;
 const CARD_GAP = 10;
 const AVAILABLE_WIDTH = width - (SLIDE_PADDING * 2);
 const CARD_WIDTH = (AVAILABLE_WIDTH - (CARD_GAP * 2)) / 3;
-const CARD_HEIGHT = CARD_WIDTH * (19.5 / 9); // Aspect ratio of modern phones (roughly 9:19.5) to prevent cropping
+const CARD_HEIGHT = CARD_WIDTH * (16 / 9); // Standard 16:9 ratio to avoid "tall" look
 
 // ...
 
@@ -244,15 +244,15 @@ const styles = StyleSheet.create({
   cardWrapper: {
     width: CARD_WIDTH,
     height: CARD_HEIGHT,
-    borderRadius: 10,
+    borderRadius: 8,
     shadowColor: "#000",
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.2,
-    shadowRadius: 8,
-    elevation: 5,
-    backgroundColor: '#fff',
-    borderWidth: 1.5,
-    borderColor: '#1c1c1e',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+    backgroundColor: '#000', // Black background for letterboxing
+    borderWidth: 1,
+    borderColor: '#333',
     overflow: 'hidden',
   },
   cardImage: {
