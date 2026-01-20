@@ -269,9 +269,9 @@ export const ProfileView = ({ userData, isOwnProfile = false, isMatch = false, b
                     elevation: 6,
                 }
                 : {
-                    backgroundColor: themeType === 'space' ? 'rgba(18, 22, 40, 0.9)' : theme.cardBg,
+                    backgroundColor: theme.cardBg,
                     borderWidth: 1,
-                    borderColor: themeType === 'space' ? 'rgba(255,255,255,0.08)' : theme.border
+                    borderColor: theme.border
                 };
 
         // Wine theme: revert to original styling for icons and titles
@@ -626,7 +626,7 @@ export const ProfileView = ({ userData, isOwnProfile = false, isMatch = false, b
                                     style={[
                                         styles.tagBox,
                                         isLight && { backgroundColor: '#fff', borderWidth: 1, borderColor: '#ccc' },
-                                        themeType === 'space' && { backgroundColor: 'rgba(18, 22, 40, 0.9)' },
+                                        { backgroundColor: theme.cardBg },
                                         !isLight && themeType !== 'space' && { backgroundColor: theme.cardBg, borderColor: theme.border, borderWidth: 1 }
                                     ]}
                                 >
