@@ -113,14 +113,15 @@ export const EventsCarousel = ({
                 <FlatList
                     data={events}
                     horizontal
-                    pagingEnabled={true}
+                    pagingEnabled={false}
                     snapToInterval={width * 0.9 + normalize(15)}
-                    snapToAlignment="center"
+                    snapToAlignment="start"
                     decelerationRate={0}
                     disableIntervalMomentum={true}
                     showsHorizontalScrollIndicator={false}
-                    contentContainerStyle={{ paddingHorizontal: normalize(10) }}
+                    contentContainerStyle={{ paddingHorizontal: width * 0.05 }}
                     onScroll={handleScroll}
+                    scrollEventThrottle={16}
                     scrollEventThrottle={16}
                     keyExtractor={(item) => item.id}
                     renderItem={({ item }) => (
