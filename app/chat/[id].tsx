@@ -531,6 +531,7 @@ export default function ChatScreen() {
                           placeholderTextColor={theme.subText}
                           multiline
                           selectionColor={theme.selectionColor}
+                          cursorColor={theme.selectionColor}
                         />
                       </View>
                       <Pressable
@@ -632,6 +633,7 @@ export default function ChatScreen() {
                   blurOnSubmit={false}
                   maxLength={1000}
                   selectionColor={theme.selectionColor}
+                  cursorColor={theme.selectionColor}
                   underlineColorAndroid="transparent"
                   // @ts-ignore
                   dataSet={{ outline: 'none' }}

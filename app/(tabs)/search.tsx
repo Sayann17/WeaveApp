@@ -399,6 +399,7 @@ export default function ExploreScreen() {
                                             placeholder="18"
                                             placeholderTextColor={theme.subText}
                                             selectionColor={theme.selectionColor}
+                                            cursorColor={theme.selectionColor}
                                         />
                                     </View>
                                     <Text style={[styles.ageSeparator, { color: theme.subText }]}>—</Text>
@@ -412,6 +413,7 @@ export default function ExploreScreen() {
                                             placeholder="50"
                                             placeholderTextColor={theme.subText}
                                             selectionColor={theme.selectionColor}
+                                            cursorColor={theme.selectionColor}
                                         />
                                     </View>
                                 </View>

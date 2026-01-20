@@ -301,6 +301,7 @@ export default function EditProfileScreen() {
                   value={city}
                   onChangeText={setCity}
                   selectionColor={theme.selectionColor}
+                  cursorColor={theme.selectionColor}
                 />
 
                 <TouchableOpacity
@@ -342,6 +343,7 @@ export default function EditProfileScreen() {
                     onChangeText={setSocialTelegram}
                     autoCapitalize="none"
                     selectionColor={theme.selectionColor}
+                    cursorColor={theme.selectionColor}
                   />
                   <TextInput
                     style={[styles.input, {
@@ -355,6 +357,7 @@ export default function EditProfileScreen() {
                     onChangeText={setSocialVk}
                     autoCapitalize="none"
                     selectionColor={theme.selectionColor}
+                    cursorColor={theme.selectionColor}
                   />
                   <TextInput
                     style={[styles.input, {
@@ -368,6 +371,7 @@ export default function EditProfileScreen() {
                     onChangeText={setSocialInstagram}
                     autoCapitalize="none"
                     selectionColor={theme.selectionColor}
+                    cursorColor={theme.selectionColor}
                   />
                 </View>
               </View>
