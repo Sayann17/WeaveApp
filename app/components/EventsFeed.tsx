@@ -55,6 +55,7 @@ export const EventsFeed = ({ onScrollToTop }: { onScrollToTop?: () => void }) =>
             events={events}
             theme={theme}
             isLight={isLight}
+            themeType={themeType}
             onScrollToTop={onScrollToTop}
             onAttend={handleAttend}
         />
@@ -65,12 +66,14 @@ export const EventsCarousel = ({
     events,
     theme,
     isLight,
+    themeType,
     onScrollToTop,
     onAttend
 }: {
     events: WeaveEvent[],
     theme: any,
     isLight: boolean,
+    themeType: string,
     onScrollToTop?: () => void,
     onAttend: (id: string) => void
 }) => {
@@ -125,6 +128,7 @@ export const EventsCarousel = ({
                             event={item}
                             theme={theme}
                             isLight={isLight}
+                            themeType={themeType}
                             onAttend={onAttend}
                             onCollapse={onScrollToTop}
                         />
@@ -159,7 +163,7 @@ export const EventsCarousel = ({
     );
 };
 
-const EventCard = ({ event, theme, isLight, onAttend, onCollapse }: { event: WeaveEvent, theme: any, isLight: boolean, onAttend: (id: string) => void, onCollapse?: () => void }) => {
+const EventCard = ({ event, theme, isLight, themeType, onAttend, onCollapse }: { event: WeaveEvent, theme: any, isLight: boolean, themeType: string, onAttend: (id: string) => void, onCollapse?: () => void }) => {
     const [expanded, setExpanded] = useState(false);
 
     const toggleExpand = () => {
@@ -170,6 +174,15 @@ const EventCard = ({ event, theme, isLight, onAttend, onCollapse }: { event: Wea
             setExpanded(true);
         }
     };
+
+    // Colors for Passion theme
+    const isWine = themeType === 'wine';
+    const dateColor = isWine ? '#fbdac9' : Colors.primary;
+    const linkColor = isWine ? '#4A90D9' : Colors.primary; // Blue for links
+    const attendBgColor = event.isGoing
+        ? (isLight ? '#F2F2F7' : 'rgba(255,255,255,0.1)')
+        : (isWine ? '#fbdac9' : Colors.primary);
+    const attendTextColor = isWine ? '#1c1c1e' : '#fff'; // Black text on peachy button
 
     return (
         <View style={styles.cardContainer}>
@@ -184,7 +197,7 @@ const EventCard = ({ event, theme, isLight, onAttend, onCollapse }: { event: Wea
 
             <View style={styles.contentContainer}>
                 <View style={styles.metaRow}>
-                    <Text style={styles.dateText}>
+                    <Text style={[styles.dateText, { color: dateColor }]}>
                         {new Date(event.date).toLocaleDateString('ru-RU', { day: 'numeric', month: 'long' }).toUpperCase()}
                     </Text>
                     <View style={styles.dot} />
@@ -203,7 +216,7 @@ const EventCard = ({ event, theme, isLight, onAttend, onCollapse }: { event: Wea
                 {/* Collapsed State: Show 'Show More' Toggle */}
                 {!expanded && (
                     <TouchableOpacity onPress={toggleExpand} hitSlop={{ top: 10, bottom: 10 }}>
-                        <Text style={[styles.toggleText, { color: Colors.primary }]}>
+                        <Text style={[styles.toggleText, { color: linkColor }]}>
                             Показать полностью
                         </Text>
                     </TouchableOpacity>
@@ -213,12 +226,19 @@ const EventCard = ({ event, theme, isLight, onAttend, onCollapse }: { event: Wea
                 {expanded && (
                     <>
                         <View style={styles.actionRow}>
-                            {/* Detail Button */}
+                            {/* Detail Button - Blue link with underline for wine theme */}
                             <TouchableOpacity
                                 onPress={() => Linking.openURL('https://forms.gle/uktQtqpxntwTo2Pb9')}
-                                style={styles.detailsButton}
+                                style={[
+                                    styles.detailsButton,
+                                    isWine && { borderColor: linkColor, backgroundColor: linkColor }
+                                ]}
                             >
-                                <Text style={[styles.detailsText, { color: Colors.primary }]}>Подробнее</Text>
+                                <Text style={[
+                                    styles.detailsText,
+                                    { color: isWine ? '#fff' : Colors.primary },
+                                    isWine && { textDecorationLine: 'underline' }
+                                ]}>Подробнее</Text>
                             </TouchableOpacity>
 
                             {/* Attend Button */}
@@ -227,19 +247,19 @@ const EventCard = ({ event, theme, isLight, onAttend, onCollapse }: { event: Wea
                                 activeOpacity={0.8}
                                 style={[
                                     styles.attendButton,
-                                    { backgroundColor: event.isGoing ? (isLight ? '#F2F2F7' : 'rgba(255,255,255,0.1)') : Colors.primary }
+                                    { backgroundColor: attendBgColor }
                                 ]}
                             >
                                 {event.isGoing ? (
                                     <Ionicons name="checkmark" size={20} color={isLight ? Colors.primary : '#fff'} />
                                 ) : (
-                                    <Text style={[styles.buttonText, { color: '#fff' }]}>Пойду</Text>
+                                    <Text style={[styles.buttonText, { color: attendTextColor }]}>Пойду</Text>
                                 )}
                             </TouchableOpacity>
                         </View>
 
                         <TouchableOpacity onPress={toggleExpand} hitSlop={{ top: 10, bottom: 10 }} style={{ marginTop: 20 }}>
-                            <Text style={[styles.toggleText, { color: Colors.primary }]}>
+                            <Text style={[styles.toggleText, { color: linkColor }]}>
                                 Свернуть
                             </Text>
                         </TouchableOpacity>
