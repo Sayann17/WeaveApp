@@ -101,26 +101,26 @@ export default function WelcomeScreen() {
       <View style={styles.visualContainer}>
         {item.id === 'welcome' ? (
           <View style={styles.cardsContainer}>
-            {/* Card 3 (Back) */}
-            <View style={[styles.cardWrapper, { transform: [{ rotate: '12deg' }, { translateX: 20 }, { translateY: 10 }] }]}>
+            {/* Card 1 */}
+            <View style={styles.cardWrapper}>
               <Image
-                source={require('../../assets/images/onboarding_card_3.jpg')}
+                source={require('../../assets/images/onboarding_card_1.jpg')}
                 style={styles.cardImage}
                 contentFit="cover"
               />
             </View>
-            {/* Card 2 (Middle) */}
-            <View style={[styles.cardWrapper, { transform: [{ rotate: '-6deg' }, { translateX: -15 }, { translateY: 5 }] }]}>
+            {/* Card 2 */}
+            <View style={styles.cardWrapper}>
               <Image
                 source={require('../../assets/images/onboarding_card_2.jpg')}
                 style={styles.cardImage}
                 contentFit="cover"
               />
             </View>
-            {/* Card 1 (Front) */}
-            <View style={[styles.cardWrapper, { transform: [{ rotate: '0deg' }], zIndex: 10 }]}>
+            {/* Card 3 */}
+            <View style={styles.cardWrapper}>
               <Image
-                source={require('../../assets/images/onboarding_card_1.jpg')}
+                source={require('../../assets/images/onboarding_card_3.jpg')}
                 style={styles.cardImage}
                 contentFit="cover"
               />
@@ -213,40 +213,39 @@ const styles = StyleSheet.create({
   slide: {
     width: width,
     flex: 1,
-    paddingHorizontal: 30,
-    paddingTop: 250, // 🔥 User specified padding
+    paddingHorizontal: 20,
+    paddingTop: 120, // Reduced from 250 to raise content
   },
 
   // Визуальная часть (Иконка или Карточки)
   visualContainer: {
-    flex: 1, // Занимает всё пространство до текста
-    justifyContent: 'center', // Центр свободного места
+    flex: 1,
+    justifyContent: 'flex-start', // Align to top of container (which starts after paddingTop)
     alignItems: 'center',
     paddingBottom: 20,
-  },
-  cardsContainer: {
-    width: 200,
-    height: 250,
-    justifyContent: 'center',
-    alignItems: 'center',
-    position: 'relative',
     marginTop: 20,
   },
+  cardsContainer: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    gap: 10,
+    width: '100%',
+  },
   cardWrapper: {
-    width: 150,
-    height: 220,
-    borderRadius: 20,
-    position: 'absolute',
-    backfaceVisibility: 'hidden',
+    width: 100, // Smaller to fit 3 in row
+    height: 150,
+    borderRadius: 14,
+    // Removed absolute position to allow flow
     shadowColor: "#000",
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.25,
-    shadowRadius: 12,
-    elevation: 8,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.2,
+    shadowRadius: 8,
+    elevation: 5,
     backgroundColor: '#fff',
-    borderWidth: 4,     // Phone bezel simulation
+    borderWidth: 2,
     borderColor: '#1c1c1e',
-    overflow: 'hidden', // Mask the image with border
+    overflow: 'hidden',
   },
   cardImage: {
     width: '100%',
@@ -261,6 +260,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     backgroundColor: 'rgba(255, 255, 255, 0.5)',
+    marginTop: 60, // Add some spacing for non-card slides getting pulled up
   },
 
   // Текстовая часть
