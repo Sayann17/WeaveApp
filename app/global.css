@@ -75,3 +75,24 @@ textarea:focus {
   outline: none !important;
   box-shadow: none !important;
 }
+
+/* Cursor (caret) color for web platform */
+/* Light theme - black cursor */
+[data-theme="light"] input,
+[data-theme="light"] textarea {
+  caret-color: #000000 !important;
+}
+
+/* Dark themes - white cursor */
+[data-theme="space"] input,
+[data-theme="space"] textarea,
+[data-theme="wine"] input,
+[data-theme="wine"] textarea {
+  caret-color: #ffffff !important;
+}
+
+/* Fallback: if no data-theme, default to black (light) */
+input,
+textarea {
+  caret-color: #000000;
+}

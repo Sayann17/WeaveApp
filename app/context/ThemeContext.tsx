@@ -83,6 +83,13 @@ export const ThemeProvider = ({ children }: { children: React.ReactNode }) => {
   // Sync with Telegram WebApp
   const { webApp } = useTelegram();
 
+  // Set data-theme attribute on HTML element for CSS (web platform)
+  useEffect(() => {
+    if (typeof document !== 'undefined') {
+      document.documentElement.setAttribute('data-theme', themeType);
+    }
+  }, [themeType]);
+
   useEffect(() => {
     if (webApp) {
       const bg = THEMES[themeType].background;
