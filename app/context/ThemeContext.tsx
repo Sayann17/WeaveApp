@@ -27,7 +27,7 @@ export const THEMES = {
     background: '#0b0d15',
     text: '#ffffff',
     subText: '#a0a0a0',
-    cardBg: 'rgba(23, 27, 44, 0.85)',
+    cardBg: 'transparent', // Made transparent as requested
     sheetBg: '#1a1d2d', // Solid dark for space sheets
     border: 'rgba(255,255,255,0.1)',
     accent: '#ffffff',
@@ -40,7 +40,7 @@ export const THEMES = {
     background: '#4a0e1c',
     text: '#ffffff',
     subText: 'rgba(255,255,255,0.7)',
-    cardBg: 'rgba(255, 255, 255, 0.1)',
+    cardBg: 'rgba(79, 17, 28, 0.6)', // Wine color #4f111c with transparency
     sheetBg: '#591c2b', // Solid wine color for sheets/modals
     border: 'rgba(255, 255, 255, 0.2)',
     accent: '#ffffff',

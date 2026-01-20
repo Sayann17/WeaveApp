@@ -110,6 +110,13 @@ export function TelegramProvider({ children }: { children: React.ReactNode }) {
 
                     // Only auto-expand on Mobile devices
                     if (detectedIsMobile) {
+                        // REMOVED: Automatic expansion to allow "Open" button to open in half-screen/default mode
+                        // The user requested that clicking "Open" should NOT open in fullscreen.
+                        // By removing expand(), we respect the default behavior or the button configuration.
+
+                        // User can still manually expand if we provide a button, or via gesture.
+
+                        /* 
                         // 1. Immediate call
                         expandApp();
 
@@ -131,9 +138,11 @@ export function TelegramProvider({ children }: { children: React.ReactNode }) {
                             // Final attempt
                             expandApp();
                         }, 2000);
+                        */
 
                         // 4. Event Listeners
-                        // Re-expand on visibility change (e.g. switching back to app)
+                        // Re-expand on visibility change (e.g. switching back to app) - Keeping this disabled as well
+                        /*
                         handleVisibilityChange = () => {
                             if (document.visibilityState === 'visible') {
                                 expandApp();
@@ -148,6 +157,7 @@ export function TelegramProvider({ children }: { children: React.ReactNode }) {
                             }
                         };
                         window.addEventListener('resize', handleResize);
+                        */
                     }
 
                     // Set viewport height to full

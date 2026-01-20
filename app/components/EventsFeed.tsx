@@ -110,9 +110,11 @@ export const EventsCarousel = ({
                 <FlatList
                     data={events}
                     horizontal
-                    pagingEnabled={false}
+                    pagingEnabled={false} // pagingEnabled can be buggy with gaps, sticking to snapToInterval
                     snapToInterval={width * 0.9 + normalize(15)}
+                    snapToAlignment="start"
                     decelerationRate="fast"
+                    disableIntervalMomentum={true} // This helps stop exactly on the item
                     showsHorizontalScrollIndicator={false}
                     contentContainerStyle={{ paddingHorizontal: normalize(10) }}
                     onScroll={handleScroll}
