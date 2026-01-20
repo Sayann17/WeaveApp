@@ -260,16 +260,19 @@ export const ProfileView = ({ userData, isOwnProfile = false, isMatch = false, b
                 borderColor: themeType === 'space' ? 'rgba(255,255,255,0.08)' : theme.border
             };
 
-        const titleColor = isLight ? '#222' : color;
+        // Wine theme: warm brown for titles and icons to complement beige cards
+        const wineAccentColor = '#8B6F47'; // Warm brown that harmonizes with beige
+        const titleColor = isLight ? '#222' : (themeType === 'wine' ? wineAccentColor : color);
         // FIX: Wine theme uses light cards, so needs dark text
         const textColorHook = (isLight || themeType === 'wine') ? '#333' : '#f4f4f5';
-        const iconBg = isLight ? color + '30' : color + '20';
+        const iconColor = themeType === 'wine' ? wineAccentColor : color;
+        const iconBg = isLight ? color + '30' : (themeType === 'wine' ? wineAccentColor + '20' : color + '20');
 
         return (
             <View style={[styles.hookContainer, containerStyle]}>
                 <View style={styles.hookHeader}>
                     <View style={[styles.iconCircle, { backgroundColor: iconBg }]}>
-                        <Ionicons name={icon} size={16} color={color} />
+                        <Ionicons name={icon} size={16} color={iconColor} />
                     </View>
                     <Text style={[styles.hookTitle, { color: titleColor }]}>{title}</Text>
                 </View>
