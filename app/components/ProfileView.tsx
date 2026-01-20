@@ -277,7 +277,7 @@ export const ProfileView = ({ userData, isOwnProfile = false, isMatch = false, b
         // Wine theme: revert to original styling for icons and titles
         const wineAccentColor = '#8B6F47';
         const titleColor = isLight ? '#222' : color; // Original: just use color
-        const textColorHook = (isLight || isWineTheme) ? (isWineTheme ? '#2B0806' : '#333') : '#f4f4f5';
+        const textColorHook = isLight ? '#333' : (isWineTheme ? '#ffffff' : '#f4f4f5');
         const iconColor = color; // Original: just use color
         const iconBg = isLight
             ? color + '30'
