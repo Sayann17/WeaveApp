@@ -277,7 +277,7 @@ export const ProfileView = ({ userData, isOwnProfile = false, isMatch = false, b
         // Wine theme: warm brown with subtle gradient effect
         const wineAccentColor = '#8B6F47';
         const titleColor = isLight ? '#222' : (isWineTheme ? '#6B5635' : color);
-        const textColorHook = (isLight || isWineTheme) ? '#2c2c2c' : '#f4f4f5';
+        const textColorHook = (isLight || isWineTheme) ? (isWineTheme ? '#2B0806' : '#333') : '#f4f4f5';
         const iconColor = isWineTheme ? wineAccentColor : color;
         const iconBg = isLight
             ? color + '30'
