@@ -627,10 +627,17 @@ export const ProfileView = ({ userData, isOwnProfile = false, isMatch = false, b
                                         styles.tagBox,
                                         isLight && { backgroundColor: '#fff', borderWidth: 1, borderColor: '#ccc' },
                                         { backgroundColor: theme.cardBg },
-                                        !isLight && themeType !== 'space' && { backgroundColor: theme.cardBg, borderColor: theme.border, borderWidth: 1 }
+                                        !isLight && themeType !== 'space' && { backgroundColor: theme.cardBg, borderColor: theme.border, borderWidth: 1 },
+                                        // Passion theme: beige background for interests
+                                        themeType === 'wine' && { backgroundColor: '#fafaf2', borderWidth: 0 }
                                     ]}
                                 >
-                                    <Text style={[styles.tagText, isLight && { color: '#333' }]}>{item}</Text>
+                                    <Text style={[
+                                        styles.tagText,
+                                        isLight && { color: '#333' },
+                                        // Passion theme: black text for interests
+                                        themeType === 'wine' && { color: '#1c1c1e' }
+                                    ]}>{item}</Text>
                                 </View>
                             ))}
                         </View>
