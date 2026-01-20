@@ -314,7 +314,7 @@ export default function MatchesScreen() {
                             matches.map((match) => (
                                 <View
                                     key={match.id}
-                                    style={[styles.card, { backgroundColor: themeType === 'wine' ? 'rgba(79, 17, 28, 0.65)' : theme.cardBg, flexDirection: 'column', alignItems: 'flex-start' }]}
+                                    style={[styles.card, { backgroundColor: themeType === 'wine' ? 'rgba(79, 17, 28, 0.65)' : theme.cardBg, borderWidth: 1, borderColor: theme.border, flexDirection: 'column', alignItems: 'flex-start' }]}
                                 >
                                     {/* Top Row: Avatar, Name, Menu Button */}
                                     <View style={{ flexDirection: 'row', alignItems: 'center', width: '100%' }}>
@@ -407,7 +407,7 @@ export default function MatchesScreen() {
                             likesYou.map((profile) => (
                                 <View
                                     key={profile.id}
-                                    style={[styles.card, { backgroundColor: themeType === 'wine' ? 'rgba(79, 17, 28, 0.65)' : theme.cardBg }]}
+                                    style={[styles.card, { backgroundColor: themeType === 'wine' ? 'rgba(79, 17, 28, 0.65)' : theme.cardBg, borderWidth: 1, borderColor: theme.border }]}
                                 >
                                     <Pressable
                                         style={{ flexDirection: 'row', alignItems: 'center', flex: 1 }}
@@ -457,7 +457,7 @@ export default function MatchesScreen() {
                             yourLikes.map((profile) => (
                                 <View
                                     key={profile.id}
-                                    style={[styles.card, { backgroundColor: themeType === 'wine' ? 'rgba(79, 17, 28, 0.65)' : theme.cardBg }]}
+                                    style={[styles.card, { backgroundColor: themeType === 'wine' ? 'rgba(79, 17, 28, 0.65)' : theme.cardBg, borderWidth: 1, borderColor: theme.border }]}
                                 >
                                     <Pressable
                                         style={{ flexDirection: 'row', alignItems: 'center', flex: 1 }}
