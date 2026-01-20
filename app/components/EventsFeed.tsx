@@ -55,7 +55,6 @@ export const EventsFeed = ({ onScrollToTop }: { onScrollToTop?: () => void }) =>
             events={events}
             theme={theme}
             isLight={isLight}
-            themeType={themeType}
             onScrollToTop={onScrollToTop}
             onAttend={handleAttend}
         />
@@ -66,14 +65,12 @@ export const EventsCarousel = ({
     events,
     theme,
     isLight,
-    themeType,
     onScrollToTop,
     onAttend
 }: {
     events: WeaveEvent[],
     theme: any,
     isLight: boolean,
-    themeType: string,
     onScrollToTop?: () => void,
     onAttend: (id: string) => void
 }) => {
@@ -116,10 +113,10 @@ export const EventsCarousel = ({
                     pagingEnabled={false}
                     snapToInterval={width * 0.9 + normalize(15)}
                     snapToAlignment="start"
-                    decelerationRate={0}
+                    decelerationRate="fast"
                     disableIntervalMomentum={true}
                     showsHorizontalScrollIndicator={false}
-                    contentContainerStyle={{ paddingHorizontal: width * 0.05 }}
+                    contentContainerStyle={{ paddingHorizontal: normalize(10) }}
                     onScroll={handleScroll}
                     scrollEventThrottle={16}
                     keyExtractor={(item) => item.id}
@@ -128,7 +125,6 @@ export const EventsCarousel = ({
                             event={item}
                             theme={theme}
                             isLight={isLight}
-                            themeType={themeType}
                             onAttend={onAttend}
                             onCollapse={onScrollToTop}
                         />
@@ -163,7 +159,7 @@ export const EventsCarousel = ({
     );
 };
 
-const EventCard = ({ event, theme, isLight, themeType, onAttend, onCollapse }: { event: WeaveEvent, theme: any, isLight: boolean, themeType: string, onAttend: (id: string) => void, onCollapse?: () => void }) => {
+const EventCard = ({ event, theme, isLight, onAttend, onCollapse }: { event: WeaveEvent, theme: any, isLight: boolean, onAttend: (id: string) => void, onCollapse?: () => void }) => {
     const [expanded, setExpanded] = useState(false);
 
     const toggleExpand = () => {
@@ -179,10 +175,6 @@ const EventCard = ({ event, theme, isLight, themeType, onAttend, onCollapse }: {
     const dateColor = isLight ? '#000000' : '#ffffff'; // Black for light, white for wine/space
     const mintColor = '#81B29A'; // Mint color matching Space theme tab icons
     const linkColor = '#4A90D9'; // Blue for "Подробнее" button
-    const attendBgColor = event.isGoing
-        ? (isLight ? '#F2F2F7' : 'rgba(255,255,255,0.1)')
-        : mintColor; // Mint attend button for all themes
-    const attendTextColor = '#1c1c1e'; // Black text on mint button
 
     return (
         <View style={styles.cardContainer}>
@@ -226,33 +218,27 @@ const EventCard = ({ event, theme, isLight, themeType, onAttend, onCollapse }: {
                 {expanded && (
                     <>
                         <View style={styles.actionRow}>
-                            {/* Detail Button - Blue with underline */}
+                            {/* Detail Button - Blue */}
                             <TouchableOpacity
                                 onPress={() => Linking.openURL('https://forms.gle/uktQtqpxntwTo2Pb9')}
-                                style={[
-                                    styles.detailsButton,
-                                    { borderColor: linkColor, backgroundColor: linkColor }
-                                ]}
+                                style={[styles.detailsButton, { borderColor: linkColor, backgroundColor: linkColor }]}
                             >
-                                <Text style={[
-                                    styles.detailsText,
-                                    { color: '#fff', textDecorationLine: 'underline' }
-                                ]}>Подробнее</Text>
+                                <Text style={[styles.detailsText, { color: '#fff', textDecorationLine: 'underline' }]}>Подробнее</Text>
                             </TouchableOpacity>
 
-                            {/* Attend Button */}
+                            {/* Attend Button - Mint */}
                             <TouchableOpacity
                                 onPress={() => onAttend(event.id)}
                                 activeOpacity={0.8}
                                 style={[
                                     styles.attendButton,
-                                    { backgroundColor: attendBgColor }
+                                    { backgroundColor: event.isGoing ? (isLight ? '#F2F2F7' : 'rgba(255,255,255,0.1)') : mintColor }
                                 ]}
                             >
                                 {event.isGoing ? (
                                     <Ionicons name="checkmark" size={20} color={isLight ? Colors.primary : '#fff'} />
                                 ) : (
-                                    <Text style={[styles.buttonText, { color: attendTextColor }]}>Пойду</Text>
+                                    <Text style={[styles.buttonText, { color: '#1c1c1e' }]}>Пойду</Text>
                                 )}
                             </TouchableOpacity>
                         </View>
