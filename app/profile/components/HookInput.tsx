@@ -40,6 +40,7 @@ export default function HookInput({ label, value, onChange, placeholder, icon }:
         maxLength={300} // Ограничение, чтобы не писали поэмы
         autoCapitalize="sentences"
         selectionColor={themeType === 'light' ? '#000000' : '#FFFFFF'}
+        cursorColor={themeType === 'light' ? '#000000' : '#FFFFFF'}
       />
     </View>
   );

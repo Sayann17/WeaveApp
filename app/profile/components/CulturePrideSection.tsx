@@ -37,6 +37,7 @@ export default function CulturePrideSection({ text, setText }: CulturePrideSecti
         maxLength={300}
         autoCapitalize="sentences"
         selectionColor={themeType === 'light' ? '#000000' : '#FFFFFF'}
+        cursorColor={themeType === 'light' ? '#000000' : '#FFFFFF'}
       />
       <Text style={[styles.hint, { color: theme.subText }]}>
         Это поможет найти людей со схожими ценностями.

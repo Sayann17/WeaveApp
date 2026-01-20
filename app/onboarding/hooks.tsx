@@ -78,6 +78,7 @@ const HookInputItem = ({
                     returnKeyType={multiline ? "default" : "done"}
                     onFocus={onFocus}
                     selectionColor="#000000"
+                    cursorColor="#000000"
                 />
             </View>
         </View>

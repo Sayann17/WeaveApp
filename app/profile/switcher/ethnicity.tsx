@@ -131,6 +131,7 @@ export default function EditEthnicityScreen() {
                     onChangeText={setCustomEthnicity}
                     autoCapitalize="words"
                     selectionColor={themeType === 'light' ? '#000000' : '#FFFFFF'}
+                    cursorColor={themeType === 'light' ? '#000000' : '#FFFFFF'}
                   />
                   {customEthnicity.length > 0 && (
                     <TouchableOpacity onPress={() => setCustomEthnicity('')}>

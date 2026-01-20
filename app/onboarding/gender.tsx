@@ -1,7 +1,7 @@
 // app/onboarding/gender.tsx
 import { useRouter } from 'expo-router';
 import React, { useState } from 'react';
-import { Keyboard, KeyboardAvoidingView, Platform, SafeAreaView, ScrollView, StatusBar, StyleSheet, Text, TextInput, View } from 'react-native';
+import { KeyboardAvoidingView, Platform, SafeAreaView, ScrollView, StatusBar, StyleSheet, Text, TextInput, View } from 'react-native';
 import { PrimaryButton } from '../components/ui/PrimaryButton';
 import { SelectableCard } from '../components/ui/SelectableCard';
 import { yandexAuth } from '../services/yandex/AuthService';
@@ -108,6 +108,8 @@ export default function OnboardingGenderScreen() {
                                 placeholderTextColor="rgba(0,0,0,0.2)"
                                 keyboardType="number-pad"
                                 maxLength={2}
+                                selectionColor="#000000"
+                                cursorColor="#000000"
                             />
                         </View>
                     </View>

@@ -711,6 +711,8 @@ export const ProfileView = ({ userData, isOwnProfile = false, isMatch = false, b
                             placeholderTextColor={isLight ? '#999' : '#666'}
                             value={banReason}
                             onChangeText={setBanReason}
+                            selectionColor={isLight ? '#000000' : '#FFFFFF'}
+                            cursorColor={isLight ? '#000000' : '#FFFFFF'}
                         />
 
                         <View style={{ flexDirection: 'row', gap: 10 }}>
