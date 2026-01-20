@@ -75,19 +75,3 @@ textarea:focus {
   outline: none !important;
   box-shadow: none !important;
 }
-
-/* Fix cursor color for light theme - Web Platform */
-input,
-textarea {
-  caret-color: var(--cursor-color, #000000) !important;
-}
-
-/* Dark theme cursor override */
-[data-theme="dark"] input,
-[data-theme="dark"] textarea,
-[data-theme="space"] input,
-[data-theme="space"] textarea,
-[data-theme="wine"] input,
-[data-theme="wine"] textarea {
-  caret-color: #ffffff !important;
-}
