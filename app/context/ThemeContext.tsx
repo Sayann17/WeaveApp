@@ -40,8 +40,8 @@ export const THEMES = {
   wine: {
     type: 'wine' as ThemeType,
     background: '#4a0e1c',
-    text: '#ffffff',
-    subText: 'rgba(255,255,255,0.7)',
+    text: '#1c1c1e', // Dark text for light cards
+    subText: '#555555', // Dark subtext for light cards
     cardBg: '#fafaf2', // Same as light theme card background
     sheetBg: '#591c2b', // Solid wine color for sheets/modals
     border: 'rgba(255, 255, 255, 0.2)',
@@ -49,7 +49,7 @@ export const THEMES = {
     accentText: '#000000',
     icon: '#ffffff',
     tint: 'rgba(255,255,255,0.3)',
-    selectionColor: '#ffffff' // White cursor for wine theme
+    selectionColor: '#000000' // Black cursor for light cards
   }
 };
 
