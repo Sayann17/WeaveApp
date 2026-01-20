@@ -1,6 +1,5 @@
 // app/onboarding/welcome.tsx
 import { Ionicons } from '@expo/vector-icons';
-import { Image } from 'expo-image';
 import { useRouter } from 'expo-router';
 import React, { useEffect, useRef, useState } from 'react';
 import {
@@ -15,25 +14,39 @@ import {
   TouchableOpacity,
   View
 } from 'react-native';
+import { ProfileCarousel } from '../components/ProfileCarousel';
 import { yandexAuth } from '../services/yandex/AuthService'; // removed
+
 
 const { width, height } = Dimensions.get('window');
 
 // Цвета для новой темы
 const THEME = {
-  background: '#f4f4e7', // Твой новый цвет
-  text: '#1c1c1e',       // Темный уголь для контраста
-  subText: '#555555',    // Мягкий серый
-  accent: '#2a2a2a',     // Почти черный для кнопок (стильно и строго)
-  cardBg: '#ffffff',     // Белый для карточек
+  background: '#f4f4e7',
+  text: '#1c1c1e',
+  subText: '#555555',
+  accent: '#2a2a2a',
 };
+
+// Carousel Config
+const CONTAINER_PADDING = 20;
+const AVAILABLE_WIDTH = width - (CONTAINER_PADDING * 2);
+const CARD_WIDTH = AVAILABLE_WIDTH * 0.65; // Central card takes 65% of width
+const CARD_HEIGHT = CARD_WIDTH * (16 / 9);
+const SPACER_WIDTH = (AVAILABLE_WIDTH - CARD_WIDTH) / 2; // Space to center the card
+
+const PROFILE_IMAGES = [
+  require('../../assets/images/onboarding_card_1.jpg'),
+  require('../../assets/images/onboarding_card_2.jpg'),
+  require('../../assets/images/onboarding_card_3.jpg'),
+];
 
 const SLIDES = [
   {
     id: 'welcome',
     icon: 'sparkles-outline',
-    title: (name: string) => `Рады тебя приветствовать,\n${name}!`,
-    subtitle: 'Добро пожаловать в Weave. Здесь начинаются истории, основанные на понимании, а не на случайности.',
+    title: 'Рады тебя приветствовать!', // Generic title as requested
+    subtitle: 'Добро пожаловать в Weave. Здесь начинаются истории, основанные на понимании.',
   },
   {
     id: 'culture',
@@ -97,35 +110,9 @@ export default function WelcomeScreen() {
 
   const renderItem = ({ item }: { item: typeof SLIDES[0] }) => (
     <View style={styles.slide}>
-      {/* Верхняя часть с "воздухом" и карточками/иконками */}
       <View style={styles.visualContainer}>
         {item.id === 'welcome' ? (
-          <View style={styles.cardsContainer}>
-            {/* Card 1 */}
-            <View style={styles.cardWrapper}>
-              <Image
-                source={require('../../assets/images/onboarding_card_1.jpg')}
-                style={styles.cardImage}
-                contentFit="contain"
-              />
-            </View>
-            {/* Card 2 */}
-            <View style={styles.cardWrapper}>
-              <Image
-                source={require('../../assets/images/onboarding_card_2.jpg')}
-                style={styles.cardImage}
-                contentFit="contain"
-              />
-            </View>
-            {/* Card 3 */}
-            <View style={styles.cardWrapper}>
-              <Image
-                source={require('../../assets/images/onboarding_card_3.jpg')}
-                style={styles.cardImage}
-                contentFit="contain"
-              />
-            </View>
-          </View>
+          <ProfileCarousel />
         ) : (
           <View style={styles.iconCircle}>
             <Ionicons name={item.icon as any} size={48} color={THEME.text} style={{ opacity: 0.8 }} />
@@ -133,10 +120,9 @@ export default function WelcomeScreen() {
         )}
       </View>
 
-      {/* Нижняя часть с текстом */}
       <View style={styles.textContainer}>
         <Text style={styles.title}>
-          {typeof item.title === 'function' ? item.title(userName) : item.title}
+          {typeof item.title === 'string' ? item.title : (item.title as any)(userName)}
         </Text>
         <View style={styles.separator} />
         <Text style={styles.subtitle}>{item.subtitle}</Text>
@@ -205,14 +191,7 @@ export default function WelcomeScreen() {
   );
 }
 
-// Calculate card size
-const SLIDE_PADDING = 20;
-const CARD_GAP = 10;
-const AVAILABLE_WIDTH = width - (SLIDE_PADDING * 2);
-const CARD_WIDTH = (AVAILABLE_WIDTH - (CARD_GAP * 2)) / 3;
-const CARD_HEIGHT = CARD_WIDTH * (16 / 9); // Standard 16:9 ratio to avoid "tall" look
 
-// ...
 
 const styles = StyleSheet.create({
   container: {
@@ -222,7 +201,7 @@ const styles = StyleSheet.create({
   slide: {
     width: width,
     flex: 1,
-    paddingHorizontal: SLIDE_PADDING,
+    paddingHorizontal: CONTAINER_PADDING,
     paddingTop: 80, // Reduced further to allow space for taller cards
   },
 
@@ -234,31 +213,8 @@ const styles = StyleSheet.create({
     paddingBottom: 20,
     marginTop: 20,
   },
-  cardsContainer: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    alignItems: 'center',
-    gap: CARD_GAP,
-    width: '100%',
-  },
-  cardWrapper: {
-    width: CARD_WIDTH,
-    height: CARD_HEIGHT,
-    borderRadius: 8,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
-    backgroundColor: '#000', // Black background for letterboxing
-    borderWidth: 1,
-    borderColor: '#333',
-    overflow: 'hidden',
-  },
-  cardImage: {
-    width: '100%',
-    height: '100%',
-  },
+  // cardsContainer & cardWrapper moved to ProfileCarousel
+
   iconCircle: {
     width: 120,
     height: 120,
