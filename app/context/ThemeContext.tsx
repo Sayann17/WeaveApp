@@ -20,20 +20,22 @@ export const THEMES = {
     accent: '#000000',
     accentText: '#ffffff',
     icon: '#1c1c1e',
-    tint: 'rgba(0,0,0,0.05)'
+    tint: 'rgba(0,0,0,0.05)',
+    selectionColor: '#000000' // Black cursor for light theme
   },
   space: {
     type: 'space' as ThemeType,
     background: '#0b0d15',
     text: '#ffffff',
     subText: '#a0a0a0',
-    cardBg: 'transparent', // Made transparent as requested
+    cardBg: 'rgba(255, 255, 255, 0.08)', // Glass effect (semi-transparent white)
     sheetBg: '#1a1d2d', // Solid dark for space sheets
     border: 'rgba(255,255,255,0.1)',
     accent: '#ffffff',
     accentText: '#000000',
     icon: '#ffffff',
-    tint: 'rgba(255,255,255,0.1)'
+    tint: 'rgba(255,255,255,0.1)',
+    selectionColor: '#ffffff' // White cursor for space theme
   },
   wine: {
     type: 'wine' as ThemeType,
@@ -46,7 +48,8 @@ export const THEMES = {
     accent: '#ffffff',
     accentText: '#000000',
     icon: '#ffffff',
-    tint: 'rgba(255,255,255,0.3)'
+    tint: 'rgba(255,255,255,0.3)',
+    selectionColor: '#ffffff' // White cursor for wine theme
   }
 };
 

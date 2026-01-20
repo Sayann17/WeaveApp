@@ -530,6 +530,7 @@ export default function ChatScreen() {
                           placeholder="Опишите причину..."
                           placeholderTextColor={theme.subText}
                           multiline
+                          selectionColor={theme.selectionColor}
                         />
                       </View>
                       <Pressable
@@ -630,7 +631,7 @@ export default function ChatScreen() {
                   multiline
                   blurOnSubmit={false}
                   maxLength={1000}
-                  selectionColor={themeType === 'light' ? '#000000' : '#FFFFFF'}
+                  selectionColor={theme.selectionColor}
                   underlineColorAndroid="transparent"
                   // @ts-ignore
                   dataSet={{ outline: 'none' }}
