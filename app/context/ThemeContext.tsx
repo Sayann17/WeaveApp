@@ -42,7 +42,7 @@ export const THEMES = {
     background: '#4a0e1c',
     text: '#ffffff',
     subText: 'rgba(255,255,255,0.7)',
-    cardBg: 'rgba(79, 17, 28, 0.6)', // Wine color #4f111c with transparency
+    cardBg: '#fafaf2', // Same as light theme card background
     sheetBg: '#591c2b', // Solid wine color for sheets/modals
     border: 'rgba(255, 255, 255, 0.2)',
     accent: '#ffffff',
