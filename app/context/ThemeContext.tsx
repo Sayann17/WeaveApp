@@ -30,7 +30,7 @@ export const THEMES = {
     subText: '#a0a0a0',
     cardBg: 'rgba(26, 31, 58, 0.6)', // Dark blue with transparency
     sheetBg: '#1a1d2d', // Solid dark for space sheets
-    border: 'rgba(255,255,255,0.1)',
+    border: 'rgba(226, 232, 240, 0.2)', // #E2E8F0 with transparency for subtle borders
     accent: '#ffffff',
     accentText: '#000000',
     icon: '#ffffff',
