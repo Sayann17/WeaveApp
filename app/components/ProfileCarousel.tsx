@@ -1,12 +1,11 @@
 
 import { Image } from 'expo-image';
 import React from 'react';
-import { Dimensions, StyleSheet, View } from 'react-native';
+import { Dimensions, FlatList, StyleSheet, View } from 'react-native';
 import Animated, {
     Extrapolate,
     interpolate,
     SharedValue,
-    useAnimatedScrollHandler,
     useAnimatedStyle,
     useSharedValue
 } from 'react-native-reanimated';
@@ -74,22 +73,22 @@ const CarouselCard = ({ source, cardIndex, scrollX }: CarouselCardProps) => {
 export const ProfileCarousel = () => {
     const scrollX = useSharedValue(0);
 
-    const scrollHandler = useAnimatedScrollHandler((event) => {
-        scrollX.value = event.contentOffset.x;
-    });
-
     const data = ['spacer-left', ...PROFILE_IMAGES, 'spacer-right'];
+
+    const handleScroll = (event: any) => {
+        scrollX.value = event.nativeEvent.contentOffset.x;
+    };
 
     return (
         <View style={styles.carouselContainer}>
-            <Animated.FlatList
+            <FlatList
                 data={data}
-                horizontal
+                horizontal={true}
                 showsHorizontalScrollIndicator={false}
                 snapToInterval={CARD_WIDTH}
                 decelerationRate="fast"
                 scrollEventThrottle={16}
-                onScroll={scrollHandler}
+                onScroll={handleScroll}
                 contentContainerStyle={{ alignItems: 'center' }}
                 keyExtractor={(_, index) => index.toString()}
                 renderItem={({ item, index }) => {
