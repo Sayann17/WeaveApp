@@ -12,6 +12,7 @@ const PROFILE_IMAGES = [
     require('../../assets/images/onboarding_card_1.jpg'),
     require('../../assets/images/onboarding_card_2.jpg'),
     require('../../assets/images/onboarding_card_3.jpg'),
+    require('../../assets/images/onboarding_card_4.jpg'),
 ];
 
 export const ProfileCarousel = () => {
