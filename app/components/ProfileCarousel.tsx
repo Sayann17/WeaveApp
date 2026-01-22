@@ -13,6 +13,9 @@ const PROFILE_IMAGES = [
     require('../../assets/images/onboarding_card_2.jpg'),
     require('../../assets/images/onboarding_card_3.jpg'),
     require('../../assets/images/onboarding_card_4.jpg'),
+    require('../../assets/images/onboarding_card_5.jpg'),
+    require('../../assets/images/onboarding_card_6.jpg'),
+    require('../../assets/images/onboarding_card_7.jpg'),
 ];
 
 export const ProfileCarousel = () => {
@@ -48,17 +51,28 @@ export const ProfileCarousel = () => {
                 ))}
             </ScrollView>
 
-            {/* Page Indicator */}
+            {/* Page Indicator - always 3 dots */}
             <View style={styles.indicatorContainer}>
-                {PROFILE_IMAGES.map((_, index) => (
-                    <View
-                        key={index}
-                        style={[
-                            styles.indicator,
-                            activeIndex === index ? styles.indicatorActive : styles.indicatorInactive,
-                        ]}
-                    />
-                ))}
+                {[0, 1, 2].map((dotIndex) => {
+                    // Логика: первая карточка = 0, последняя = 2, всё между = 1
+                    const totalImages = PROFILE_IMAGES.length;
+                    let activeDot = 1; // по умолчанию средний
+                    if (activeIndex === 0) {
+                        activeDot = 0;
+                    } else if (activeIndex >= totalImages - 1) {
+                        activeDot = 2;
+                    }
+
+                    return (
+                        <View
+                            key={dotIndex}
+                            style={[
+                                styles.indicator,
+                                activeDot === dotIndex ? styles.indicatorActive : styles.indicatorInactive,
+                            ]}
+                        />
+                    );
+                })}
             </View>
         </View>
     );
