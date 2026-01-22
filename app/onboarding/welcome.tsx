@@ -44,7 +44,7 @@ const SLIDES = [
     id: 'start',
     title: () => 'Время создавать',
     topText: 'Чтобы помочь тебе сплести твой узор, нам нужно немного узнать о тебе',
-    bottomText: 'Начни свой путь в Weave',
+    bottomText: 'Начни свой путь в Weave, создай анкету и сплети свою судьбу!',
   },
 ];
 
@@ -150,7 +150,7 @@ const styles = StyleSheet.create({
   content: {
     flex: 1,
     paddingHorizontal: 20,
-    paddingTop: 40,
+    paddingTop: 92,
   },
 
   // Верхний блок с заголовком
