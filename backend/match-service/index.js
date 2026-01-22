@@ -181,24 +181,34 @@ async function getDiscovery(driver, requestHeaders, queryParams, responseHeaders
 
     let profiles = [];
     await driver.tableClient.withSession(async (session) => {
-        // Get current user data including location
-        // Get current user data including location and BLOCKED users
+        // Get current user data including location, BLOCKED users, and recent DISLIKES
         const currentUserQuery = `
             DECLARE $userId AS Utf8;
+            DECLARE $fiveDaysAgo AS Timestamp;
             SELECT to_user_id FROM likes WHERE from_user_id = $userId;
             SELECT * FROM users WHERE id = $userId;
             SELECT blocked_id FROM blocked_users WHERE blocker_id = $userId;
             SELECT blocker_id FROM blocked_users WHERE blocked_id = $userId;
+            SELECT to_user_id FROM dislikes WHERE from_user_id = $userId AND created_at > $fiveDaysAgo;
         `;
-        const { resultSets: resData } = await session.executeQuery(currentUserQuery, { '$userId': TypedValues.utf8(userId) });
+
+        // Calculate 5 days ago timestamp
+        const fiveDaysAgo = new Date(Date.now() - 5 * 24 * 60 * 60 * 1000);
+
+        const { resultSets: resData } = await session.executeQuery(currentUserQuery, {
+            '$userId': TypedValues.utf8(userId),
+            '$fiveDaysAgo': TypedValues.timestamp(fiveDaysAgo)
+        });
 
         const likedIds = resData[0] ? TypedData.createNativeObjects(resData[0]).map(r => r.to_user_id) : [];
         const currentUserDataRaw = resData[1] ? TypedData.createNativeObjects(resData[1])[0] : null;
         const blockedByMe = resData[2] ? TypedData.createNativeObjects(resData[2]).map(r => r.blocked_id) : [];
         const blockedMe = resData[3] ? TypedData.createNativeObjects(resData[3]).map(r => r.blocker_id) : [];
+        const recentDislikes = resData[4] ? TypedData.createNativeObjects(resData[4]).map(r => r.to_user_id) : [];
 
-        const excludedIds = [...new Set([...likedIds, ...blockedByMe, ...blockedMe])];
+        const excludedIds = [...new Set([...likedIds, ...blockedByMe, ...blockedMe, ...recentDislikes])];
         excludedIds.push(userId); // Exclude self
+        console.log(`[getDiscovery] Excluding ${recentDislikes.length} recent dislikes (5 day window)`);
         if (!currentUserDataRaw) return; // Should not happen if auth is valid
 
         // Normalize current user data for scoring
@@ -893,9 +903,31 @@ async function handleDislike(driver, requestHeaders, body, responseHeaders) {
     const { targetUserId } = body;
     if (!targetUserId) return { statusCode: 400, headers: responseHeaders, body: JSON.stringify({ error: 'Missing targetUserId' }) };
 
-    // If you don't have a 'dislikes' table in your schema, we should just return success
-    // or log it. Currently, the schema provided only has 'likes'.
-    console.log('[handleDislike] Skipping DB insert because dislikes table does not exist. (Intentional pass)');
+    try {
+        await driver.tableClient.withSession(async (session) => {
+            const timestamp = new Date();
+
+            const insertQuery = `
+                DECLARE $fromUserId AS Utf8;
+                DECLARE $toUserId AS Utf8;
+                DECLARE $createdAt AS Timestamp;
+                
+                UPSERT INTO dislikes (from_user_id, to_user_id, created_at)
+                VALUES ($fromUserId, $toUserId, $createdAt);
+            `;
+
+            await session.executeQuery(insertQuery, {
+                '$fromUserId': TypedValues.utf8(userId),
+                '$toUserId': TypedValues.utf8(targetUserId),
+                '$createdAt': TypedValues.timestamp(timestamp)
+            }, { commitTx: true, beginTx: { serializableReadWrite: {} } });
+
+            console.log(`[handleDislike] Saved dislike: ${userId} -> ${targetUserId}`);
+        });
+    } catch (error) {
+        console.error('[handleDislike] Error saving dislike:', error);
+        // Don't fail the request even if DB write fails
+    }
 
     return {
         statusCode: 200,
