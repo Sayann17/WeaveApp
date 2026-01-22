@@ -1,5 +1,5 @@
 import { Image } from 'expo-image';
-import React, { useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { Dimensions, NativeScrollEvent, NativeSyntheticEvent, ScrollView, StyleSheet, View } from 'react-native';
 
 const { width } = Dimensions.get('window');
@@ -18,8 +18,33 @@ const PROFILE_IMAGES = [
     require('../../assets/images/onboarding_card_7.jpg'),
 ];
 
-export const ProfileCarousel = () => {
+interface ProfileCarouselProps {
+    /** Внешний индекс слайда для синхронизации (0, 1, 2) */
+    slideIndex?: number;
+}
+
+export const ProfileCarousel = ({ slideIndex = 0 }: ProfileCarouselProps) => {
+    const scrollViewRef = useRef<ScrollView>(null);
     const [activeIndex, setActiveIndex] = useState(0);
+
+    // Синхронизация с внешним slideIndex
+    useEffect(() => {
+        if (scrollViewRef.current && slideIndex >= 0) {
+            // Маппинг слайда на карточку:
+            // Слайд 0 -> карточка 0
+            // Слайд 1 -> карточка 2-3 (показываем середину)
+            // Слайд 2 -> карточка 5-6 (показываем конец)
+            let targetCard = 0;
+            if (slideIndex === 1) {
+                targetCard = Math.floor(PROFILE_IMAGES.length / 2); // средние карточки
+            } else if (slideIndex === 2) {
+                targetCard = PROFILE_IMAGES.length - 2; // ближе к концу
+            }
+
+            const scrollX = targetCard * (CARD_WIDTH + CARD_GAP);
+            scrollViewRef.current.scrollTo({ x: scrollX, animated: true });
+        }
+    }, [slideIndex]);
 
     const handleScroll = (event: NativeSyntheticEvent<NativeScrollEvent>) => {
         const scrollX = event.nativeEvent.contentOffset.x;
@@ -30,6 +55,7 @@ export const ProfileCarousel = () => {
     return (
         <View style={styles.carouselContainer}>
             <ScrollView
+                ref={scrollViewRef}
                 horizontal={true}
                 showsHorizontalScrollIndicator={false}
                 contentContainerStyle={styles.scrollContent}

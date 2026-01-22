@@ -1,12 +1,10 @@
 // app/onboarding/welcome.tsx
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
+  Animated,
   Dimensions,
-  FlatList,
-  NativeScrollEvent,
-  NativeSyntheticEvent,
   SafeAreaView,
   StatusBar,
   StyleSheet,
@@ -15,10 +13,10 @@ import {
   View
 } from 'react-native';
 import { ProfileCarousel } from '../components/ProfileCarousel';
-import { yandexAuth } from '../services/yandex/AuthService'; // removed
+import { yandexAuth } from '../services/yandex/AuthService';
 
 
-const { width, height } = Dimensions.get('window');
+const { width } = Dimensions.get('window');
 
 // Цвета для новой темы
 const THEME = {
@@ -28,64 +26,39 @@ const THEME = {
   accent: '#2a2a2a',
 };
 
-// Carousel Config
-const CONTAINER_PADDING = 20;
-const AVAILABLE_WIDTH = width - (CONTAINER_PADDING * 2);
-const CARD_WIDTH = AVAILABLE_WIDTH * 0.65; // Central card takes 65% of width
-const CARD_HEIGHT = CARD_WIDTH * (16 / 9);
-const SPACER_WIDTH = (AVAILABLE_WIDTH - CARD_WIDTH) / 2; // Space to center the card
-
-const PROFILE_IMAGES = [
-  require('../../assets/images/onboarding_card_1.jpg'),
-  require('../../assets/images/onboarding_card_2.jpg'),
-  require('../../assets/images/onboarding_card_3.jpg'),
-];
-
+// 3 слайда онбординга
 const SLIDES = [
   {
     id: 'welcome',
-    icon: 'sparkles-outline',
     title: (name: string) => `Привет, ${name}! Добро пожаловать в Weave :)`,
-    subtitle: 'Мы искренне рады, что ты теперь с нами, ведь Weave — это про глубину, а не поверхностное скольжение.',
     topText: 'Мы создали пространство, где тебе будет комфортно искать своих людей',
+    bottomText: 'Мы искренне рады, что ты теперь с нами, ведь Weave — это про глубину, а не поверхностное скольжение.',
   },
   {
-    id: 'culture',
-    icon: 'finger-print-outline',
-    title: () => 'Культурный код',
-    subtitle: 'Твое происхождение — это не просто графа в анкете. Это фундамент, на котором строятся самые крепкие связи.',
-  },
-  {
-    id: 'values',
-    icon: 'infinite-outline', // Заменил сердце на бесконечность (более философски)
-    title: () => 'Глубина важнее',
-    subtitle: 'Мы против поверхностного скольжения. Мы создали пространство для тех, кто ищет человека своего менталитета.',
+    id: 'preferences',
+    title: () => 'Твои предпочтения — это основа',
+    topText: 'В Weave ты не будешь чувствовать себя лишним',
+    bottomText: 'Фундамент, на котором плетутся самые крепкие связи — это твоя идентичность.',
   },
   {
     id: 'start',
-    icon: 'hourglass-outline',
     title: () => 'Время создавать',
-    subtitle: 'Чтобы алгоритм нашел твоих людей, нам нужно немного узнать о тебе. Это займет всего пару минут.',
+    topText: 'Чтобы помочь тебе сплести твой узор, нам нужно немного узнать о тебе',
+    bottomText: 'Начни свой путь в Weave',
   },
 ];
 
 export default function WelcomeScreen() {
   const router = useRouter();
-  const flatListRef = useRef<FlatList>(null);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [userName, setUserName] = useState('Путешественник');
+  const [fadeAnim] = useState(new Animated.Value(1));
 
-  // import { auth, firestore } from '../config/firebase';
-
-
-  // ...
-
-  // 🔥 ИСПРАВЛЕНИЕ: Загружаем реальное имя из сервиса авторизации
+  // Загружаем имя пользователя
   useEffect(() => {
     const fetchUserName = async () => {
       try {
         const user = yandexAuth.getCurrentUser();
-        console.log('WelcomeScreen user:', user);
         if (user && user.displayName) {
           setUserName(user.displayName);
         }
@@ -96,100 +69,51 @@ export default function WelcomeScreen() {
     fetchUserName();
   }, []);
 
-  const handleScroll = (event: NativeSyntheticEvent<NativeScrollEvent>) => {
-    const slideIndex = Math.round(event.nativeEvent.contentOffset.x / width);
-    setCurrentIndex(slideIndex);
-  };
-
   const handleNext = () => {
     if (currentIndex < SLIDES.length - 1) {
-      flatListRef.current?.scrollToIndex({ index: currentIndex + 1 });
+      // Анимация fade для плавного перехода текста
+      Animated.sequence([
+        Animated.timing(fadeAnim, { toValue: 0, duration: 150, useNativeDriver: true }),
+        Animated.timing(fadeAnim, { toValue: 1, duration: 150, useNativeDriver: true }),
+      ]).start();
+
+      setCurrentIndex(prev => prev + 1);
     } else {
       router.replace('/onboarding/gender');
     }
   };
 
-  const renderItem = ({ item }: { item: typeof SLIDES[0] }) => {
-    // Специальный рендеринг для первого слайда (welcome)
-    if (item.id === 'welcome') {
-      return (
-        <View style={styles.slide}>
-          {/* Приветствие сверху */}
-          <View style={styles.welcomeHeader}>
-            <Text style={styles.welcomeTitle}>
-              {typeof item.title === 'function' ? item.title(userName) : item.title}
-            </Text>
-            {'topText' in item && (
-              <Text style={styles.welcomeSubtitle}>{(item as any).topText}</Text>
-            )}
-          </View>
-
-          {/* Карусель */}
-          <View style={styles.carouselWrapper}>
-            <ProfileCarousel />
-          </View>
-
-          {/* Текст под каруселью */}
-          <View style={styles.bottomTextContainer}>
-            <Text style={styles.bottomText}>{item.subtitle}</Text>
-          </View>
-        </View>
-      );
-    }
-
-    // Рендеринг для остальных слайдов
-    return (
-      <View style={styles.slide}>
-        <View style={styles.visualContainer}>
-          <View style={styles.iconCircle}>
-            <Ionicons name={item.icon as any} size={48} color={THEME.text} style={{ opacity: 0.8 }} />
-          </View>
-        </View>
-
-        <View style={styles.textContainer}>
-          <Text style={styles.title}>
-            {typeof item.title === 'string' ? item.title : (item.title as any)(userName)}
-          </Text>
-          <View style={styles.separator} />
-          <Text style={styles.subtitle}>{item.subtitle}</Text>
-        </View>
-      </View>
-    );
-  };
+  const currentSlide = SLIDES[currentIndex];
 
   return (
     <SafeAreaView style={styles.container}>
       <StatusBar barStyle="dark-content" backgroundColor={THEME.background} />
 
-      <FlatList
-        ref={flatListRef}
-        style={{ flex: 1 }}
-        data={SLIDES}
-        renderItem={renderItem}
-        horizontal
-        pagingEnabled
-        showsHorizontalScrollIndicator={false}
-        onScroll={handleScroll}
-        scrollEventThrottle={16}
-        keyExtractor={(item) => item.id}
-        bounces={false} // Отключаем пружину для строгости
-        getItemLayout={(data, index) => ({
-          length: width,
-          offset: width * index,
-          index,
-        })}
-        onScrollToIndexFailed={(info) => {
-          const wait = new Promise((resolve) => setTimeout(resolve, 500));
-          wait.then(() => {
-            flatListRef.current?.scrollToIndex({ index: info.index, animated: true });
-          });
-        }}
-      />
+      <View style={styles.content}>
+        {/* Верхний текст */}
+        <Animated.View style={[styles.headerContainer, { opacity: fadeAnim }]}>
+          <Text style={styles.title}>
+            {typeof currentSlide.title === 'function'
+              ? currentSlide.title(userName)
+              : currentSlide.title}
+          </Text>
+          <Text style={styles.topText}>{currentSlide.topText}</Text>
+        </Animated.View>
 
-      {/* Панель управления снизу */}
+        {/* Карусель - постоянный элемент */}
+        <View style={styles.carouselWrapper}>
+          <ProfileCarousel slideIndex={currentIndex} />
+        </View>
+
+        {/* Нижний текст */}
+        <Animated.View style={[styles.bottomContainer, { opacity: fadeAnim }]}>
+          <Text style={styles.bottomText}>{currentSlide.bottomText}</Text>
+        </Animated.View>
+      </View>
+
+      {/* Футер */}
       <View style={styles.footer}>
-
-        {/* Индикаторы прогресса (Линии вместо точек - более стильно) */}
+        {/* Индикаторы прогресса */}
         <View style={styles.progressContainer}>
           {SLIDES.map((_, index) => (
             <View
@@ -218,66 +142,44 @@ export default function WelcomeScreen() {
   );
 }
 
-
-
 const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: THEME.background,
   },
-  slide: {
-    width: width,
+  content: {
     flex: 1,
-    paddingHorizontal: CONTAINER_PADDING,
-    paddingTop: 80, // Reduced further to allow space for taller cards
+    paddingHorizontal: 20,
+    paddingTop: 40,
   },
 
-  // Визуальная часть (Иконка или Карточки)
-  visualContainer: {
-    flex: 1,
-    justifyContent: 'flex-start',
-    alignItems: 'center',
-    paddingBottom: 20,
-    marginTop: 20,
+  // Верхний блок с заголовком
+  headerContainer: {
+    marginBottom: 20,
   },
-  // cardsContainer & cardWrapper moved to ProfileCarousel
-
-  iconCircle: {
-    width: 120,
-    height: 120,
-    borderRadius: 60,
-    borderWidth: 1,
-    borderColor: 'rgba(28, 28, 30, 0.1)',
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: 'rgba(255, 255, 255, 0.5)',
-    marginTop: 60,
-  },
-
-  // Стили для первого слайда (welcome)
-  welcomeHeader: {
-    paddingTop: 10,
-    paddingBottom: 16,
-  },
-  welcomeTitle: {
+  title: {
     fontSize: 24,
     fontWeight: '600',
     color: THEME.text,
     textAlign: 'left',
     lineHeight: 32,
   },
-  welcomeSubtitle: {
+  topText: {
     fontSize: 16,
     color: THEME.subText,
     textAlign: 'left',
     lineHeight: 22,
     marginTop: 8,
   },
+
+  // Карусель
   carouselWrapper: {
     flex: 1,
     justifyContent: 'center',
   },
-  bottomTextContainer: {
+
+  // Нижний текст
+  bottomContainer: {
     paddingVertical: 20,
   },
   bottomText: {
@@ -288,36 +190,6 @@ const styles = StyleSheet.create({
     fontStyle: 'italic',
   },
 
-  // Текстовая часть
-  textContainer: {
-    justifyContent: 'flex-end',
-    paddingTop: 30,
-    marginBottom: 10, // Closer to footer
-  },
-  title: {
-    fontSize: 34, // Slightly adjusted for balance
-    fontWeight: '300',
-    color: THEME.text,
-    textAlign: 'left',
-    lineHeight: 40,
-    fontFamily: 'System',
-  },
-  separator: {
-    width: 40,
-    height: 2,
-    backgroundColor: THEME.text,
-    marginTop: 15,
-    marginBottom: 15,
-    opacity: 0.2,
-  },
-  subtitle: {
-    fontSize: 16,
-    color: THEME.subText,
-    textAlign: 'left',
-    lineHeight: 24,
-    fontWeight: '400',
-  },
-
   // Футер
   footer: {
     paddingHorizontal: 30,
@@ -325,7 +197,7 @@ const styles = StyleSheet.create({
     justifyContent: 'flex-end',
   },
 
-  // Прогресс-бар (линии)
+  // Прогресс-бар
   progressContainer: {
     flexDirection: 'row',
     marginBottom: 30,
