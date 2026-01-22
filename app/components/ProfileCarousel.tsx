@@ -111,9 +111,8 @@ const styles = StyleSheet.create({
     },
     indicatorActive: {
         backgroundColor: '#1c1c1e',
-        width: 24,
     },
     indicatorInactive: {
-        backgroundColor: 'rgba(28, 28, 30, 0.2)',
+        backgroundColor: '#b0b0b0',
     },
 });
