@@ -45,8 +45,9 @@ const SLIDES = [
   {
     id: 'welcome',
     icon: 'sparkles-outline',
-    title: 'Рады тебя приветствовать!', // Generic title as requested
-    subtitle: 'Добро пожаловать в Weave. Здесь начинаются истории, основанные на понимании.',
+    title: (name: string) => `Привет, ${name}! Добро пожаловать в Weave :)`,
+    subtitle: 'Мы искренне рады, что ты станешь частью нашего сообщества, ведь Weave - это про глубину, а не поверхностное скольжение.',
+    topText: 'Мы создали пространство, где тебе будет комфортно искать своих людей',
   },
   {
     id: 'culture',
@@ -108,27 +109,53 @@ export default function WelcomeScreen() {
     }
   };
 
-  const renderItem = ({ item }: { item: typeof SLIDES[0] }) => (
-    <View style={styles.slide}>
-      <View style={styles.visualContainer}>
-        {item.id === 'welcome' ? (
-          <ProfileCarousel />
-        ) : (
+  const renderItem = ({ item }: { item: typeof SLIDES[0] }) => {
+    // Специальный рендеринг для первого слайда (welcome)
+    if (item.id === 'welcome') {
+      return (
+        <View style={styles.slide}>
+          {/* Приветствие сверху */}
+          <View style={styles.welcomeHeader}>
+            <Text style={styles.welcomeTitle}>
+              {typeof item.title === 'function' ? item.title(userName) : item.title}
+            </Text>
+            {'topText' in item && (
+              <Text style={styles.welcomeSubtitle}>{(item as any).topText}</Text>
+            )}
+          </View>
+
+          {/* Карусель */}
+          <View style={styles.carouselWrapper}>
+            <ProfileCarousel />
+          </View>
+
+          {/* Текст под каруселью */}
+          <View style={styles.bottomTextContainer}>
+            <Text style={styles.bottomText}>{item.subtitle}</Text>
+          </View>
+        </View>
+      );
+    }
+
+    // Рендеринг для остальных слайдов
+    return (
+      <View style={styles.slide}>
+        <View style={styles.visualContainer}>
           <View style={styles.iconCircle}>
             <Ionicons name={item.icon as any} size={48} color={THEME.text} style={{ opacity: 0.8 }} />
           </View>
-        )}
-      </View>
+        </View>
 
-      <View style={styles.textContainer}>
-        <Text style={styles.title}>
-          {typeof item.title === 'string' ? item.title : (item.title as any)(userName)}
-        </Text>
-        <View style={styles.separator} />
-        <Text style={styles.subtitle}>{item.subtitle}</Text>
+        <View style={styles.textContainer}>
+          <Text style={styles.title}>
+            {typeof item.title === 'string' ? item.title : (item.title as any)(userName)}
+          </Text>
+          <View style={styles.separator} />
+          <Text style={styles.subtitle}>{item.subtitle}</Text>
+        </View>
       </View>
-    </View>
-  );
+    );
+  };
 
   return (
     <SafeAreaView style={styles.container}>
@@ -225,6 +252,40 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     backgroundColor: 'rgba(255, 255, 255, 0.5)',
     marginTop: 60,
+  },
+
+  // Стили для первого слайда (welcome)
+  welcomeHeader: {
+    paddingTop: 10,
+    paddingBottom: 16,
+  },
+  welcomeTitle: {
+    fontSize: 24,
+    fontWeight: '600',
+    color: THEME.text,
+    textAlign: 'left',
+    lineHeight: 32,
+  },
+  welcomeSubtitle: {
+    fontSize: 16,
+    color: THEME.subText,
+    textAlign: 'left',
+    lineHeight: 22,
+    marginTop: 8,
+  },
+  carouselWrapper: {
+    flex: 1,
+    justifyContent: 'center',
+  },
+  bottomTextContainer: {
+    paddingVertical: 20,
+  },
+  bottomText: {
+    fontSize: 15,
+    color: THEME.subText,
+    textAlign: 'left',
+    lineHeight: 22,
+    fontStyle: 'italic',
   },
 
   // Текстовая часть

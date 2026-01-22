@@ -70,7 +70,7 @@ const styles = StyleSheet.create({
     scrollContent: {
         flexDirection: 'row',
         alignItems: 'center',
-        paddingLeft: CONTAINER_PADDING, // Start from left with padding
+        paddingLeft: 0, // Сдвинуто влево
         paddingRight: CONTAINER_PADDING,
         gap: CARD_GAP,
     },
