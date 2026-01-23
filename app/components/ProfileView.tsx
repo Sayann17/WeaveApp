@@ -500,7 +500,7 @@ export const ProfileView = ({ userData, isOwnProfile = false, isMatch = false, b
                                 renderItem={({ item }) => {
                                     let imageSource = null;
                                     if (item.imageKey === 'uzor_love') imageSource = require('../../assets/images/events/uzor_love.jpg');
-                                    else if (item.imageKey === 'tuva_culture') imageSource = require('../../assets/images/events/tuva_culture.jpg');
+                                    else if (item.imageKey === 'reunion_shude') imageSource = require('../../assets/images/events/reunion_shude_event.jpg');
 
                                     const eventContainerStyle = isLight
                                         ? { backgroundColor: '#fff', borderWidth: 1, borderColor: '#eee' }
