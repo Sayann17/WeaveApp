@@ -429,18 +429,18 @@ export default function MatchesScreen() {
                                     2. Заполните необязательные вопросы, раскрывающие вашу личность{"\n"}
                                     3. Проявите инициативу! Поставьте лайки понравившимся анкетам :)
                                 </Text>
-                                <View style={styles.emptyButtons}>
+                                <View style={[styles.emptyButtons, { flexDirection: 'column' }]}>
                                     <Pressable
-                                        style={[styles.emptyButton, { backgroundColor: theme.accent || '#00b894' }]}
+                                        style={[styles.emptyButton, { backgroundColor: isLight ? '#000' : '#fff' }]}
                                         onPress={() => router.push('/profile/edit')}
                                     >
-                                        <Text style={styles.emptyButtonText}>Редактировать профиль</Text>
+                                        <Text style={[styles.emptyButtonText, { color: isLight ? '#fff' : '#000' }]}>Редактировать профиль</Text>
                                     </Pressable>
                                     <Pressable
-                                        style={[styles.emptyButtonOutline, { borderColor: theme.accent || '#00b894' }]}
+                                        style={[styles.emptyButton, { backgroundColor: isLight ? '#000' : '#fff' }]}
                                         onPress={() => router.push('/(tabs)/search')}
                                     >
-                                        <Text style={[styles.emptyButtonTextOutline, { color: theme.accent || '#00b894' }]}>Поиск</Text>
+                                        <Text style={[styles.emptyButtonText, { color: isLight ? '#fff' : '#000' }]}>Поиск</Text>
                                     </Pressable>
                                 </View>
                             </View>
