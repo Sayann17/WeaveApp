@@ -31,7 +31,6 @@ export default function AuthScreen() {
       }
 
       if (isTelegram && tgUser) {
-        console.log('Telegram Mini App detected, attempting auto-login');
         try {
           // Pass initData string for backend verification
           await yandexAuth.telegramLogin({ ...tgUser, initData });

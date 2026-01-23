@@ -71,12 +71,7 @@ export function TelegramProvider({ children }: { children: React.ReactNode }) {
                     WebApp.ready();
 
                     // Debug info
-                    console.log('=== TELEGRAM DEBUG INFO ===');
-                    console.log('Platform:', WebApp.platform);
-                    console.log('InitData:', WebApp.initDataUnsafe);
-                    console.log('Is expanded:', WebApp.isExpanded);
-                    console.log('Version:', WebApp.version);
-                    console.log('======================');
+                    WebApp.ready();
 
                     // Detect platform
                     const detectedPlatform = WebApp.platform;
