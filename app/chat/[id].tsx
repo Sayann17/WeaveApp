@@ -132,21 +132,6 @@ export default function ChatScreen() {
     };
   }, [chatId, participantId]);
 
-  // Helper to format last seen
-  const formatLastSeen = (date: Date) => {
-    const now = new Date();
-    const diff = now.getTime() - date.getTime();
-    const minutes = Math.floor(diff / 60000);
-    const hours = Math.floor(diff / 3600000);
-    const days = Math.floor(diff / 86400000);
-
-    if (minutes < 1) return 'только что';
-    if (minutes < 60) return `${minutes} мин. назад`;
-    if (hours < 24) return `${hours} ч. назад`;
-    if (days === 1) return 'вчера';
-    return date.toLocaleDateString('ru-RU', { day: 'numeric', month: 'short' });
-  };
-
   // Подписка на сообщения
   useEffect(() => {
     if (!chatId || typeof chatId !== 'string') return;
@@ -626,14 +611,16 @@ export default function ChatScreen() {
                 <Text style={[styles.participantName, { color: theme.text }]} numberOfLines={1}>
                   {participant?.name || 'Собеседник'}
                 </Text>
-                <Text style={[styles.statusText, { color: isTyping ? theme.accent : (userStatus?.isOnline ? '#4ade80' : theme.subText) }]}>
+                <Text style={[styles.statusText, {
+                  color: (isTyping || userStatus?.isOnline)
+                    ? '#3b82f6'
+                    : (isLight ? '#000' : '#fff')
+                }]}>
                   {isTyping
                     ? 'печатает...'
                     : userStatus?.isOnline
                       ? 'В сети'
-                      : userStatus?.lastSeen
-                        ? `Был(а) ${formatLastSeen(userStatus.lastSeen)}`
-                        : ''}
+                      : 'Был(а) недавно'}
                 </Text>
               </View>
             </Pressable>
