@@ -84,6 +84,11 @@ module.exports.handler = async function (event, context) {
         'Access-Control-Allow-Headers': 'Content-Type, Authorization'
     };
 
+    // Handle Preflight OPTIONS requests immediately without DB connection
+    if (httpMethod === 'OPTIONS') {
+        return { statusCode: 200, headers: responseHeaders };
+    }
+
     try {
         const driver = await getDriver();
 
@@ -102,10 +107,6 @@ module.exports.handler = async function (event, context) {
         }
 
         // Handle REST API
-        if (httpMethod === 'OPTIONS') {
-            return { statusCode: 200, headers: responseHeaders };
-        }
-
         if (path === '/chats' && httpMethod === 'GET') {
             return await getChats(driver, headers, responseHeaders);
         } else if (path === '/history' && httpMethod === 'GET') {
