@@ -282,12 +282,12 @@ export default function ExploreScreen() {
                             Мы пока не нашли подходящих людей. Попробуйте изменить фильтры или заглянуть позже!
                         </Text>
 
-                        <Pressable style={[styles.actionBtn, { backgroundColor: '#00b894', marginTop: 30 }]} onPress={openFilters}>
-                            <Text style={styles.actionBtnText}>Изменить фильтры</Text>
+                        <Pressable style={[styles.actionBtn, { backgroundColor: isLight ? '#000' : '#fff', marginTop: 30 }]} onPress={openFilters}>
+                            <Text style={[styles.actionBtnText, { color: isLight ? '#fff' : '#000' }]}>Изменить фильтры</Text>
                         </Pressable>
 
-                        <Pressable style={[styles.actionBtnOutline, { borderColor: '#00b894', marginTop: 15 }]} onPress={() => router.push('/(tabs)/profile')}>
-                            <Text style={[styles.actionBtnText, { color: '#00b894' }]}>Редактировать профиль</Text>
+                        <Pressable style={[styles.actionBtn, { backgroundColor: isLight ? '#000' : '#fff', marginTop: 15 }]} onPress={() => router.push('/profile/edit')}>
+                            <Text style={[styles.actionBtnText, { color: isLight ? '#fff' : '#000' }]}>Редактировать профиль</Text>
                         </Pressable>
                     </View>
 
