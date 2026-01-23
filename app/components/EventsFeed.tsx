@@ -192,6 +192,7 @@ const EventCard = ({
     const dateColor = isLight ? '#000000' : '#ffffff'; // Black for light, white for wine/space
     const mintColor = '#81B29A'; // Mint color matching Space theme tab icons
     const linkColor = '#4A90D9'; // Blue for "Подробнее" button
+    const detailsUrl = event.imageKey === 'reunion_shude' ? 'https://t.me/reunionpartyy/93' : 'https://forms.gle/uktQtqpxntwTo2Pb9';
 
     return (
         <View style={styles.cardContainer}>
@@ -239,7 +240,7 @@ const EventCard = ({
                         <View style={styles.actionRow}>
                             {/* Detail Button - Blue */}
                             <TouchableOpacity
-                                onPress={() => Linking.openURL('https://forms.gle/uktQtqpxntwTo2Pb9')}
+                                onPress={() => Linking.openURL(detailsUrl)}
                                 style={[styles.detailsButton, { borderColor: linkColor, backgroundColor: linkColor }]}
                             >
                                 <Text style={[styles.detailsText, { color: '#fff', textDecorationLine: 'underline' }]}>Подробнее</Text>
