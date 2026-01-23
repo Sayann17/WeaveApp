@@ -9,9 +9,8 @@ import {
     Pressable,
     ScrollView,
     StyleSheet,
-    Switch,
     Text,
-    View,
+    View
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme } from '../context/ThemeContext';
@@ -150,8 +149,8 @@ export const MenuModal = ({ visible, onClose }: MenuModalProps) => {
                                 <Ionicons name="chevron-forward" size={20} color={theme.subText} />
                             </Pressable>
 
-                            {/* Visibility Toggle */}
-                            <View style={[styles.menuItem, { backgroundColor: isLight ? '#ffffff' : theme.cardBg }]}>
+                            {/* Visibility Toggle - Hidden by request */}
+                            {/* <View style={[styles.menuItem, { backgroundColor: isLight ? '#ffffff' : theme.cardBg }]}>
                                 <View style={[styles.iconContainer, { backgroundColor: isLight ? '#f0f0f0' : 'rgba(255,255,255,0.1)' }]}>
                                     <Ionicons name={isVisibleProfile ? "eye-outline" : "eye-off-outline"} size={24} color={theme.text} />
                                 </View>
@@ -169,7 +168,7 @@ export const MenuModal = ({ visible, onClose }: MenuModalProps) => {
                                     trackColor={{ false: '#767577', true: '#4A9EFF' }}
                                     thumbColor={'#fff'}
                                 />
-                            </View>
+                            </View> */}
 
                             {/* Theme Options */}
                             <View style={styles.themeOptions}>

@@ -16,6 +16,7 @@ const PROFILE_IMAGES = [
     require('../../assets/images/onboarding_card_5.jpg'),
     require('../../assets/images/onboarding_card_6.jpg'),
     require('../../assets/images/onboarding_card_7.jpg'),
+    require('../../assets/images/onboarding_card_8.jpg'),
 ];
 
 interface ProfileCarouselProps {

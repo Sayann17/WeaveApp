@@ -11,7 +11,7 @@ const { width } = Dimensions.get('window');
 // Mapping imageKey to local assets
 const EVENT_IMAGES: Record<string, any> = {
     'uzor_love': require('../../assets/images/events/uzor_love.jpg'),
-    'tuva_culture': require('../../assets/images/events/tuva_culture.jpg'),
+    'reunion_shude': require('../../assets/images/events/reunion_shude_event.jpg'),
 };
 
 import { useData } from '../context/DataContext';
