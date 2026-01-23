@@ -20,7 +20,7 @@ export default function AuthScreen() {
   const [error, setError] = useState('');
 
   // Telegram Integration
-  const { isTelegram, user: tgUser } = useTelegram();
+  const { isTelegram, user: tgUser, initData } = useTelegram();
 
   useEffect(() => {
     const autoLogin = async () => {
@@ -33,7 +33,8 @@ export default function AuthScreen() {
       if (isTelegram && tgUser) {
         console.log('Telegram Mini App detected, attempting auto-login');
         try {
-          await yandexAuth.telegramLogin(tgUser);
+          // Pass initData string for backend verification
+          await yandexAuth.telegramLogin({ ...tgUser, initData });
           router.replace('/(tabs)');
         } catch (e: any) {
           console.error('Telegram auto-login failed:', e);
