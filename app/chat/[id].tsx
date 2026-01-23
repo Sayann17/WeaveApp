@@ -617,7 +617,7 @@ export default function ChatScreen() {
                     : (isLight ? '#000' : '#fff')
                 }]}>
                   {isTyping
-                    ? 'печатает...'
+                    ? 'Печатает...'
                     : userStatus?.isOnline
                       ? 'В сети'
                       : 'Был(а) недавно'}
