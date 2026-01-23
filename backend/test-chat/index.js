@@ -109,6 +109,9 @@ module.exports.handler = async function (event, context) {
             return await markAsRead(driver, headers, JSON.parse(body), responseHeaders);
         } else if ((path === '/notifications/messages' || path === '/notifications/messages/') && httpMethod === 'GET') {
             return await getUnreadMessages(driver, headers, responseHeaders);
+        } else if ((path === '/user-status' || path === '/user-status/') && httpMethod === 'GET') {
+            const targetUserId = queryStringParameters?.userId;
+            return await getUserStatus(driver, headers, targetUserId, responseHeaders);
         }
 
         return {
@@ -155,6 +158,17 @@ async function handleConnect(driver, event, connectionId) {
                 '$connectionId': TypedValues.utf8(connectionId),
                 '$createdAt': TypedValues.timestamp(new Date())
             });
+
+            // Update last_seen when user connects
+            const updateLastSeen = `
+                DECLARE $userId AS Utf8;
+                DECLARE $lastSeen AS Timestamp;
+                UPDATE users SET last_seen = $lastSeen WHERE id = $userId;
+            `;
+            await session.executeQuery(updateLastSeen, {
+                '$userId': TypedValues.utf8(userId),
+                '$lastSeen': TypedValues.timestamp(new Date())
+            });
         });
         console.log('[WS] Connected user:', userId, 'connection:', connectionId);
         return { statusCode: 200 };
@@ -168,6 +182,9 @@ async function handleDisconnect(driver, connectionId) {
     console.log('[WS] Disconnect:', connectionId);
 
     try {
+        // Get userId before deleting connection (for last_seen update)
+        const userId = await getUserIdByConnection(driver, connectionId);
+
         // Delete this specific connection
         await driver.tableClient.withSession(async (session) => {
             const query = `
@@ -177,6 +194,20 @@ async function handleDisconnect(driver, connectionId) {
             await session.executeQuery(query, {
                 '$connectionId': TypedValues.utf8(connectionId)
             });
+
+            // Update last_seen when user disconnects
+            if (userId) {
+                const updateLastSeen = `
+                    DECLARE $userId AS Utf8;
+                    DECLARE $lastSeen AS Timestamp;
+                    UPDATE users SET last_seen = $lastSeen WHERE id = $userId;
+                `;
+                await session.executeQuery(updateLastSeen, {
+                    '$userId': TypedValues.utf8(userId),
+                    '$lastSeen': TypedValues.timestamp(new Date())
+                });
+                console.log('[WS] Updated last_seen for user:', userId);
+            }
         });
         console.log('[WS] Connection removed from database');
 
@@ -334,6 +365,21 @@ async function handleMessage(driver, event, connectionId) {
     } else if (action === 'deleteMessage') {
         const { messageIds } = body;
         return await handleDeleteMessage(driver, connectionId, chatId, messageIds, recipientId, event);
+    } else if (action === 'typing') {
+        // Handle typing indicator
+        const userId = await getUserIdByConnection(driver, connectionId);
+        if (!userId) return { statusCode: 403 };
+
+        // Forward typing event to recipient
+        const recipientConnectionId = await getConnectionIdByUserId(driver, recipientId);
+        if (recipientConnectionId) {
+            await sendToConnection(driver, recipientConnectionId, {
+                type: 'typing',
+                userId: userId,
+                chatId: chatId
+            }, event);
+        }
+        return { statusCode: 200 };
     }
     return { statusCode: 200 };
 }
@@ -795,5 +841,39 @@ async function getUnreadMessages(driver, requestHeaders, responseHeaders) {
         statusCode: 200,
         headers: responseHeaders,
         body: JSON.stringify({ unreadMessages })
+    };
+}
+
+async function getUserStatus(driver, requestHeaders, targetUserId, responseHeaders) {
+    const userId = checkAuth(requestHeaders);
+    if (!userId) return { statusCode: 401, headers: responseHeaders, body: JSON.stringify({ error: 'Unauthorized' }) };
+    if (!targetUserId) return { statusCode: 400, headers: responseHeaders, body: JSON.stringify({ error: 'Missing userId parameter' }) };
+
+    // Check if user has active WebSocket connection (is online)
+    const connectionId = await getConnectionIdByUserId(driver, targetUserId);
+    const isOnline = !!connectionId;
+
+    // Get last_seen from users table
+    let lastSeen = null;
+    await driver.tableClient.withSession(async (session) => {
+        const query = `
+            DECLARE $userId AS Utf8;
+            SELECT last_seen FROM users WHERE id = $userId;
+        `;
+        const { resultSets } = await session.executeQuery(query, {
+            '$userId': TypedValues.utf8(targetUserId)
+        });
+        const rows = TypedData.createNativeObjects(resultSets[0]);
+        if (rows.length > 0 && rows[0].last_seen) {
+            lastSeen = new Date(rows[0].last_seen).toISOString();
+        }
+    });
+
+    console.log(`[getUserStatus] User ${targetUserId}: online=${isOnline}, lastSeen=${lastSeen}`);
+
+    return {
+        statusCode: 200,
+        headers: responseHeaders,
+        body: JSON.stringify({ isOnline, lastSeen })
     };
 }

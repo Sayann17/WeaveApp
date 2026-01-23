@@ -69,6 +69,12 @@ export default function ChatScreen() {
   const router = useRouter();
   const { setBackButtonHandler, showBackButton, hideBackButton, isMobile } = useTelegram();
 
+  // Online Status & Typing Indicator
+  const [userStatus, setUserStatus] = useState<{ isOnline: boolean; lastSeen: Date | null } | null>(null);
+  const [isTyping, setIsTyping] = useState(false);
+  const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const lastTypingSentRef = useRef<number>(0);
+
   // ... (useEffects remain same) ...
   // Проверка параметров
   useEffect(() => {
@@ -98,6 +104,48 @@ export default function ChatScreen() {
     };
     loadParticipantData();
   }, [participantId]);
+
+  // Load user online status
+  useEffect(() => {
+    if (participantId && typeof participantId === 'string') {
+      yandexChat.getUserStatus(participantId).then(setUserStatus);
+    }
+  }, [participantId]);
+
+  // Subscribe to typing events
+  useEffect(() => {
+    if (!chatId || typeof chatId !== 'string') return;
+
+    const unsubscribeTyping = yandexChat.onTyping((userId, eventChatId) => {
+      if (eventChatId === chatId && userId === participantId) {
+        setIsTyping(true);
+
+        // Auto-hide after 3 seconds
+        if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current);
+        typingTimeoutRef.current = setTimeout(() => setIsTyping(false), 3000);
+      }
+    });
+
+    return () => {
+      unsubscribeTyping();
+      if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current);
+    };
+  }, [chatId, participantId]);
+
+  // Helper to format last seen
+  const formatLastSeen = (date: Date) => {
+    const now = new Date();
+    const diff = now.getTime() - date.getTime();
+    const minutes = Math.floor(diff / 60000);
+    const hours = Math.floor(diff / 3600000);
+    const days = Math.floor(diff / 86400000);
+
+    if (minutes < 1) return 'только что';
+    if (minutes < 60) return `${minutes} мин. назад`;
+    if (hours < 24) return `${hours} ч. назад`;
+    if (days === 1) return 'вчера';
+    return date.toLocaleDateString('ru-RU', { day: 'numeric', month: 'short' });
+  };
 
   // Подписка на сообщения
   useEffect(() => {
@@ -574,9 +622,20 @@ export default function ChatScreen() {
                   <Ionicons name="person" size={normalize(20)} color={theme.subText} />
                 </View>
               )}
-              <Text style={[styles.participantName, { color: theme.text }]} numberOfLines={1}>
-                {participant?.name || 'Собеседник'}
-              </Text>
+              <View style={{ flexDirection: 'column' }}>
+                <Text style={[styles.participantName, { color: theme.text }]} numberOfLines={1}>
+                  {participant?.name || 'Собеседник'}
+                </Text>
+                <Text style={[styles.statusText, { color: isTyping ? theme.accent : (userStatus?.isOnline ? '#4ade80' : theme.subText) }]}>
+                  {isTyping
+                    ? 'печатает...'
+                    : userStatus?.isOnline
+                      ? 'В сети'
+                      : userStatus?.lastSeen
+                        ? `Был(а) ${formatLastSeen(userStatus.lastSeen)}`
+                        : ''}
+                </Text>
+              </View>
             </Pressable>
 
             {/* Block Button */}
@@ -626,7 +685,14 @@ export default function ChatScreen() {
                   ref={inputRef}
                   style={[styles.textInput, { color: theme.text }]}
                   value={newMessage}
-                  onChangeText={setNewMessage}
+                  onChangeText={(text) => {
+                    setNewMessage(text);
+                    // Send typing indicator with debounce (every 2 seconds max)
+                    if (Date.now() - lastTypingSentRef.current > 2000 && text.trim()) {
+                      yandexChat.sendTyping(chatId as string, participantId as string);
+                      lastTypingSentRef.current = Date.now();
+                    }
+                  }}
                   placeholder="Сообщение..."
                   placeholderTextColor={theme.subText}
                   multiline
@@ -697,6 +763,10 @@ const styles = StyleSheet.create({
   participantName: {
     fontSize: normalize(16),
     fontWeight: '600',
+  },
+  statusText: {
+    fontSize: normalize(12),
+    marginTop: normalize(2),
   },
 
   // CHAT AREA

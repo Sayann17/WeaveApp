@@ -66,6 +66,7 @@ class YandexChatService {
     private messageListeners: ((message: Message, eventType?: 'newMessage' | 'messageEdited') => void)[] = [];
     private likeListeners: ((fromUserId: string) => void)[] = [];
     private readListeners: ((chatId: string, readerId: string) => void)[] = [];
+    private typingListeners: ((userId: string, chatId: string) => void)[] = [];
 
     private manuallyClosed = false;
     private reconnectTimer: NodeJS.Timeout | null = null;
@@ -146,6 +147,8 @@ class YandexChatService {
                             this.readListeners.forEach(listener => listener(data.chatId, data.readerId));
                         } else if (data.type === 'newLike' || data.type === 'newMatch') {
                             this.likeListeners.forEach(listener => listener(data.fromUserId));
+                        } else if (data.type === 'typing') {
+                            this.typingListeners.forEach(listener => listener(data.userId, data.chatId));
                         }
                     } catch (e) {
                         console.error('[ChatService] Failed to parse message:', e);
@@ -226,6 +229,43 @@ class YandexChatService {
         return () => {
             this.readListeners = this.readListeners.filter(l => l !== callback);
         };
+    }
+
+    onTyping(callback: (userId: string, chatId: string) => void) {
+        this.typingListeners.push(callback);
+        return () => {
+            this.typingListeners = this.typingListeners.filter(l => l !== callback);
+        };
+    }
+
+    async sendTyping(chatId: string, recipientId: string) {
+        if (!this.socket || this.socket.readyState !== WebSocket.OPEN) return;
+
+        this.socket.send(JSON.stringify({
+            action: 'typing',
+            chatId,
+            recipientId
+        }));
+    }
+
+    async getUserStatus(userId: string): Promise<{ isOnline: boolean; lastSeen: Date | null }> {
+        const token = await AsyncStorage.getItem('auth_token');
+        if (!token) return { isOnline: false, lastSeen: null };
+
+        try {
+            const response = await fetch(`${API_URL}/user-status?userId=${userId}`, {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            if (!response.ok) return { isOnline: false, lastSeen: null };
+            const data = await response.json();
+            return {
+                isOnline: data.isOnline,
+                lastSeen: data.lastSeen ? new Date(data.lastSeen) : null
+            };
+        } catch (e) {
+            console.error('[ChatService] Failed to get user status:', e);
+            return { isOnline: false, lastSeen: null };
+        }
     }
 
     async sendMessage(chatId: string, text: string, recipientId: string, replyToId?: string) {
