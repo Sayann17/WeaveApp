@@ -11,7 +11,8 @@ async function handler(event, context) {
     const allowedOrigins = [
         'https://web.telegram.org',
         'https://webk.telegram.org',
-        'https://webz.telegram.org'
+        'https://webz.telegram.org',
+        'https://weave-app-henna.vercel.app'
     ];
     const requestOrigin = headers.Origin || headers.origin || '';
     const corsOrigin = allowedOrigins.includes(requestOrigin) ? requestOrigin : (requestOrigin === '' ? '*' : '');
