@@ -31,6 +31,7 @@ export const MenuModal = ({ visible, onClose }: MenuModalProps) => {
     const [isVisibleProfile, setIsVisibleProfile] = React.useState(true);
     const [showFeedback, setShowFeedback] = React.useState(false);
     const [showSupport, setShowSupport] = React.useState(false);
+    const [showDonate, setShowDonate] = React.useState(false);
 
     React.useEffect(() => {
         if (visible) {
@@ -215,6 +216,21 @@ export const MenuModal = ({ visible, onClose }: MenuModalProps) => {
                                 </Pressable>
                             </View>
 
+                            {/* Donate Button */}
+                            <Pressable
+                                style={[styles.menuItem, { backgroundColor: isLight ? '#ffffff' : theme.cardBg }]}
+                                onPress={() => setShowDonate(true)}
+                            >
+                                <View style={[styles.iconContainer, { backgroundColor: isLight ? '#f0f0f0' : 'rgba(255,255,255,0.1)' }]}>
+                                    <Ionicons name="gift-outline" size={24} color={theme.text} />
+                                </View>
+                                <View style={styles.menuTextContainer}>
+                                    <Text style={[styles.menuText, { color: theme.text }]}>Поддержать проект</Text>
+                                    <Text style={[styles.menuSubtext, { color: theme.subText }]}>На развитие Weave</Text>
+                                </View>
+                                <Ionicons name="chevron-forward" size={20} color={theme.subText} />
+                            </Pressable>
+
                             {/* Support Button */}
                             <Pressable
                                 style={[styles.menuItem, { backgroundColor: isLight ? '#ffffff' : theme.cardBg }]}
@@ -311,6 +327,38 @@ export const MenuModal = ({ visible, onClose }: MenuModalProps) => {
                     </View>
                 </View>
             </Modal>
+
+            {/* Donate Modal */}
+            < Modal
+                transparent
+                visible={showDonate}
+                animationType="fade"
+                onRequestClose={() => setShowDonate(false)}
+            >
+                <View style={styles.feedbackBackdrop}>
+                    <View style={[styles.feedbackModal, { backgroundColor: theme.cardBg, borderColor: theme.border }]}>
+                        <Pressable style={styles.feedbackClose} onPress={() => setShowDonate(false)}>
+                            <Ionicons name="close" size={24} color={theme.subText} />
+                        </Pressable>
+
+                        <Text style={[styles.feedbackText, { color: theme.text, fontSize: 16, lineHeight: 24 }]}>
+                            Привет! Weave сейчас находится на стадии развития и у нас большие амбициозные планы!{'\n'}{'\n'}
+                            Если тебе нравится продукт, помоги нам стать еще лучше!{'\n'}
+                            Будем рады любой сумме :)
+                        </Text>
+
+                        <Pressable
+                            style={[styles.feedbackButton, { backgroundColor: '#4A9EFF', width: '100%' }]}
+                            onPress={() => {
+                                Linking.openURL('https://yoomoney.ru/fundraise/1FF7HNTP03P.260123');
+                                setShowDonate(false);
+                            }}
+                        >
+                            <Text style={styles.feedbackButtonText}>Задонатить</Text>
+                        </Pressable>
+                    </View>
+                </View>
+            </Modal >
         </Modal >
     );
 };
