@@ -40,6 +40,7 @@ export default function MatchesScreen() {
     const [likesYou, setLikesYou] = useState<any[]>([]);
     const [yourLikes, setYourLikes] = useState<any[]>([]);
     const [activeTab, setActiveTab] = useState<'matches' | 'likes' | 'sent'>('matches');
+    const [processingId, setProcessingId] = useState<string | null>(null); // Prevent double-clicks
 
     const insets = useSafeAreaInsets();
     const { isMobile, hideBackButton } = useTelegram();
@@ -79,6 +80,8 @@ export default function MatchesScreen() {
     }
 
     const handleLikeBack = async (profile: any) => {
+        if (processingId === profile.id) return; // Prevent double-click
+        setProcessingId(profile.id);
         try {
             const result = await yandexMatch.likeUser(profile.id);
             if (result.type === 'match') {
@@ -109,15 +112,21 @@ export default function MatchesScreen() {
         } catch (e) {
             console.error(e);
             Alert.alert('Ошибка', 'Не удалось лайкнуть пользователя');
+        } finally {
+            setProcessingId(null);
         }
     };
 
     const handleDislike = async (profile: any) => {
+        if (processingId === profile.id) return; // Prevent double-click
+        setProcessingId(profile.id);
         try {
             await yandexMatch.dislikeUser(profile.id);
             setLikesYou(prev => prev.filter(p => p.id !== profile.id));
         } catch (e) {
             console.error(e);
+        } finally {
+            setProcessingId(null);
         }
     };
 
@@ -479,13 +488,21 @@ export default function MatchesScreen() {
                                     {/* Action Buttons for Likes */}
                                     <View style={{ flexDirection: 'row', gap: normalize(10) }}>
                                         <Pressable
-                                            style={[styles.iconBtn, { backgroundColor: isLight ? '#fff0f0' : 'rgba(255,0,0,0.1)' }]}
+                                            style={[styles.iconBtn, {
+                                                backgroundColor: isLight ? '#fff0f0' : 'rgba(255,0,0,0.1)',
+                                                opacity: processingId === profile.id ? 0.5 : 1
+                                            }]}
+                                            disabled={processingId === profile.id}
                                             onPress={() => handleDislike(profile)}
                                         >
                                             <Ionicons name="close" size={20} color="#ff4444" />
                                         </Pressable>
                                         <Pressable
-                                            style={[styles.iconBtn, { backgroundColor: isLight ? '#f0f8ff' : 'rgba(0,100,255,0.1)' }]}
+                                            style={[styles.iconBtn, {
+                                                backgroundColor: isLight ? '#f0f8ff' : 'rgba(0,100,255,0.1)',
+                                                opacity: processingId === profile.id ? 0.5 : 1
+                                            }]}
+                                            disabled={processingId === profile.id}
                                             onPress={() => handleLikeBack(profile)}
                                         >
                                             <Ionicons name="heart" size={20} color="#e1306c" />

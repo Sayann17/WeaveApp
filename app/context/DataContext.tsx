@@ -177,10 +177,28 @@ export const DataProvider = ({ children }: { children: React.ReactNode }) => {
             });
         });
 
+        // Real-time Like/Match Updates - refetch data when notified
+        const unsubscribeLike = yandexChat.onLike(async (fromUserId) => {
+            console.log('[DataContext] Received new like/match notification from:', fromUserId);
+            try {
+                // Refetch both lists to ensure instant updates
+                const [likesData, matchesData] = await Promise.all([
+                    yandexMatch.getLikesYou(),
+                    yandexMatch.getMatches()
+                ]);
+                setLikesYou(likesData || []);
+                setMatches(matchesData || []);
+                console.log('[DataContext] Refreshed likes and matches after notification');
+            } catch (e) {
+                console.error('[DataContext] Failed to refresh after like notification:', e);
+            }
+        });
+
         return () => {
             unsubscribeAuth();
             unsubscribeMsg();
             unsubscribeRead();
+            unsubscribeLike();
         };
     }, []);
 
