@@ -20,8 +20,7 @@ async function handler(event, context) {
         'Content-Type': 'application/json',
         'Access-Control-Allow-Origin': corsOrigin || 'https://web.telegram.org',
         'Access-Control-Allow-Methods': 'OPTIONS, POST, GET',
-        'Access-Control-Allow-Headers': 'Content-Type, Authorization',
-        'Access-Control-Allow-Credentials': 'true'
+        'Access-Control-Allow-Headers': 'Content-Type, Authorization'
     };
 
     if (httpMethod === 'OPTIONS') {

@@ -1,4 +1,4 @@
-const { Driver, getCredentialsFromEnv, TypedValues } = require('ydb-sdk');
+const { Driver, getCredentialsFromEnv, TypedValues, TypedData } = require('ydb-sdk');
 const TelegramBot = require('node-telegram-bot-api');
 
 const YDB_ENDPOINT = process.env.YDB_ENDPOINT;
@@ -8,7 +8,7 @@ const BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN;
 const bot = new TelegramBot(BOT_TOKEN, { polling: false });
 
 async function handler(event, context) {
-    console.log('Starting retention check...');
+    console.log('Starting retention check at', new Date().toISOString());
 
     const driver = new Driver({
         endpoint: YDB_ENDPOINT,
@@ -20,6 +20,7 @@ async function handler(event, context) {
         if (!await driver.ready(10000)) {
             throw new Error('Driver not ready!');
         }
+        console.log('Driver connected.');
 
         await driver.tableClient.withSession(async (session) => {
             const now = new Date();
@@ -27,6 +28,7 @@ async function handler(event, context) {
             const twentyFourHoursAgo = new Date(now.getTime() - 24 * 60 * 60 * 1000);
 
             // 1. Inactive Users (Last login > 7 days ago)
+            // Assuming last_login is Timestamp
             const queryInactive = `
                 DECLARE $seven_days_ago AS Timestamp;
                 
@@ -37,18 +39,19 @@ async function handler(event, context) {
                 AND telegram_id IS NOT NULL;
             `;
 
+            console.log('Executing inactive query...');
             const { resultSets: inactiveSets } = await session.executeQuery(queryInactive, {
                 '$seven_days_ago': TypedValues.timestamp(sevenDaysAgo)
             });
 
-            const inactiveUsers = this.mapResult(inactiveSets[0]);
+            const inactiveUsers = mapResult(inactiveSets[0]);
             console.log(`Found ${inactiveUsers.length} inactive users.`);
 
             for (const user of inactiveUsers) {
                 if (user.telegram_id) {
                     try {
                         await bot.sendMessage(user.telegram_id, `Привет, ${user.name || 'друг'}! 👋\nМы соскучились! Загляни в Weave, там появилось много новых людей, с которыми у тебя может сложиться Узор.`);
-                        await this.updateLastNotified(session, user.id);
+                        await updateLastNotified(session, user.id);
                         console.log(`Sent inactive notification to user ${user.id}`);
                     } catch (e) {
                         console.error(`Failed to notify inactive user ${user.id}:`, e.message);
@@ -57,6 +60,7 @@ async function handler(event, context) {
             }
 
             // 2. Incomplete Onboarding (Created > 24h ago, profile_completed = 0/false)
+            // Assuming created_at is Datetime (seconds)
             const queryIncomplete = `
                 DECLARE $twenty_four_hours_ago AS Datetime; 
                 
@@ -68,18 +72,22 @@ async function handler(event, context) {
                 AND telegram_id IS NOT NULL;
             `;
 
+            console.log('Executing incomplete profile query...');
+            // Datetime in YDB is seconds since epoch (uint32)
+            const twentyFourHoursAgoSeconds = Math.floor(twentyFourHoursAgo.getTime() / 1000);
+
             const { resultSets: incompleteSets } = await session.executeQuery(queryIncomplete, {
-                '$twenty_four_hours_ago': TypedValues.datetime(twentyFourHoursAgo)
+                '$twenty_four_hours_ago': TypedValues.datetime(twentyFourHoursAgoSeconds)
             });
 
-            const incompleteUsers = this.mapResult(incompleteSets[0]);
+            const incompleteUsers = mapResult(incompleteSets[0]);
             console.log(`Found ${incompleteUsers.length} users with incomplete profile.`);
 
             for (const user of incompleteUsers) {
                 if (user.telegram_id) {
                     try {
                         await bot.sendMessage(user.telegram_id, `Привет! ✨\nТвой профиль в Weave почти готов. Осталось всего пара шагов, чтобы начать знакомиться. Заверши настройку прямо сейчас!`);
-                        await this.updateLastNotified(session, user.id);
+                        await updateLastNotified(session, user.id);
                         console.log(`Sent incomplete notification to user ${user.id}`);
                     } catch (e) {
                         console.error(`Failed to notify incomplete user ${user.id}:`, e.message);
@@ -89,12 +97,13 @@ async function handler(event, context) {
         });
 
     } catch (err) {
-        console.error(err);
+        console.error('Retention check FAILED:', err);
         return { statusCode: 500, body: err.message };
     } finally {
         await driver.destroy();
     }
 
+    console.log('Retention check completed successfully.');
     return {
         statusCode: 200,
         body: 'Retention check completed',
@@ -102,18 +111,28 @@ async function handler(event, context) {
 }
 
 // Helper to map YDB results
-handler.mapResult = (resultSet) => {
+function mapResult(resultSet) {
+    if (!resultSet || !resultSet.rows) return [];
     return resultSet.rows.map(row => {
         const obj = {};
-        resultSet.columns.forEach((col, i) => {
-            obj[col.name] = row.items[i].textValue || row.items[i].int64Value || row.items[i].uint64Value;
-        });
+        if (resultSet.columns) {
+            resultSet.columns.forEach((col, i) => {
+                const item = row.items[i];
+                // Handle different value types roughly
+                obj[col.name] = item.textValue || item.int64Value || item.uint64Value || item.boolValue;
+
+                // Special handling for byte/string if needed, or nulls
+                if (obj[col.name] === undefined && item.nullFlag) {
+                    obj[col.name] = null;
+                }
+            });
+        }
         return obj;
     });
-};
+}
 
 // Helper to update last_notified_at
-handler.updateLastNotified = async (session, userId) => {
+async function updateLastNotified(session, userId) {
     await session.executeQuery(`
         DECLARE $id AS Utf8;
         DECLARE $now AS Timestamp;
@@ -122,6 +141,6 @@ handler.updateLastNotified = async (session, userId) => {
         '$id': TypedValues.utf8(userId),
         '$now': TypedValues.timestamp(new Date())
     });
-};
+}
 
 module.exports.handler = handler;
