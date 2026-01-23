@@ -363,7 +363,6 @@ async function me(driver, requestHeaders, headers) {
             loveLanguage: user.love_language,
             familyMemory: user.family_memory,
             stereotypeTrue: user.stereotype_true,
-            stereotypeTrue: user.stereotype_true,
             stereotypeFalse: user.stereotype_false,
             isVisible: user.is_visible !== undefined ? user.is_visible : true,
             latitude: user.latitude,
@@ -371,7 +370,6 @@ async function me(driver, requestHeaders, headers) {
             city: user.city,
             socialTelegram: user.social_telegram,
             socialVk: user.social_vk,
-            socialInstagram: user.social_instagram,
             socialInstagram: user.social_instagram,
             events: tryParse(user.events),
             is_admin: user.is_admin
@@ -435,11 +433,10 @@ async function telegramLogin(driver, data, headers) {
             return { statusCode: 403, headers, body: JSON.stringify({ error: 'Data is outdated' }) };
         }
     } else {
-        // Fallback for logic where initData might be missing (dev mode or legacy front)
-        // Ideally we should block this in production.
-        console.warn('[telegramLogin] MISSING initData string. Skipping verification (INSECURE).');
-        // Uncomment to enforce:
-        // return { statusCode: 400, headers, body: JSON.stringify({ error: 'Missing initData source' }) };
+        // SECURITY: initData is REQUIRED for Telegram authentication
+        // Without it, anyone could impersonate any Telegram user
+        console.error('[telegramLogin] MISSING initData string - authentication rejected');
+        return { statusCode: 400, headers, body: JSON.stringify({ error: 'Missing initData - authentication failed' }) };
     }
 
     const email = `tg_${id}@telegram.user`;
@@ -578,9 +575,6 @@ async function telegramLogin(driver, data, headers) {
                 latitude: fullUser.latitude,
                 longitude: fullUser.longitude,
                 city: fullUser.city,
-                socialTelegram: fullUser.social_telegram,
-                socialVk: fullUser.social_vk,
-                socialInstagram: fullUser.social_instagram,
                 socialTelegram: fullUser.social_telegram,
                 socialVk: fullUser.social_vk,
                 socialInstagram: fullUser.social_instagram,

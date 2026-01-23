@@ -346,49 +346,6 @@ async function getNewLikes(driver, requestHeaders, responseHeaders) {
     let newLikes = 0;
 
     await driver.tableClient.withSession(async (session) => {
-        // Find users who liked me
-        const likedMeQuery = `
-            DECLARE $userId AS Utf8;
-            SELECT from_user_id FROM likes WHERE to_user_id = $userId;
-        `;
-        const { resultSets: likedMeResults } = await session.executeQuery(likedMeQuery, {
-            '$userId': TypedValues.utf8(userId)
-        });
-        const likedMeIds = likedMeResults[0] ? TypedData.createNativeObjects(likedMeResults[0]).map(r => r.from_user_id) : [];
-
-        if (likedMeIds.length === 0) {
-            newLikes = 0;
-            return;
-        }
-
-        // Find users I liked (to exclude matches)
-        const myLikesQuery = `
-            DECLARE $userId AS Utf8;
-            SELECT to_user_id FROM likes WHERE from_user_id = $userId;
-        `;
-        const { resultSets: myLikesResults } = await session.executeQuery(myLikesQuery, {
-            '$userId': TypedValues.utf8(userId)
-        });
-        const myLikesIds = myLikesResults[0] ? TypedData.createNativeObjects(myLikesResults[0]).map(r => r.to_user_id) : [];
-
-        const oneSidedLikes = likedMeIds.filter(id => !myLikesIds.includes(id));
-        newLikes = oneSidedLikes.length;
-    });
-
-    return {
-        statusCode: 200,
-        headers: responseHeaders,
-        body: JSON.stringify({ newLikes })
-    };
-}
-
-async function getNewLikes(driver, requestHeaders, responseHeaders) {
-    const userId = checkAuth(requestHeaders);
-    if (!userId) return { statusCode: 401, headers: responseHeaders, body: JSON.stringify({ error: 'Unauthorized' }) };
-
-    let newLikes = 0;
-
-    await driver.tableClient.withSession(async (session) => {
         const likeQuery = `
             DECLARE $userId AS Utf8;
             $my_likes = (SELECT to_user_id FROM likes WHERE from_user_id = $userId);
@@ -517,7 +474,6 @@ async function getMatches(driver, requestHeaders, responseHeaders) {
 
             sortedMatches.push({
                 ...m,
-                ...m,
                 sortTime,
                 lastMessageTime,
                 unreadCount: Number(unreadCount),
@@ -587,8 +543,6 @@ async function getMatches(driver, requestHeaders, responseHeaders) {
                     macroGroups: tryParse(u.macro_groups),
                     sortTime: m.sortTime,
                     lastMessageTime: m.lastMessageTime,
-                    unreadCount: m.unreadCount,
-                    hasUnread: m.hasUnread,
                     unreadCount: m.unreadCount,
                     hasUnread: m.hasUnread,
                     lastMessage: m.lastMessage,
