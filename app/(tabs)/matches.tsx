@@ -349,72 +349,75 @@ export default function MatchesScreen() {
                                     <View style={{ height: 1, backgroundColor: themeType === 'light' ? 'rgba(0,0,0,0.15)' : 'rgba(255,255,255,0.2)', marginTop: normalize(8), width: '100%' }} />
 
                                     {/* Bottom Row: Message Preview */}
-                                    <Pressable
-                                        style={{ width: '100%', marginTop: normalize(10), flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}
-                                        onPress={() => router.push({ pathname: '/chat/[id]', params: { id: match.chatId, participantId: match.id } })}
-                                    >
-                                        <View style={{ flex: 1, marginRight: normalize(10) }}>
-                                            <Text
-                                                style={{
-                                                    fontSize: normalize(14),
-                                                    color: match.hasUnread ? theme.text : (match.lastMessage ? theme.subText : theme.subText),
-                                                    fontWeight: match.hasUnread ? '700' : '400',
-                                                    fontStyle: !match.lastMessage ? 'italic' : 'normal',
-                                                    lineHeight: normalize(20)
-                                                }}
-                                                numberOfLines={1}
-                                            >
-                                                {match.lastMessage || 'Сплетем узор? Напиши первое сообщение!'}
-                                            </Text>
-                                        </View>
+                                    <View style={{ width: '100%', marginTop: normalize(10) }}>
+                                        <Pressable
+                                            style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}
+                                            onPress={() => router.push({ pathname: '/chat/[id]', params: { id: match.chatId, participantId: match.id } })}
+                                        >
+                                            <View style={{ flex: 1, marginRight: normalize(10) }}>
+                                                <Text
+                                                    style={{
+                                                        fontSize: normalize(14),
+                                                        color: match.hasUnread ? theme.text : (match.lastMessage ? theme.subText : theme.subText),
+                                                        fontWeight: match.hasUnread ? '700' : '400',
+                                                        fontStyle: !match.lastMessage ? 'italic' : 'normal',
+                                                        lineHeight: normalize(20)
+                                                    }}
+                                                    numberOfLines={1}
+                                                >
+                                                    {match.lastMessage || 'Сплетем узор? Напиши первое сообщение!'}
+                                                </Text>
+                                            </View>
 
-                                        {/* Кнопка "Открыть чат" */}
+                                            {/* Right Column: Badge OR Ticks */}
+                                            <View style={{ justifyContent: 'center', marginRight: normalize(0) }}>
+                                                {match.isOwnMessage ? (
+                                                    <Ionicons
+                                                        name={match.isRead ? "checkmark-done" : "checkmark"}
+                                                        size={normalize(16)}
+                                                        color={match.isRead ? '#4ade80' : (themeType === 'light' ? theme.subText : 'rgba(255,255,255,0.5)')}
+                                                    />
+                                                ) : (
+                                                    (match.unreadCount > 0 || match.hasUnread) && (
+                                                        <View style={{
+                                                            backgroundColor: themeType === 'light' ? (theme.accent || '#00b894') : '#fff',
+                                                            borderRadius: normalize(10),
+                                                            paddingHorizontal: normalize(6),
+                                                            paddingVertical: normalize(2),
+                                                            minWidth: normalize(18),
+                                                            alignItems: 'center',
+                                                            justifyContent: 'center'
+                                                        }}>
+                                                            <Text style={{ color: themeType === 'light' ? '#fff' : '#000', fontSize: normalize(10), fontWeight: 'bold' }}>
+                                                                {match.unreadCount || 1}
+                                                            </Text>
+                                                        </View>
+                                                    )
+                                                )}
+                                            </View>
+                                        </Pressable>
+
+                                        {/* Кнопка "Открыть чат" - слева под превью */}
                                         <Pressable
                                             style={{
-                                                backgroundColor: '#fff',
+                                                backgroundColor: isLight ? '#000' : '#fff',
                                                 paddingHorizontal: normalize(12),
                                                 paddingVertical: normalize(6),
                                                 borderRadius: normalize(12),
-                                                marginRight: normalize(10)
+                                                alignSelf: 'flex-start',
+                                                marginTop: normalize(8)
                                             }}
                                             onPress={() => router.push({ pathname: '/chat/[id]', params: { id: match.chatId, participantId: match.id } })}
                                         >
                                             <Text style={{
-                                                color: themeType === 'light' ? '#fff' : '#000',
+                                                color: isLight ? '#fff' : '#000',
                                                 fontSize: normalize(12),
                                                 fontWeight: '600'
                                             }}>
                                                 Открыть чат
                                             </Text>
                                         </Pressable>
-
-                                        {/* Right Column: Badge OR Ticks */}
-                                        <View style={{ justifyContent: 'center', marginRight: normalize(0) }}>
-                                            {match.isOwnMessage ? (
-                                                <Ionicons
-                                                    name={match.isRead ? "checkmark-done" : "checkmark"}
-                                                    size={normalize(16)}
-                                                    color={match.isRead ? '#4ade80' : (themeType === 'light' ? theme.subText : 'rgba(255,255,255,0.5)')}
-                                                />
-                                            ) : (
-                                                (match.unreadCount > 0 || match.hasUnread) && (
-                                                    <View style={{
-                                                        backgroundColor: themeType === 'light' ? (theme.accent || '#00b894') : '#fff',
-                                                        borderRadius: normalize(10),
-                                                        paddingHorizontal: normalize(6),
-                                                        paddingVertical: normalize(2),
-                                                        minWidth: normalize(18),
-                                                        alignItems: 'center',
-                                                        justifyContent: 'center'
-                                                    }}>
-                                                        <Text style={{ color: themeType === 'light' ? '#fff' : '#000', fontSize: normalize(10), fontWeight: 'bold' }}>
-                                                            {match.unreadCount || 1}
-                                                        </Text>
-                                                    </View>
-                                                )
-                                            )}
-                                        </View>
-                                    </Pressable>
+                                    </View>
                                 </View>
                             ))
                         ) : (
