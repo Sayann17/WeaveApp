@@ -210,7 +210,9 @@ const EventCard = ({
                         {new Date(event.date).toLocaleDateString('ru-RU', { day: 'numeric', month: 'long' }).toUpperCase()}
                     </Text>
                     <View style={styles.dot} />
-                    <Text style={styles.timeText}>19:00</Text>
+                    <Text style={styles.timeText}>
+                        {event.imageKey === 'reunion_shude' ? 'AFTERPARTY' : '16:00'}
+                    </Text>
                 </View>
 
                 <Text style={[styles.title, { color: theme.text }]}>{event.title}</Text>
