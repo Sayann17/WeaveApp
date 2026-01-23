@@ -459,9 +459,9 @@ async function telegramLogin(driver, data, headers) {
         }
     } else {
         // SECURITY: initData is REQUIRED for Telegram authentication
-        // TEMP DEBUG: Downgrading to warning to debug login issues
-        console.warn('[telegramLogin] MISSING initData string - proceeding insecurely for debugging');
-        // return { statusCode: 400, headers, body: JSON.stringify({ error: 'Missing initData - authentication failed' }) };
+        // Without it, anyone could impersonate any Telegram user
+        console.error('[telegramLogin] MISSING initData string - authentication rejected');
+        return { statusCode: 400, headers, body: JSON.stringify({ error: 'Missing initData - authentication failed' }) };
     }
 
     const email = `tg_${id}@telegram.user`;
