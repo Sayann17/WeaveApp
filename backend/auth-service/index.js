@@ -58,12 +58,21 @@ module.exports.handler = async function (event, context) {
         };
     }
 
-    // CORS Headers
+    // CORS Headers - Whitelist for Telegram Mini Apps
+    const allowedOrigins = [
+        'https://web.telegram.org',
+        'https://webk.telegram.org',
+        'https://webz.telegram.org'
+    ];
+    const requestOrigin = headers.Origin || headers.origin || '';
+    const corsOrigin = allowedOrigins.includes(requestOrigin) ? requestOrigin : (requestOrigin === '' ? '*' : '');
+
     const responseHeaders = {
         'Content-Type': 'application/json',
-        'Access-Control-Allow-Origin': '*',
-        'Access-Control-Allow-Methods': 'POST, GET, OPTIONS',
+        'Access-Control-Allow-Origin': corsOrigin || 'https://web.telegram.org',
+        'Access-Control-Allow-Methods': 'POST, GET, OPTIONS, DELETE',
         'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+        'Access-Control-Allow-Credentials': 'true',
         'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate',
         'Pragma': 'no-cache',
         'Expires': '0'
@@ -270,14 +279,30 @@ async function deleteAccount(driver, requestHeaders, headers) {
     const id = decoded.uid;
 
     await driver.tableClient.withSession(async (session) => {
-        const query = `
-            DECLARE $id AS Utf8;
-            DELETE FROM users WHERE id = $id;
-        `;
         try {
+            // Cascade delete all related data
+            const query = `
+                DECLARE $id AS Utf8;
+                
+                -- Delete interactions
+                DELETE FROM likes WHERE from_user_id = $id OR to_user_id = $id;
+                DELETE FROM dislikes WHERE from_user_id = $id OR to_user_id = $id;
+                DELETE FROM matches WHERE user1_id = $id OR user2_id = $id;
+                DELETE FROM blocked_users WHERE blocker_id = $id OR blocked_id = $id;
+                
+                -- Delete chat data
+                DELETE FROM chats WHERE user1_id = $id OR user2_id = $id;
+                DELETE FROM messages WHERE sender_id = $id;
+                
+                -- Delete technical data
+                DELETE FROM socket_connections WHERE user_id = $id;
+                
+                -- Finally delete user
+                DELETE FROM users WHERE id = $id;
+            `;
             await session.executeQuery(query, {
                 '$id': TypedValues.utf8(id)
-            });
+            }, { commitTx: true, beginTx: { serializableReadWrite: {} } });
             console.log('[deleteAccount] Query executed successfully');
         } catch (err) {
             console.error('[deleteAccount] Execution failed:', err);

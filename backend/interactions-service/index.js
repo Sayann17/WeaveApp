@@ -6,11 +6,22 @@ const JWT_SECRET = process.env.JWT_SECRET || 'dev-secret-key-change-me';
 
 async function handler(event, context) {
     const { httpMethod, headers, body, path } = event;
+
+    // CORS Headers - Whitelist for Telegram Mini Apps
+    const allowedOrigins = [
+        'https://web.telegram.org',
+        'https://webk.telegram.org',
+        'https://webz.telegram.org'
+    ];
+    const requestOrigin = headers.Origin || headers.origin || '';
+    const corsOrigin = allowedOrigins.includes(requestOrigin) ? requestOrigin : (requestOrigin === '' ? '*' : '');
+
     const responseHeaders = {
         'Content-Type': 'application/json',
-        'Access-Control-Allow-Origin': '*',
+        'Access-Control-Allow-Origin': corsOrigin || 'https://web.telegram.org',
         'Access-Control-Allow-Methods': 'OPTIONS, POST, GET',
-        'Access-Control-Allow-Headers': 'Content-Type, Authorization'
+        'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+        'Access-Control-Allow-Credentials': 'true'
     };
 
     if (httpMethod === 'OPTIONS') {

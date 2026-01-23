@@ -11,11 +11,21 @@ module.exports.handler = async function (event, context) {
 
     console.log('[match-service] Request:', { path, method: httpMethod });
 
+    // CORS Headers - Whitelist for Telegram Mini Apps
+    const allowedOrigins = [
+        'https://web.telegram.org',
+        'https://webk.telegram.org',
+        'https://webz.telegram.org'
+    ];
+    const requestOrigin = headers.Origin || headers.origin || '';
+    const corsOrigin = allowedOrigins.includes(requestOrigin) ? requestOrigin : (requestOrigin === '' ? '*' : '');
+
     const responseHeaders = {
         'Content-Type': 'application/json',
-        'Access-Control-Allow-Origin': '*',
+        'Access-Control-Allow-Origin': corsOrigin || 'https://web.telegram.org',
         'Access-Control-Allow-Methods': 'POST, GET, OPTIONS',
-        'Access-Control-Allow-Headers': 'Content-Type, Authorization'
+        'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+        'Access-Control-Allow-Credentials': 'true'
     };
 
     try {
@@ -880,7 +890,7 @@ async function handleDislike(driver, requestHeaders, body, responseHeaders) {
         });
     } catch (error) {
         console.error('[handleDislike] Error saving dislike:', error);
-        // Don't fail the request even if DB write fails
+        return { statusCode: 500, headers: responseHeaders, body: JSON.stringify({ error: 'Failed to save dislike' }) };
     }
 
     return {

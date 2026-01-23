@@ -67,11 +67,21 @@ module.exports.handler = async function (event, context) {
 
     console.log('[test-chat] Request:', { path, method: httpMethod, type: requestContext?.eventType });
 
+    // CORS Headers - Whitelist for Telegram Mini Apps
+    const allowedOrigins = [
+        'https://web.telegram.org',
+        'https://webk.telegram.org',
+        'https://webz.telegram.org'
+    ];
+    const requestOrigin = headers.Origin || headers.origin || '';
+    const corsOrigin = allowedOrigins.includes(requestOrigin) ? requestOrigin : (requestOrigin === '' ? '*' : '');
+
     const responseHeaders = {
         'Content-Type': 'application/json',
-        'Access-Control-Allow-Origin': '*',
+        'Access-Control-Allow-Origin': corsOrigin || 'https://web.telegram.org',
         'Access-Control-Allow-Methods': 'POST, GET, OPTIONS',
-        'Access-Control-Allow-Headers': 'Content-Type, Authorization'
+        'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+        'Access-Control-Allow-Credentials': 'true'
     };
 
     try {
