@@ -260,7 +260,7 @@ async function getDiscovery(driver, requestHeaders, queryParams, responseHeaders
         }
 
         // Fetch a large pool to sort from
-        usersQuery += ` LIMIT 1000`;
+        usersQuery += ` LIMIT 200`;
 
         const { resultSets: resUsers } = await session.executeQuery(usersQuery, params);
         const allCandidates = TypedData.createNativeObjects(resUsers[0]);
@@ -397,7 +397,6 @@ async function getMatches(driver, requestHeaders, responseHeaders) {
 
     await driver.tableClient.withSession(async (session) => {
         // 1. Fetch matches directly from 'matches' table
-        // We need to check both user1_id and user2_id columns
         const matchesQuery = `
             DECLARE $userId AS Utf8;
             
@@ -425,38 +424,63 @@ async function getMatches(driver, requestHeaders, responseHeaders) {
             };
         });
 
-        // 3. Fetch Last Message Details from Messages Table directly
-        // This gives us sender_id (to know if it's ours) and is_read status
-        // We can do this efficiently? Or just iterate.
-        // Let's iterate for safety and simplicity as we have chatId. 
-        // A bulk IN query would be better but let's stick to safe logic first.
+        const chatIds = activeMatches.map(m => m.chatId);
+        const otherUserIds = activeMatches.map(m => m.otherId);
 
-        const sortedMatches = [];
+        // Initialize defaults
+        let allMessages = [];
+        let unreadCounts = [];
 
-        for (const m of activeMatches) {
-            const chatQuery = `
-                DECLARE $chatId AS Utf8;
+        // 3. BATCH: Fetch all last messages and unread counts
+        // Only execute if we have chat IDs
+        if (chatIds.length > 0) {
+            const chatIdsString = chatIds.map(id => `'${id}'`).join(', ');
+
+            const batchMessagesQuery = `
                 DECLARE $userId AS Utf8;
-
-                -- Get actual last message details
-                SELECT sender_id, is_read, text, timestamp 
-                FROM messages 
-                WHERE chat_id = $chatId 
-                ORDER BY timestamp DESC LIMIT 1;
                 
-                -- Get unread count (incoming only)
-                SELECT COUNT(*) as unread_count 
-                FROM messages 
-                WHERE chat_id = $chatId 
-                AND is_read = false 
-                AND sender_id != $userId;
+                SELECT m.chat_id, m.sender_id, m.is_read, m.text, m.timestamp
+                FROM messages m
+                WHERE m.chat_id IN (${chatIdsString})
+                ORDER BY m.chat_id, m.timestamp DESC;
             `;
-            const { resultSets: res } = await session.executeQuery(chatQuery, {
-                '$chatId': TypedValues.utf8(m.chatId),
-                '$userId': TypedValues.utf8(userId)
-            });
-            const lastMsgRow = res[0] ? TypedData.createNativeObjects(res[0])[0] : null;
-            const unreadRow = res[1] ? TypedData.createNativeObjects(res[1])[0] : null;
+
+            const messagesResult = await session.executeQuery(batchMessagesQuery, { '$userId': TypedValues.utf8(userId) });
+            allMessages = messagesResult.resultSets[0] ? TypedData.createNativeObjects(messagesResult.resultSets[0]) : [];
+
+            const batchUnreadQuery = `
+                DECLARE $userId AS Utf8;
+                
+                SELECT chat_id, COUNT(*) as unread_count
+                FROM messages
+                WHERE chat_id IN (${chatIdsString})
+                AND is_read = false
+                AND sender_id != $userId
+                GROUP BY chat_id;
+            `;
+
+            const unreadResult = await session.executeQuery(batchUnreadQuery, { '$userId': TypedValues.utf8(userId) });
+            unreadCounts = unreadResult.resultSets[0] ? TypedData.createNativeObjects(unreadResult.resultSets[0]) : [];
+        }
+
+        // Group messages by chat_id and get the latest one
+        const lastMessageByChat = {};
+        for (const msg of allMessages) {
+            if (!lastMessageByChat[msg.chat_id]) {
+                lastMessageByChat[msg.chat_id] = msg; // First one is the latest due to ORDER BY DESC
+            }
+        }
+
+        // Map unread counts by chat_id
+        const unreadByChat = {};
+        for (const row of unreadCounts) {
+            unreadByChat[row.chat_id] = Number(row.unread_count || row.count || 0);
+        }
+
+        // Build sorted matches with message info
+        const sortedMatches = activeMatches.map(m => {
+            const lastMsgRow = lastMessageByChat[m.chatId];
+            const unreadCount = unreadByChat[m.chatId] || 0;
 
             let sortTime = m.matchCreatedAt;
             let lastMessage = null;
@@ -470,7 +494,6 @@ async function getMatches(driver, requestHeaders, responseHeaders) {
                 isOwnMessage = lastMsgRow.sender_id === userId;
                 isRead = lastMsgRow.is_read;
 
-                // If last message is newer than match creation, use it for sorting
                 const msgDate = new Date(lastMessageTime);
                 const matchDate = new Date(m.matchCreatedAt);
                 if (msgDate > matchDate) {
@@ -478,88 +501,88 @@ async function getMatches(driver, requestHeaders, responseHeaders) {
                 }
             }
 
-            const unreadCount = unreadRow ? (unreadRow.unread_count || unreadRow.count || 0) : 0;
-            // Handle different number types from YDB (uint64 vs int64)
-            const hasUnread = Number(unreadCount) > 0;
-
-            sortedMatches.push({
+            return {
                 ...m,
                 sortTime,
                 lastMessageTime,
-                unreadCount: Number(unreadCount),
-                hasUnread,
+                unreadCount,
+                hasUnread: unreadCount > 0,
                 lastMessage,
                 isOwnMessage,
                 isRead
-            });
-        }
+            };
+        });
 
-        // 4. Sort by sortTime DESC
+        // Sort by sortTime DESC
         sortedMatches.sort((a, b) => new Date(b.sortTime) - new Date(a.sortTime));
 
-        // 5. Fetch User Profiles for these matches
-        for (const m of sortedMatches) {
-            const userQuery = `
-                DECLARE $id AS Utf8;
+        // 4. BATCH: Fetch all user profiles in ONE query
+        let allUsers = [];
+        if (otherUserIds.length > 0) {
+            const userIdsString = otherUserIds.map(id => `'${id}'`).join(', ');
+            const batchUsersQuery = `
                 SELECT id, name, age, photos, about, gender, ethnicity, religion, zodiac, macro_groups
-                FROM users WHERE id = $id AND (is_banned IS NULL OR is_banned = false);
+                FROM users 
+                WHERE id IN (${userIdsString})
+                AND (is_banned IS NULL OR is_banned = false);
             `;
-            const { resultSets: userResults } = await session.executeQuery(userQuery, {
-                '$id': TypedValues.utf8(m.otherId)
-            });
-            const users = userResults[0] ? TypedData.createNativeObjects(userResults[0]) : [];
 
-            if (users.length > 0) {
-                const u = users[0];
+            const { resultSets: usersResult } = await session.executeQuery(batchUsersQuery, {});
+            allUsers = usersResult[0] ? TypedData.createNativeObjects(usersResult[0]) : [];
+        }
 
-                // Parse religion properly (handles double-escaped JSON)
-                let religionsArray = null;
-                if (u.religion) {
-                    try {
-                        const parsed = tryParse(u.religion);
-                        if (parsed && Array.isArray(parsed)) {
-                            // Each element might be a JSON string like "\"buddhism\""
-                            religionsArray = parsed.map(item => {
-                                if (typeof item === 'string') {
-                                    // Try to parse again to remove escaped quotes
-                                    try {
-                                        return JSON.parse(item);
-                                    } catch {
-                                        return item;
-                                    }
-                                }
-                                return item;
-                            }).filter(item => item); // Remove empty values
-                        } else if (parsed) {
-                            religionsArray = [parsed];
-                        }
-                    } catch (e) {
-                        console.error('[getMatches] Failed to parse religion:', e);
+        // Map users by ID
+        const usersById = {};
+        for (const u of allUsers) {
+            usersById[u.id] = u;
+        }
+
+        // Build final matches array
+        for (const m of sortedMatches) {
+            const u = usersById[m.otherId];
+            if (!u) continue;
+
+            // Parse religion properly (handles double-escaped JSON)
+            let religionsArray = null;
+            if (u.religion) {
+                try {
+                    const parsed = tryParse(u.religion);
+                    if (parsed && Array.isArray(parsed)) {
+                        religionsArray = parsed.map(item => {
+                            if (typeof item === 'string') {
+                                try { return JSON.parse(item); } catch { return item; }
+                            }
+                            return item;
+                        }).filter(item => item);
+                    } else if (parsed) {
+                        religionsArray = [parsed];
                     }
+                } catch (e) {
+                    console.error('[getMatches] Failed to parse religion:', e);
                 }
-
-                matches.push({
-                    id: u.id,
-                    chatId: m.chatId,
-                    name: u.name,
-                    age: u.age,
-                    photos: tryParse(u.photos),
-                    bio: u.about,
-                    gender: u.gender,
-                    ethnicity: u.ethnicity,
-                    religion: u.religion, // Keep original for backward compatibility
-                    zodiac: u.zodiac,
-                    religions: religionsArray, // Parsed array
-                    macroGroups: tryParse(u.macro_groups),
-                    sortTime: m.sortTime,
-                    lastMessageTime: m.lastMessageTime,
-                    unreadCount: m.unreadCount,
-                    hasUnread: m.hasUnread,
-                    lastMessage: m.lastMessage,
-                    isOwnMessage: m.isOwnMessage,
-                    isRead: m.isRead
-                });
             }
+
+            matches.push({
+                id: u.id,
+                chatId: m.chatId,
+                name: u.name,
+                age: u.age,
+                photos: tryParse(u.photos),
+                bio: u.about,
+                gender: u.gender,
+                ethnicity: u.ethnicity,
+                religion: u.religion,
+                zodiac: u.zodiac,
+                religions: religionsArray,
+                macroGroups: tryParse(u.macro_groups),
+                sortTime: m.sortTime,
+                lastMessageTime: m.lastMessageTime,
+                unreadCount: m.unreadCount,
+                hasUnread: m.hasUnread,
+                lastMessage: m.lastMessage,
+                isOwnMessage: m.isOwnMessage,
+                isRead: m.isRead
+            });
         }
     });
 
@@ -586,53 +609,41 @@ async function getLikesYou(driver, requestHeaders, responseHeaders) {
     console.log('[getLikesYou] Starting for userId:', userId);
 
     await driver.tableClient.withSession(async (session) => {
-        // Find users who liked me
-        const likedByQuery = `
+        // Find users who liked me AND users I already liked in ONE query
+        const likesQuery = `
             DECLARE $userId AS Utf8;
             SELECT from_user_id FROM likes WHERE to_user_id = $userId;
+            SELECT to_user_id FROM likes WHERE from_user_id = $userId;
         `;
-        const { resultSets: likedByResults } = await session.executeQuery(likedByQuery, {
+        const { resultSets: likesResults } = await session.executeQuery(likesQuery, {
             '$userId': TypedValues.utf8(userId)
         });
-        const likedByMeIds = likedByResults[0] ? TypedData.createNativeObjects(likedByResults[0]).map(r => r.from_user_id) : [];
-        console.log('[getLikesYou] Users who liked me (potential):', likedByMeIds);
+
+        const likedByMeIds = likesResults[0] ? TypedData.createNativeObjects(likesResults[0]).map(r => r.from_user_id) : [];
+        const myLikesIds = likesResults[1] ? TypedData.createNativeObjects(likesResults[1]).map(r => r.to_user_id) : [];
+
+        console.log('[getLikesYou] Users who liked me:', likedByMeIds.length);
 
         if (likedByMeIds.length === 0) return;
 
-        // Find users I already liked
-        const myLikesQuery = `
-            DECLARE $userId AS Utf8;
-            SELECT to_user_id FROM likes WHERE from_user_id = $userId;
-        `;
-        const { resultSets: myLikesResults } = await session.executeQuery(myLikesQuery, {
-            '$userId': TypedValues.utf8(userId)
-        });
-        const myLikesIds = myLikesResults[0] ? TypedData.createNativeObjects(myLikesResults[0]).map(r => r.to_user_id) : [];
-        console.log('[getLikesYou] Users I already liked (to exclude):', myLikesIds);
-
         // Filter out mutual likes
         const newLikesIds = likedByMeIds.filter(id => !myLikesIds.includes(id));
-        console.log('[getLikesYou] Final one-sided like IDs:', newLikesIds);
+        console.log('[getLikesYou] One-sided likes count:', newLikesIds.length);
 
         if (newLikesIds.length === 0) return;
 
-        // Get user data
-        for (const likeId of newLikesIds) {
-            const userQuery = `
-                DECLARE $likeId AS Utf8;
-                SELECT id, name, age, photos, about, gender, ethnicity, religion, macro_groups, zodiac, interests, culture_pride, love_language, family_memory, stereotype_true, stereotype_false, events
-                FROM users
-                WHERE id = $likeId AND (is_banned IS NULL OR is_banned = false);
-            `;
-            const { resultSets: userResults } = await session.executeQuery(userQuery, {
-                '$likeId': TypedValues.utf8(likeId)
-            });
-            const users = userResults[0] ? TypedData.createNativeObjects(userResults[0]) : [];
-            console.log(`[getLikesYou] Fetched user data for ${likeId}:`, users.length > 0 ? 'Success' : 'Not found');
+        // BATCH: Get all user data in ONE query
+        const batchUsersQuery = `
+            SELECT id, name, age, photos, about, gender, ethnicity, religion, macro_groups, zodiac, interests, culture_pride, love_language, family_memory, stereotype_true, stereotype_false, events
+            FROM users
+            WHERE id IN (${newLikesIds.map(id => `'${id}'`).join(', ')})
+            AND (is_banned IS NULL OR is_banned = false);
+        `;
 
-            if (users.length === 0) continue;
+        const { resultSets: userResults } = await session.executeQuery(batchUsersQuery, {});
+        const users = userResults[0] ? TypedData.createNativeObjects(userResults[0]) : [];
 
-            const u = users[0];
+        for (const u of users) {
             profiles.push({
                 id: u.id,
                 name: u.name,
@@ -680,53 +691,41 @@ async function getYourLikes(driver, requestHeaders, responseHeaders) {
     console.log('[getYourLikes] Starting for userId:', userId);
 
     await driver.tableClient.withSession(async (session) => {
-        // Find users I liked
-        const myLikesQuery = `
+        // Find users I liked AND users who liked me back in ONE query
+        const likesQuery = `
             DECLARE $userId AS Utf8;
             SELECT to_user_id FROM likes WHERE from_user_id = $userId;
+            SELECT from_user_id FROM likes WHERE to_user_id = $userId;
         `;
-        const { resultSets: myLikesResults } = await session.executeQuery(myLikesQuery, {
+        const { resultSets: likesResults } = await session.executeQuery(likesQuery, {
             '$userId': TypedValues.utf8(userId)
         });
-        const myLikesIds = myLikesResults[0] ? TypedData.createNativeObjects(myLikesResults[0]).map(r => r.to_user_id) : [];
-        console.log('[getYourLikes] Users I liked (potential):', myLikesIds);
+
+        const myLikesIds = likesResults[0] ? TypedData.createNativeObjects(likesResults[0]).map(r => r.to_user_id) : [];
+        const likedByMeIds = likesResults[1] ? TypedData.createNativeObjects(likesResults[1]).map(r => r.from_user_id) : [];
+
+        console.log('[getYourLikes] Users I liked:', myLikesIds.length);
 
         if (myLikesIds.length === 0) return;
 
-        // Find users who liked me back
-        const likedByQuery = `
-            DECLARE $userId AS Utf8;
-            SELECT from_user_id FROM likes WHERE to_user_id = $userId;
-        `;
-        const { resultSets: likedByResults } = await session.executeQuery(likedByQuery, {
-            '$userId': TypedValues.utf8(userId)
-        });
-        const likedByMeIds = likedByResults[0] ? TypedData.createNativeObjects(likedByResults[0]).map(r => r.from_user_id) : [];
-        console.log('[getYourLikes] Users who liked me (to exclude):', likedByMeIds);
-
         // Filter out mutual likes
         const oneSidedLikes = myLikesIds.filter(id => !likedByMeIds.includes(id));
-        console.log('[getYourLikes] Final one-sided like IDs:', oneSidedLikes);
+        console.log('[getYourLikes] One-sided likes count:', oneSidedLikes.length);
 
         if (oneSidedLikes.length === 0) return;
 
-        // Get user data
-        for (const likeId of oneSidedLikes) {
-            const userQuery = `
-                DECLARE $likeId AS Utf8;
-                SELECT id, name, age, photos, about, gender, ethnicity, religion, macro_groups, zodiac, interests, culture_pride, love_language, family_memory, stereotype_true, stereotype_false, events
-                FROM users
-                WHERE id = $likeId AND (is_banned IS NULL OR is_banned = false);
-            `;
-            const { resultSets: userResults } = await session.executeQuery(userQuery, {
-                '$likeId': TypedValues.utf8(likeId)
-            });
-            const users = userResults[0] ? TypedData.createNativeObjects(userResults[0]) : [];
-            console.log(`[getYourLikes] Fetched user data for ${likeId}:`, users.length > 0 ? 'Success' : 'Not found');
+        // BATCH: Get all user data in ONE query
+        const batchUsersQuery = `
+            SELECT id, name, age, photos, about, gender, ethnicity, religion, macro_groups, zodiac, interests, culture_pride, love_language, family_memory, stereotype_true, stereotype_false, events
+            FROM users
+            WHERE id IN (${oneSidedLikes.map(id => `'${id}'`).join(', ')})
+            AND (is_banned IS NULL OR is_banned = false);
+        `;
 
-            if (users.length === 0) continue;
+        const { resultSets: userResults } = await session.executeQuery(batchUsersQuery, {});
+        const users = userResults[0] ? TypedData.createNativeObjects(userResults[0]) : [];
 
-            const u = users[0];
+        for (const u of users) {
             profiles.push({
                 id: u.id,
                 name: u.name,

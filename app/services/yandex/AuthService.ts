@@ -4,6 +4,36 @@ import { IAuthService, User } from '../interfaces/IAuthService';
 
 const API_URL = 'https://d5dg37j92h7tg2f7sf87.o2p3jdjj.apigw.yandexcloud.net';
 
+// Retry helper for network requests
+async function withRetry<T>(
+    fn: () => Promise<T>,
+    options: { maxRetries?: number; delayMs?: number; shouldRetry?: (error: any) => boolean } = {}
+): Promise<T> {
+    const { maxRetries = 3, delayMs = 1000, shouldRetry = () => true } = options;
+    let lastError: any;
+
+    for (let attempt = 1; attempt <= maxRetries; attempt++) {
+        try {
+            return await fn();
+        } catch (error) {
+            lastError = error;
+            console.log(`[Retry] Attempt ${attempt}/${maxRetries} failed:`, error);
+
+            // Don't retry if it's a business logic error (ban, auth, etc.)
+            if (!shouldRetry(error)) {
+                throw error;
+            }
+
+            if (attempt < maxRetries) {
+                console.log(`[Retry] Waiting ${delayMs}ms before retry...`);
+                await new Promise(resolve => setTimeout(resolve, delayMs));
+            }
+        }
+    }
+
+    throw lastError;
+}
+
 class YandexAuthService implements IAuthService {
     private _currentUser: User | null = null;
     private _listeners: ((user: User | null) => void)[] = [];
@@ -25,43 +55,52 @@ class YandexAuthService implements IAuthService {
     }
 
     async telegramLogin(tgUser: any): Promise<void> {
-        try {
-            console.log('Authenticating with backend via Telegram...', tgUser);
+        await withRetry(
+            async () => {
+                console.log('Authenticating with backend via Telegram...');
 
-            const response = await fetch(`${API_URL}/telegram-login`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify(tgUser),
-            });
+                const response = await fetch(`${API_URL}/telegram-login`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(tgUser),
+                });
 
-            const data = await response.json();
+                const data = await response.json();
 
-            if (!response.ok) {
-                if (data.isBanned) {
-                    const error = new Error(data.error || 'Account banned');
-                    // @ts-ignore
-                    error.isBanned = true;
-                    // @ts-ignore
-                    error.reason = data.reason;
-                    throw error;
+                if (!response.ok) {
+                    if (data.isBanned) {
+                        const error = new Error(data.error || 'Account banned');
+                        // @ts-ignore
+                        error.isBanned = true;
+                        // @ts-ignore
+                        error.reason = data.reason;
+                        throw error;
+                    }
+                    throw new Error(data.error || 'Telegram auth failed on server');
                 }
-                throw new Error(data.error || 'Telegram auth failed on server');
-            }
 
-            if (data.token && data.user) {
-                this._currentUser = this._transformUser(data.user);
-                await AsyncStorage.setItem('auth_token', data.token);
-                this._notifyListeners();
-                console.log('Telegram login successful, token saved');
-            } else {
-                throw new Error('Invalid response from server');
+                if (data.token && data.user) {
+                    this._currentUser = this._transformUser(data.user);
+                    await AsyncStorage.setItem('auth_token', data.token);
+                    this._notifyListeners();
+                    console.log('Telegram login successful, token saved');
+                } else {
+                    throw new Error('Invalid response from server');
+                }
+            },
+            {
+                maxRetries: 3,
+                delayMs: 1500,
+                // Don't retry on ban or explicit auth failures
+                shouldRetry: (error) => {
+                    if (error?.isBanned) return false;
+                    if (error?.message?.includes('banned')) return false;
+                    return true;
+                }
             }
-        } catch (error) {
-            console.error('Telegram Login Error:', error);
-            throw error;
-        }
+        );
     }
     private async _loadSession() {
         if (Platform.OS === 'web' && typeof window === 'undefined') return;
@@ -170,53 +209,72 @@ class YandexAuthService implements IAuthService {
 
     async updateProfile(data: Partial<User> & Record<string, any>): Promise<void> {
         console.log('[AuthService] updateProfile called with:', Object.keys(data));
-        const token = await AsyncStorage.getItem('auth_token');
-        if (!token) throw new Error('Not authenticated');
 
         // OPTIMISTIC UPDATE: Update local state BEFORE server call for instant UI feedback
         const previousUser = this._currentUser ? { ...this._currentUser } : null;
         if (this._currentUser) {
-            // Merge new data with existing user data to preserve all fields
             this._currentUser = { ...this._currentUser, ...data };
             this._notifyListeners();
             console.log('[AuthService] Optimistic update applied, UI updated instantly');
         }
 
         try {
-            const response = await fetch(`${API_URL}/profile`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${token}`
+            await withRetry(
+                async () => {
+                    const token = await AsyncStorage.getItem('auth_token');
+                    if (!token) throw new Error('Not authenticated');
+
+                    const response = await fetch(`${API_URL}/profile`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': `Bearer ${token}`
+                        },
+                        body: JSON.stringify(data)
+                    });
+
+                    console.log('[AuthService] updateProfile response status:', response.status);
+
+                    if (!response.ok) {
+                        const text = await response.text();
+                        console.error('[AuthService] Update profile failed:', response.status, text);
+
+                        // Don't retry on 401 (auth error) or 4xx client errors
+                        if (response.status === 401) {
+                            const error = new Error('Not authenticated');
+                            // @ts-ignore
+                            error.noRetry = true;
+                            throw error;
+                        }
+                        if (response.status >= 400 && response.status < 500) {
+                            const error = new Error(`Failed to update profile: ${response.status} ${text}`);
+                            // @ts-ignore
+                            error.noRetry = true;
+                            throw error;
+                        }
+
+                        throw new Error(`Failed to update profile: ${response.status} ${text}`);
+                    }
+
+                    console.log('[AuthService] Profile successfully saved to server');
                 },
-                body: JSON.stringify(data)
-            });
-
-            console.log('[AuthService] updateProfile response status:', response.status);
-
-            if (!response.ok) {
-                const text = await response.text();
-                console.error('[AuthService] Update profile failed:', response.status, text);
-
-                // ROLLBACK: Restore previous state on error
-                if (previousUser) {
-                    this._currentUser = previousUser;
-                    this._notifyListeners();
-                    console.log('[AuthService] Rolled back optimistic update due to server error');
+                {
+                    maxRetries: 3,
+                    delayMs: 1000,
+                    shouldRetry: (error) => {
+                        // @ts-ignore
+                        if (error?.noRetry) return false;
+                        if (error?.message === 'Not authenticated') return false;
+                        return true;
+                    }
                 }
-
-                throw new Error(`Failed to update profile: ${response.status} ${text}`);
-            }
-
-            console.log('[AuthService] Profile successfully saved to server');
-            // No refreshSession here - it causes race conditions when multiple fields are updated quickly
-            // The optimistic update already has the correct data merged
+            );
         } catch (e) {
-            // If it's a network error (not thrown by us above), also rollback
-            if (previousUser && e instanceof Error && !e.message.startsWith('Failed to update profile')) {
+            // ROLLBACK: Restore previous state on final failure
+            if (previousUser) {
                 this._currentUser = previousUser;
                 this._notifyListeners();
-                console.log('[AuthService] Rolled back optimistic update due to network error');
+                console.log('[AuthService] Rolled back optimistic update due to error');
             }
             throw e;
         }
