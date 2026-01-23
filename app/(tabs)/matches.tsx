@@ -364,9 +364,29 @@ export default function MatchesScreen() {
                                                 }}
                                                 numberOfLines={1}
                                             >
-                                                {match.lastMessage || 'Какое сплетение создаст ваш Узор... Проверим?'}
+                                                {match.lastMessage || 'Сплетем узор? Напиши первое сообщение!'}
                                             </Text>
                                         </View>
+
+                                        {/* Кнопка "Открыть чат" */}
+                                        <Pressable
+                                            style={{
+                                                backgroundColor: '#fff',
+                                                paddingHorizontal: normalize(12),
+                                                paddingVertical: normalize(6),
+                                                borderRadius: normalize(12),
+                                                marginRight: normalize(10)
+                                            }}
+                                            onPress={() => router.push({ pathname: '/chat/[id]', params: { id: match.chatId, participantId: match.id } })}
+                                        >
+                                            <Text style={{
+                                                color: themeType === 'light' ? '#fff' : '#000',
+                                                fontSize: normalize(12),
+                                                fontWeight: '600'
+                                            }}>
+                                                Открыть чат
+                                            </Text>
+                                        </Pressable>
 
                                         {/* Right Column: Badge OR Ticks */}
                                         <View style={{ justifyContent: 'center', marginRight: normalize(0) }}>
@@ -398,8 +418,31 @@ export default function MatchesScreen() {
                                 </View>
                             ))
                         ) : (
-                            <View style={styles.empty}>
-                                <Text style={[styles.emptyText, { color: theme.subText }]}>Пока нет совпадений</Text>
+                            <View style={styles.emptyContainer}>
+                                <Text style={[styles.emptyTitle, { color: theme.text }]}>Пока нет совпадений 😔</Text>
+                                <Text style={[styles.emptySubtitle, { color: theme.subText }]}>
+                                    Давай отредактируем твой профиль или посмотрим анкеты? :)
+                                </Text>
+                                <Text style={[styles.emptyTips, { color: theme.subText }]}>
+                                    Советы:{"\n"}
+                                    1. Добавьте 2-3 ваши реальные фотографии — людям важно увидеть настоящего тебя{"\n"}
+                                    2. Заполните необязательные вопросы, раскрывающие вашу личность{"\n"}
+                                    3. Проявите инициативу! Поставьте лайки понравившимся анкетам :)
+                                </Text>
+                                <View style={styles.emptyButtons}>
+                                    <Pressable
+                                        style={[styles.emptyButton, { backgroundColor: theme.accent || '#00b894' }]}
+                                        onPress={() => router.push('/profile/edit')}
+                                    >
+                                        <Text style={styles.emptyButtonText}>Редактировать профиль</Text>
+                                    </Pressable>
+                                    <Pressable
+                                        style={[styles.emptyButtonOutline, { borderColor: theme.accent || '#00b894' }]}
+                                        onPress={() => router.push('/(tabs)/search')}
+                                    >
+                                        <Text style={[styles.emptyButtonTextOutline, { color: theme.accent || '#00b894' }]}>Поиск</Text>
+                                    </Pressable>
+                                </View>
                             </View>
                         )
                     ) : activeTab === 'likes' ? (
@@ -448,8 +491,25 @@ export default function MatchesScreen() {
                                 </View>
                             ))
                         ) : (
-                            <View style={styles.empty}>
-                                <Text style={[styles.emptyText, { color: theme.subText }]}>Вас пока никто не лайкнул</Text>
+                            <View style={styles.emptyContainer}>
+                                <Text style={[styles.emptyTitle, { color: theme.text }]}>Вас пока никто не лайкнул 😔</Text>
+                                <Text style={[styles.emptySubtitle, { color: theme.subText }]}>
+                                    Возможно вы не полностью заполнили свой профиль
+                                </Text>
+                                <Text style={[styles.emptyTips, { color: theme.subText }]}>
+                                    Советы:{"\n"}
+                                    1. Добавьте 2-3 ваших реальных фотографии — людям важно увидеть настоящего тебя{"\n"}
+                                    2. Заполните необязательные вопросы, раскрывающие вашу личность{"\n"}
+                                    3. Проявите инициативу! Поставьте лайки понравившимся анкетам :)
+                                </Text>
+                                <View style={styles.emptyButtons}>
+                                    <Pressable
+                                        style={[styles.emptyButton, { backgroundColor: theme.accent || '#00b894' }]}
+                                        onPress={() => router.push('/profile/edit')}
+                                    >
+                                        <Text style={styles.emptyButtonText}>Редактировать профиль</Text>
+                                    </Pressable>
+                                </View>
                             </View>
                         )
                     ) : (
@@ -482,8 +542,21 @@ export default function MatchesScreen() {
                                 </View>
                             ))
                         ) : (
-                            <View style={styles.empty}>
-                                <Text style={[styles.emptyText, { color: theme.subText }]}>Вы пока никого не лайкнули</Text>
+                            <View style={styles.emptyContainer}>
+                                <Text style={[styles.emptyTitle, { color: theme.text }]}>Вы пока никого не лайкнули 😔</Text>
+                                <Text style={[styles.emptySubtitle, { color: theme.subText }]}>
+                                    Чтобы случился Мэтч, нужно поставить лайк анкете, которая вам понравилась!{"\n"}
+                                    Но ты наверняка об этом уже знаешь :){"\n"}{"\n"}
+                                    Пойдем искать?
+                                </Text>
+                                <View style={styles.emptyButtons}>
+                                    <Pressable
+                                        style={[styles.emptyButton, { backgroundColor: theme.accent || '#00b894' }]}
+                                        onPress={() => router.push('/(tabs)/search')}
+                                    >
+                                        <Text style={styles.emptyButtonText}>Поиск</Text>
+                                    </Pressable>
+                                </View>
                             </View>
                         )
                     )}
@@ -684,5 +757,58 @@ const styles = StyleSheet.create({
     submitButtonText: {
         fontSize: normalize(16),
         fontWeight: '700'
-    }
+    },
+
+    // Empty State Styles
+    emptyContainer: {
+        alignItems: 'center',
+        paddingHorizontal: normalize(20),
+        paddingTop: normalize(40),
+    },
+    emptyTitle: {
+        fontSize: normalize(20),
+        fontWeight: '700',
+        textAlign: 'center',
+        marginBottom: normalize(12),
+    },
+    emptySubtitle: {
+        fontSize: normalize(15),
+        textAlign: 'center',
+        lineHeight: normalize(22),
+        marginBottom: normalize(16),
+    },
+    emptyTips: {
+        fontSize: normalize(14),
+        textAlign: 'left',
+        lineHeight: normalize(22),
+        marginBottom: normalize(24),
+    },
+    emptyButtons: {
+        flexDirection: 'row',
+        gap: normalize(12),
+        width: '100%',
+    },
+    emptyButton: {
+        flex: 1,
+        paddingVertical: normalize(14),
+        borderRadius: normalize(12),
+        alignItems: 'center',
+    },
+    emptyButtonText: {
+        color: '#fff',
+        fontSize: normalize(15),
+        fontWeight: '600',
+    },
+    emptyButtonOutline: {
+        flex: 1,
+        paddingVertical: normalize(14),
+        borderRadius: normalize(12),
+        alignItems: 'center',
+        borderWidth: 2,
+        backgroundColor: 'transparent',
+    },
+    emptyButtonTextOutline: {
+        fontSize: normalize(15),
+        fontWeight: '600',
+    },
 });
