@@ -15,6 +15,8 @@ interface DataContextType {
     yourLikes: any[];
     isLoading: boolean;
     refreshData: () => Promise<void>;
+    addToYourLikes: (profile: any) => void;
+    updateUserProfile: (data: Partial<any>) => void;
 }
 
 const DataContext = createContext<DataContextType>({
@@ -26,6 +28,8 @@ const DataContext = createContext<DataContextType>({
     yourLikes: [],
     isLoading: true,
     refreshData: async () => { },
+    addToYourLikes: () => { },
+    updateUserProfile: () => { },
 });
 
 export const useData = () => useContext(DataContext);
@@ -113,6 +117,15 @@ export const DataProvider = ({ children }: { children: React.ReactNode }) => {
         } finally {
             setIsLoading(false);
         }
+    };
+
+    // Optimistic update functions
+    const addToYourLikes = (profile: any) => {
+        setYourLikes(prev => [profile, ...prev.filter(p => p.id !== profile.id)]);
+    };
+
+    const updateUserProfile = (data: Partial<any>) => {
+        setUserProfile((prev: any) => prev ? { ...prev, ...data } : null);
     };
 
     useEffect(() => {
@@ -211,7 +224,9 @@ export const DataProvider = ({ children }: { children: React.ReactNode }) => {
             likesYou,
             yourLikes,
             isLoading,
-            refreshData: loadAll
+            refreshData: loadAll,
+            addToYourLikes,
+            updateUserProfile
         }}>
             {children}
         </DataContext.Provider>

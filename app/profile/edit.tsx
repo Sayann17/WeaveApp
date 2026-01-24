@@ -16,6 +16,7 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Colors } from '../constants/colors';
+import { useData } from '../context/DataContext';
 import { useTelegram } from '../context/TelegramProvider';
 import { useTheme } from '../context/ThemeContext';
 import { yandexAuth } from '../services/yandex/AuthService';
@@ -45,6 +46,7 @@ export default function EditProfileScreen() {
   const { setBackButtonHandler, showBackButton, hideBackButton, isMobile } = useTelegram();
   const params = useLocalSearchParams();
   const isFirstEdit = params.firstEdit === 'true';
+  const { updateUserProfile } = useData();
 
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
@@ -182,6 +184,33 @@ export default function EditProfileScreen() {
         name: name.trim(),
         age: ageNum,
         bio: bio.trim(),
+        gender,
+        photos,
+        interests,
+        zodiac: zodiac || undefined,
+        religions,
+        macroGroups,
+        ethnicity: ethnicities[0] || '',
+        profile_completed: 1,
+        culturePride: culturePride.trim(),
+        loveLanguage: loveLanguage.trim(),
+        familyMemory: familyMemory.trim(),
+        stereotypeTrue: stereotypeTrue.trim(),
+        stereotypeFalse: stereotypeFalse.trim(),
+        city: city.trim(),
+        latitude: latitude !== null ? latitude : undefined,
+        longitude: longitude !== null ? longitude : undefined,
+        socialTelegram: socialTelegram.trim(),
+        socialVk: socialVk.trim(),
+        socialInstagram: socialInstagram.trim()
+      });
+
+      // Optimistically update DataContext for instant UI reflection
+      updateUserProfile({
+        name: name.trim(),
+        age: ageNum,
+        bio: bio.trim(),
+        about: bio.trim(),
         gender,
         photos,
         interests,

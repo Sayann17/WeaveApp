@@ -73,7 +73,7 @@ export default function ExploreScreen() {
     const [profiles, setProfiles] = useState<UserProfile[]>([]);
     const [currentProfileIndex, setCurrentProfileIndex] = useState(0);
     const [isLoading, setIsLoading] = useState(true);
-    const { discoveryProfiles: preloadedProfiles, isLoading: isContextLoading } = useData();
+    const { discoveryProfiles: preloadedProfiles, isLoading: isContextLoading, addToYourLikes } = useData();
 
     // UI States
     const [showFilters, setShowFilters] = useState(false);
@@ -224,6 +224,9 @@ export default function ExploreScreen() {
                 console.log('[Explore] Sending like...');
                 const res = await enhancedMatchService.likeUser(profile.id);
                 console.log('[Explore] Like response:', res);
+
+                // Optimistically add to "Your Likes" list
+                addToYourLikes(profile);
 
                 if (res.type === 'match') {
                     Alert.alert('Мэтч!', `Вы понравились ${profile.name}!`);
