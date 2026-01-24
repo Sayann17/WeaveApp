@@ -259,6 +259,19 @@ export const MenuModal = ({ visible, onClose }: MenuModalProps) => {
                                 </View>
                                 <Ionicons name="chevron-forward" size={20} color={theme.subText} />
                             </Pressable>
+                            {/* Delete Account - Hidden for now */}
+                            {/* <Pressable
+                                style={[styles.menuItem, styles.deleteItem, { backgroundColor: isLight ? '#FFF0F0' : 'rgba(255, 69, 58, 0.1)' }]}
+                                onPress={handleDeleteAccount}
+                            >
+                                <View style={[styles.iconContainer, { backgroundColor: isLight ? '#FFE5E5' : 'rgba(255, 69, 58, 0.15)' }]}>
+                                    <Ionicons name="trash-outline" size={24} color="#FF453A" />
+                                </View>
+                                <View style={styles.menuTextContainer}>
+                                    <Text style={[styles.menuText, { color: '#FF453A' }]}>Удалить аккаунт</Text>
+                                    <Text style={[styles.menuSubtext, { color: theme.subText }]}>Безвозвратно</Text>
+                                </View>
+                            </Pressable> */}
                         </ScrollView>
                     </View>
                 </Pressable>

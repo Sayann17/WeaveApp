@@ -5,6 +5,7 @@
     "main": "index.js",
     "dependencies": {
         "ydb-sdk": "^4.6.0",
-        "node-telegram-bot-api": "^0.61.0"
+        "node-telegram-bot-api": "^0.61.0",
+        "@yandex-cloud/nodejs-sdk": "^2.4.0"
     }
 }

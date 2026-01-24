@@ -161,8 +161,8 @@ export default function EditProfileScreen() {
     }
 
     // Проверка этноса
-    if (ethnicities.length === 0 && macroGroups.length === 0) {
-      Alert.alert('Внимание', 'Пожалуйста, укажите ваши корни (этническую принадлежность)');
+    if (ethnicities.length === 0) {
+      Alert.alert('Внимание', 'Пожалуйста, укажите ваши данные в разделе "Твои корни" (этническая принадлежность)');
       return;
     }
 
@@ -245,7 +245,7 @@ export default function EditProfileScreen() {
     age.trim().length > 0 &&
     gender !== null &&
     photos.length > 0 &&
-    (macroGroups.length > 0 || ethnicities.length > 0);
+    ethnicities.length > 0;
 
   if (isLoading) {
     return (

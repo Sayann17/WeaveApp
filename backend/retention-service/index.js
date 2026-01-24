@@ -25,7 +25,7 @@ async function handler(event, context) {
         await driver.tableClient.withSession(async (session) => {
             const now = new Date();
             const sevenDaysAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
-            const twentyFourHoursAgo = new Date(now.getTime() - 24 * 60 * 60 * 1000);
+            const twentyFourHoursAgo = new Date(now.getTime() - 60 * 60 * 1000); // Changed to 1 hour for testing
 
             // 1. Inactive Users (Last login > 7 days ago)
             // Assuming last_login is Timestamp
@@ -59,10 +59,10 @@ async function handler(event, context) {
                 }
             }
 
-            // 2. Incomplete Onboarding (Created > 24h ago, profile_completed = 0/false)
-            // Assuming created_at is Datetime (seconds)
+            // 2. Incomplete Onboarding (Created > 1 hour ago, profile_completed = 0/false)
+            // Fix: created_at is Timestamp, so we must compare with Timestamp
             const queryIncomplete = `
-                DECLARE $twenty_four_hours_ago AS Datetime; 
+                DECLARE $twenty_four_hours_ago AS Timestamp; 
                 
                 SELECT id, telegram_id, name 
                 FROM users 
@@ -72,12 +72,10 @@ async function handler(event, context) {
                 AND telegram_id IS NOT NULL;
             `;
 
-            console.log('Executing incomplete profile query...');
-            // Datetime in YDB is seconds since epoch (uint32)
-            const twentyFourHoursAgoSeconds = Math.floor(twentyFourHoursAgo.getTime() / 1000);
+            console.log('Executing incomplete profile query (1h test)...');
 
             const { resultSets: incompleteSets } = await session.executeQuery(queryIncomplete, {
-                '$twenty_four_hours_ago': TypedValues.datetime(twentyFourHoursAgoSeconds)
+                '$twenty_four_hours_ago': TypedValues.timestamp(twentyFourHoursAgo)
             });
 
             const incompleteUsers = mapResult(incompleteSets[0]);

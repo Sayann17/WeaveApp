@@ -281,6 +281,7 @@ async function deleteAccount(driver, requestHeaders, headers) {
     await driver.tableClient.withSession(async (session) => {
         try {
             // Cascade delete all related data
+            // NOTE: YDB doesn't support CASCADE DELETE in schema, so we must delete manually
             const query = `
                 DECLARE $id AS Utf8;
                 
@@ -290,9 +291,14 @@ async function deleteAccount(driver, requestHeaders, headers) {
                 DELETE FROM matches WHERE user1_id = $id OR user2_id = $id;
                 DELETE FROM blocked_users WHERE blocker_id = $id OR blocked_id = $id;
                 
-                -- Delete chat data
-                DELETE FROM chats WHERE user1_id = $id OR user2_id = $id;
+                -- Delete chat data (messages sent by user)
+                -- We do NOT delete messages sent TO user because the other person might want to keep history
+                -- Actually, usually "Delete Account" means wiping presence. 
+                -- Let's delete where sender is user.
                 DELETE FROM messages WHERE sender_id = $id;
+                
+                -- Delete chats where user is participant
+                DELETE FROM chats WHERE user1_id = $id OR user2_id = $id;
                 
                 -- Delete technical data
                 DELETE FROM socket_connections WHERE user_id = $id;
@@ -303,7 +309,7 @@ async function deleteAccount(driver, requestHeaders, headers) {
             await session.executeQuery(query, {
                 '$id': TypedValues.utf8(id)
             }, { commitTx: true, beginTx: { serializableReadWrite: {} } });
-            console.log('[deleteAccount] Query executed successfully');
+            console.log('[deleteAccount] User deleted successfully:', id);
         } catch (err) {
             console.error('[deleteAccount] Execution failed:', err);
             throw err;
@@ -501,10 +507,11 @@ async function telegramLogin(driver, data, headers) {
                 DECLARE $created_at AS Datetime;
                 DECLARE $photo AS Utf8;
                 DECLARE $telegram_id AS Utf8;
+                DECLARE $username AS Utf8;
                 DECLARE $last_login AS Timestamp;
 
-                INSERT INTO users (id, email, password_hash, name, age, created_at, photos, telegram_id, last_login)
-                VALUES ($id, $email, $password_hash, $name, $age, $created_at, $photo, $telegram_id, $last_login);
+                INSERT INTO users (id, email, password_hash, name, age, created_at, photos, telegram_id, username, last_login)
+                VALUES ($id, $email, $password_hash, $name, $age, $created_at, $photo, $telegram_id, $username, $last_login);
             `;
 
             await session.executeQuery(insertQuery, {
@@ -516,6 +523,7 @@ async function telegramLogin(driver, data, headers) {
                 '$created_at': TypedValues.datetime(new Date(createdAt)),
                 '$photo': TypedValues.utf8(photoJson),
                 '$telegram_id': TypedValues.utf8(String(id)),
+                '$username': TypedValues.utf8(username || ''),
                 '$last_login': TypedValues.timestamp(new Date())
             });
         } else {
@@ -526,12 +534,14 @@ async function telegramLogin(driver, data, headers) {
             const updateQuery = `
                 DECLARE $id AS Utf8;
                 DECLARE $telegram_id AS Utf8;
+                DECLARE $username AS Utf8;
                 DECLARE $last_login AS Timestamp;
-                UPDATE users SET telegram_id = $telegram_id, last_login = $last_login WHERE id = $id;
+                UPDATE users SET telegram_id = $telegram_id, username = $username, last_login = $last_login WHERE id = $id;
             `;
             await session.executeQuery(updateQuery, {
                 '$id': TypedValues.utf8(userId),
                 '$telegram_id': TypedValues.utf8(String(id)),
+                '$username': TypedValues.utf8(username || ''),
                 '$last_login': TypedValues.timestamp(new Date())
             });
         }
