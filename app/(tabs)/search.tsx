@@ -323,7 +323,7 @@ export default function ExploreScreen() {
 
                 {/* 🔥 ПОЛНЫЙ ПРОСМОТР ПРОФИЛЯ */}
                 <View style={{ flex: 1 }}>
-                    <ProfileView userData={profile} isOwnProfile={false} bottomPadding={normalize(150)} />
+                    <ProfileView key={profile.id} userData={profile} isOwnProfile={false} bottomPadding={normalize(150)} />
                 </View>
 
                 {/* 🔥 ПЛАВАЮЩИЕ КНОПКИ ДЕЙСТВИЙ */}
