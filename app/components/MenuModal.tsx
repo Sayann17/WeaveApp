@@ -50,28 +50,21 @@ export const MenuModal = ({ visible, onClose }: MenuModalProps) => {
         }
     };
 
+    const [showDeleteConfirm, setShowDeleteConfirm] = React.useState(false);
+
     const handleDeleteAccount = () => {
-        Alert.alert(
-            'Удалить аккаунт',
-            'Вы уверены? Это действие нельзя отменить. Все ваши данные будут удалены.',
-            [
-                { text: 'Отмена', style: 'cancel' },
-                {
-                    text: 'Удалить',
-                    style: 'destructive',
-                    onPress: async () => {
-                        try {
-                            await yandexAuth.deleteAccount();
-                            onClose();
-                            router.replace('/(auth)');
-                        } catch (error) {
-                            console.error('Delete account error:', error);
-                            Alert.alert('Ошибка', 'Не удалось удалить аккаунт');
-                        }
-                    }
-                }
-            ]
-        );
+        setShowDeleteConfirm(true);
+    };
+
+    const confirmDeleteAccount = async () => {
+        try {
+            await yandexAuth.deleteAccount();
+            onClose();
+            router.replace('/(auth)');
+        } catch (error) {
+            console.error('Delete account error:', error);
+            Alert.alert('Ошибка', 'Не удалось удалить аккаунт');
+        }
     };
 
     const handleLogout = async () => {
@@ -371,6 +364,46 @@ export const MenuModal = ({ visible, onClose }: MenuModalProps) => {
                     </View>
                 </View>
             </Modal >
+
+            {/* Delete Confirmation Modal */}
+            <Modal
+                transparent
+                visible={showDeleteConfirm}
+                animationType="fade"
+                onRequestClose={() => setShowDeleteConfirm(false)}
+            >
+                <View style={styles.feedbackBackdrop}>
+                    <View style={[styles.feedbackModal, { backgroundColor: theme.cardBg, borderColor: theme.border }]}>
+                        <Pressable style={styles.feedbackClose} onPress={() => setShowDeleteConfirm(false)}>
+                            <Ionicons name="close" size={24} color={theme.subText} />
+                        </Pressable>
+
+                        <Text style={[styles.headerTitle, { color: theme.text, fontSize: 20, marginBottom: 12, textAlign: 'center' }]}>
+                            Удалить аккаунт?
+                        </Text>
+
+                        <Text style={[styles.feedbackText, { color: theme.text, marginBottom: 24 }]}>
+                            Вы действительно хотите удалить вашу анкету? Это безвозвратное действие, все ваши мэтчи, чаты и взаимодействия с другими пользователями будут полностью удалены.
+                        </Text>
+
+                        <View style={{ flexDirection: 'row', gap: 12, width: '100%' }}>
+                            <Pressable
+                                style={[styles.feedbackButton, { backgroundColor: theme.cardBg, borderWidth: 1, borderColor: theme.border, flex: 1 }]}
+                                onPress={() => setShowDeleteConfirm(false)}
+                            >
+                                <Text style={[styles.feedbackButtonText, { color: theme.text }]}>Отмена</Text>
+                            </Pressable>
+
+                            <Pressable
+                                style={[styles.feedbackButton, { backgroundColor: '#FF453A', flex: 1 }]}
+                                onPress={confirmDeleteAccount}
+                            >
+                                <Text style={styles.feedbackButtonText}>Удалить</Text>
+                            </Pressable>
+                        </View>
+                    </View>
+                </View>
+            </Modal>
         </Modal >
     );
 };
