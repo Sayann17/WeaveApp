@@ -62,6 +62,11 @@ paths:
         type: cloud_functions
         function_id: d4e7tedk8v6ng9d3u68f
       operationId: me
+    delete:
+      x-yc-apigateway-integration:
+        type: cloud_functions
+        function_id: d4e7tedk8v6ng9d3u68f
+      operationId: deleteAccount
   /profile:
     post:
       x-yc-apigateway-integration:
@@ -91,6 +96,12 @@ paths:
         type: cloud_functions
         function_id: d4ecmpdtnp0imbqrprrv
       operationId: gethistory
+  /user-status:
+    get:
+      x-yc-apigateway-integration:
+        type: cloud_functions
+        function_id: d4ecmpdtnp0imbqrprrv
+      operationId: getUserStatus
   /like:
     post:
       x-yc-apigateway-integration:

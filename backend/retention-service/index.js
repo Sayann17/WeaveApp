@@ -138,7 +138,7 @@ async function updateLastNotified(session, userId) {
     `, {
         '$id': TypedValues.utf8(userId),
         '$now': TypedValues.timestamp(new Date())
-    });
+    }, { commitTx: true, beginTx: { serializableReadWrite: {} } });
 }
 
 module.exports.handler = handler;
