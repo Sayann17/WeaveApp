@@ -37,6 +37,7 @@ async function withRetry<T>(
 class YandexAuthService implements IAuthService {
     private _currentUser: User | null = null;
     private _listeners: ((user: User | null) => void)[] = [];
+    private _cachedToken: string | null = null; // In-memory token cache to avoid AsyncStorage delays
 
     constructor() {
         // Skip session load on server-side (Next.js/Expo Router SSG)
@@ -51,7 +52,16 @@ class YandexAuthService implements IAuthService {
     }
 
     async getToken(): Promise<string | null> {
-        return AsyncStorage.getItem('auth_token');
+        // Return cached token first for instant access
+        if (this._cachedToken) {
+            return this._cachedToken;
+        }
+        // Fallback to AsyncStorage
+        const token = await AsyncStorage.getItem('auth_token');
+        if (token) {
+            this._cachedToken = token;
+        }
+        return token;
     }
 
     async telegramLogin(tgUser: any): Promise<void> {
@@ -83,9 +93,11 @@ class YandexAuthService implements IAuthService {
 
                 if (data.token && data.user) {
                     this._currentUser = this._transformUser(data.user);
+                    // Cache token in memory FIRST for instant access
+                    this._cachedToken = data.token;
                     await AsyncStorage.setItem('auth_token', data.token);
                     this._notifyListeners();
-                    console.log('Telegram login successful, token saved');
+                    console.log('Telegram login successful, token saved and cached');
                 } else {
                     throw new Error('Invalid response from server');
                 }
@@ -107,6 +119,8 @@ class YandexAuthService implements IAuthService {
 
         try {
             const token = await AsyncStorage.getItem('auth_token');
+            // Cache the token in memory
+            this._cachedToken = token;
             console.log('[AuthService] Loading session, token exists:', !!token);
 
             if (token) {
@@ -167,12 +181,13 @@ class YandexAuthService implements IAuthService {
 
     async logout(): Promise<void> {
         this._currentUser = null;
+        this._cachedToken = null; // Clear cached token
         await AsyncStorage.removeItem('auth_token');
         this._notifyListeners();
     }
 
     async deleteAccount(): Promise<void> {
-        const token = await AsyncStorage.getItem('auth_token');
+        const token = await this.getToken(); // Use cached token method
         if (!token) throw new Error('Not authenticated');
 
         const response = await fetch(`${API_URL}/me`, {
@@ -221,7 +236,7 @@ class YandexAuthService implements IAuthService {
         try {
             await withRetry(
                 async () => {
-                    const token = await AsyncStorage.getItem('auth_token');
+                    const token = await this.getToken(); // Use cached token for instant access
                     if (!token) throw new Error('Not authenticated');
 
                     const response = await fetch(`${API_URL}/profile`, {
