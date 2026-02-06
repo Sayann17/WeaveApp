@@ -71,7 +71,7 @@ export default function RootLayout() {
           }
         }
       } else {
-        setIsZenChecked(true);
+        // NOT setting isZenChecked here - it should remain false until authenticated user check
         if (inTabsGroup || inOnboarding || inZen) {
           router.replace('/(auth)');
         }
@@ -81,8 +81,8 @@ export default function RootLayout() {
     checkNavigation();
   }, [user, segments, isLoading]); // Removed isZenChecked from deps to prevent re-trigger
 
-  // Индикатор загрузки - показывать пока Zen не проверен
-  if (isLoading || (user?.profile_completed && !isZenChecked)) {
+  // Индикатор загрузки - показывать пока Zen не проверен (only for authenticated users)
+  if (isLoading || (user && user.profile_completed && !isZenChecked)) {
     return (
       <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#f3efe1' }}>
         <ActivityIndicator size="large" color="#34d399" />
