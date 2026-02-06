@@ -12,12 +12,10 @@ import { ThemeProvider } from './context/ThemeContext';
 import './global.css'; // Import global CSS for pinch-zoom prevention
 import { User } from './services/interfaces/IAuthService';
 import { yandexAuth } from './services/yandex/AuthService';
-import { ZenService } from './services/ZenService';
 
 export default function RootLayout() {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [isZenChecked, setIsZenChecked] = useState(false);
   const segments = useSegments();
   const router = useRouter();
 
@@ -36,56 +34,26 @@ export default function RootLayout() {
   useEffect(() => {
     if (isLoading) return;
 
-    const checkNavigation = async () => {
-      const inAuthGroup = segments[0] === '(auth)';
-      const inTabsGroup = segments[0] === '(tabs)';
-      const inOnboarding = segments[0] === 'onboarding';
-      const inZen = segments[0] === 'zen';
+    const inAuthGroup = segments[0] === '(auth)';
+    const inTabsGroup = segments[0] === '(tabs)';
+    const inOnboarding = segments[0] === 'onboarding';
 
-      console.log('[Layout] checkNavigation:', { user: !!user, profile_completed: user?.profile_completed, segments: segments[0], isZenChecked, inZen });
-
-      if (user) {
-        if (!user.profile_completed && !inOnboarding && !inAuthGroup) {
-          setIsZenChecked(true);
-          router.replace('/onboarding/welcome');
-        } else if (user.profile_completed) {
-          // Check for Zen (Day Pause) BEFORE navigating anywhere
-          if (!isZenChecked && !inZen) {
-            console.log('[Layout] Calling ZenService.shouldShowZen()...');
-            try {
-              const shouldShowZen = await ZenService.shouldShowZen();
-              console.log('[Layout] shouldShowZen result:', shouldShowZen);
-              setIsZenChecked(true);
-              if (shouldShowZen) {
-                router.replace('/zen');
-                return;
-              }
-            } catch (err) {
-              console.error('[Layout] ZenService error:', err);
-              setIsZenChecked(true);
-            }
-          }
-
-          if (inAuthGroup || inOnboarding) {
-            router.replace('/(tabs)');
-          }
-        }
-      } else {
-        // NOT setting isZenChecked here - it should remain false until authenticated user check
-        if (inTabsGroup || inOnboarding || inZen) {
-          router.replace('/(auth)');
-        }
+    if (user) {
+      if (!user.profile_completed && !inOnboarding && !inAuthGroup) {
+        router.replace('/onboarding/welcome');
+      } else if (user.profile_completed && (inAuthGroup || inOnboarding)) {
+        router.replace('/(tabs)');
       }
-    };
+    } else if (!user && (inTabsGroup || inOnboarding)) {
+      router.replace('/(auth)');
+    }
+  }, [user, segments, isLoading]);
 
-    checkNavigation();
-  }, [user, segments, isLoading]); // Removed isZenChecked from deps to prevent re-trigger
-
-  // Индикатор загрузки - показывать пока Zen не проверен (only for authenticated users)
-  if (isLoading || (user && user.profile_completed && !isZenChecked)) {
+  // Индикатор загрузки
+  if (isLoading) {
     return (
-      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#f3efe1' }}>
-        <ActivityIndicator size="large" color="#34d399" />
+      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#0a0a0a' }}>
+        <ActivityIndicator size="large" color="#e1306c" />
       </View>
     );
   }
@@ -102,7 +70,6 @@ export default function RootLayout() {
                 <Stack.Screen name="(auth)" />
                 <Stack.Screen name="onboarding" />
                 <Stack.Screen name="(tabs)" />
-                <Stack.Screen name="zen/index" />
                 <Stack.Screen name="chat/[id]" />
                 <Stack.Screen name="profile/[id]" />
                 <Stack.Screen name="profile/edit" />
