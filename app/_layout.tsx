@@ -12,6 +12,7 @@ import { ThemeProvider } from './context/ThemeContext';
 import './global.css'; // Import global CSS for pinch-zoom prevention
 import { User } from './services/interfaces/IAuthService';
 import { yandexAuth } from './services/yandex/AuthService';
+import { ZenService } from './services/ZenService';
 
 export default function RootLayout() {
   const [user, setUser] = useState<User | null>(null);
@@ -34,19 +35,35 @@ export default function RootLayout() {
   useEffect(() => {
     if (isLoading) return;
 
-    const inAuthGroup = segments[0] === '(auth)';
-    const inTabsGroup = segments[0] === '(tabs)';
-    const inOnboarding = segments[0] === 'onboarding';
+    const checkNavigation = async () => {
+      const inAuthGroup = segments[0] === '(auth)';
+      const inTabsGroup = segments[0] === '(tabs)';
+      const inOnboarding = segments[0] === 'onboarding';
+      const inZen = segments[0] === 'zen';
 
-    if (user) {
-      if (!user.profile_completed && !inOnboarding && !inAuthGroup) {
-        router.replace('/onboarding/welcome');
-      } else if (user.profile_completed && (inAuthGroup || inOnboarding)) {
-        router.replace('/(tabs)');
+      if (user) {
+        if (!user.profile_completed && !inOnboarding && !inAuthGroup) {
+          router.replace('/onboarding/welcome');
+        } else if (user.profile_completed) {
+          // Check for Zen (Day Pause)
+          if (!inZen) {
+            const shouldShowZen = await ZenService.shouldShowZen();
+            if (shouldShowZen) {
+              router.replace('/zen');
+              return;
+            }
+          }
+
+          if (inAuthGroup || inOnboarding) {
+            router.replace('/(tabs)');
+          }
+        }
+      } else if (!user && (inTabsGroup || inOnboarding || inZen)) {
+        router.replace('/(auth)');
       }
-    } else if (!user && (inTabsGroup || inOnboarding)) {
-      router.replace('/(auth)');
-    }
+    };
+
+    checkNavigation();
   }, [user, segments, isLoading]);
 
   // Индикатор загрузки
@@ -70,6 +87,7 @@ export default function RootLayout() {
                 <Stack.Screen name="(auth)" />
                 <Stack.Screen name="onboarding" />
                 <Stack.Screen name="(tabs)" />
+                <Stack.Screen name="zen/index" />
                 <Stack.Screen name="chat/[id]" />
                 <Stack.Screen name="profile/[id]" />
                 <Stack.Screen name="profile/edit" />
