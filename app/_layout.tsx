@@ -17,6 +17,7 @@ import { ZenService } from './services/ZenService';
 export default function RootLayout() {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [isZenChecked, setIsZenChecked] = useState(false);
   const segments = useSegments();
   const router = useRouter();
 
@@ -41,16 +42,27 @@ export default function RootLayout() {
       const inOnboarding = segments[0] === 'onboarding';
       const inZen = segments[0] === 'zen';
 
+      console.log('[Layout] checkNavigation:', { user: !!user, profile_completed: user?.profile_completed, segments: segments[0], isZenChecked, inZen });
+
       if (user) {
         if (!user.profile_completed && !inOnboarding && !inAuthGroup) {
+          setIsZenChecked(true);
           router.replace('/onboarding/welcome');
         } else if (user.profile_completed) {
-          // Check for Zen (Day Pause)
-          if (!inZen) {
-            const shouldShowZen = await ZenService.shouldShowZen();
-            if (shouldShowZen) {
-              router.replace('/zen');
-              return;
+          // Check for Zen (Day Pause) BEFORE navigating anywhere
+          if (!isZenChecked && !inZen) {
+            console.log('[Layout] Calling ZenService.shouldShowZen()...');
+            try {
+              const shouldShowZen = await ZenService.shouldShowZen();
+              console.log('[Layout] shouldShowZen result:', shouldShowZen);
+              setIsZenChecked(true);
+              if (shouldShowZen) {
+                router.replace('/zen');
+                return;
+              }
+            } catch (err) {
+              console.error('[Layout] ZenService error:', err);
+              setIsZenChecked(true);
             }
           }
 
@@ -58,19 +70,22 @@ export default function RootLayout() {
             router.replace('/(tabs)');
           }
         }
-      } else if (!user && (inTabsGroup || inOnboarding || inZen)) {
-        router.replace('/(auth)');
+      } else {
+        setIsZenChecked(true);
+        if (inTabsGroup || inOnboarding || inZen) {
+          router.replace('/(auth)');
+        }
       }
     };
 
     checkNavigation();
-  }, [user, segments, isLoading]);
+  }, [user, segments, isLoading]); // Removed isZenChecked from deps to prevent re-trigger
 
-  // Индикатор загрузки
-  if (isLoading) {
+  // Индикатор загрузки - показывать пока Zen не проверен
+  if (isLoading || (user?.profile_completed && !isZenChecked)) {
     return (
-      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#0a0a0a' }}>
-        <ActivityIndicator size="large" color="#e1306c" />
+      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#f3efe1' }}>
+        <ActivityIndicator size="large" color="#34d399" />
       </View>
     );
   }

@@ -14,17 +14,11 @@ import { ZenService } from '../services/ZenService';
 
 const { width } = Dimensions.get('window');
 
-const QUOTES = [
-    "Цветок не торопится распускаться, даже если ты очень ждешь. Позволь вашему диалогу расти в своем ритме.",
-    "Чтобы наполнить чашу, её нужно сначала подставить под струю. Чтобы получить ответ, нужно сначала задать вопрос.",
-    "Ветер дует, но гора остается неподвижной. Чужое 'нет' не меняет твоей истинной ценности.",
-    "Не ищи того, с кем проживешь жизнь. Ищи того, с кем захочешь выпить этот чай здесь и сейчас."
-];
-
 export default function ZenScreen() {
     const router = useRouter();
     const [isRevealed, setIsRevealed] = useState(false);
-    const [quoteIndex, setQuoteIndex] = useState(0);
+    const [quote, setQuote] = useState<{ text: string, theme: string } | null>(null);
+    const [quoteId, setQuoteId] = useState<string | undefined>(undefined);
     const [ripples, setRipples] = useState<{ id: number; x: number; y: number }[]>([]);
 
     const rotation = useSharedValue(0);
@@ -39,8 +33,18 @@ export default function ZenScreen() {
             false
         );
 
-        // Pick a random quote
-        setQuoteIndex(Math.floor(Math.random() * QUOTES.length));
+        // Fetch quote from backend
+        const loadQuote = async () => {
+            const data = await ZenService.getZenState();
+            if (data.quote) {
+                setQuote(data.quote);
+                setQuoteId(data.quote.id);
+            } else {
+                // Fallback if offline or error
+                setQuote({ text: "Тишина внутри...", theme: "Покой" });
+            }
+        };
+        loadQuote();
     }, []);
 
     const animatedRotation = useAnimatedStyle(() => {
@@ -80,7 +84,7 @@ export default function ZenScreen() {
     };
 
     const handleAccept = async () => {
-        await ZenService.markZenSeen();
+        await ZenService.completeZen(quoteId);
         // Uses replacement to prevent going back to this screen
         router.replace('/(tabs)');
     };
@@ -88,9 +92,6 @@ export default function ZenScreen() {
     return (
         <View style={styles.container}>
             <StatusBar style="dark" />
-
-            {/* Background Gradient Mock */}
-            <View style={styles.gradientOverlay} pointerEvents="none" />
 
             {/* Header */}
             <View style={styles.header}>
@@ -108,7 +109,7 @@ export default function ZenScreen() {
                     <Animated.View style={[styles.centerContent, { opacity: isRevealed ? 0 : 1 }]}>
                         <Animated.View style={[styles.uroborosContainer, animatedRotation]}>
                             <Image
-                                source={require('../../assets/images/uroboros.jpg')}
+                                source={require('../../assets/images/uro_bezh.png')}
                                 style={styles.uroborosImage}
                                 resizeMode="contain"
                             />
@@ -125,14 +126,13 @@ export default function ZenScreen() {
                 ))}
 
                 {/* Quote (Revealed) */}
-                {isRevealed && (
+                {isRevealed && quote && (
                     <Animated.View style={[styles.quoteContainer, animatedReveal]}>
-                        {/* Quote Card */}
-                        <View style={styles.quoteCard}>
-                            <Text style={styles.quoteText}>
-                                {QUOTES[quoteIndex]}
-                            </Text>
-                        </View>
+                        {/* Soft glow behind text */}
+                        <View style={styles.quoteGlow} />
+                        <Text style={styles.quoteText}>
+                            {quote.text}
+                        </Text>
                     </Animated.View>
                 )}
             </Pressable>
@@ -186,29 +186,30 @@ const Ripple = ({ x, y }: { x: number, y: number }) => {
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: '#F0F2F0', // Light Zen Background
+        backgroundColor: '#f3efe1',
     },
     gradientOverlay: {
         ...StyleSheet.absoluteFillObject,
-        backgroundColor: 'rgba(255,255,255,0.3)',
+        backgroundColor: 'transparent', // No overlay to keep bg consistent
     },
     header: {
-        paddingTop: 60,
+        paddingTop: 93,
+        paddingBottom: 16,
         paddingHorizontal: 40,
         zIndex: 10,
     },
     headerTitle: {
-        fontSize: 16,
+        fontSize: 18,
         fontWeight: '300',
-        color: '#94a3b8', // slate-400
-        letterSpacing: 4,
+        color: '#44403c', // stone-700
+        letterSpacing: 6,
         textTransform: 'uppercase',
     },
     separator: {
-        height: 1,
-        width: 50,
-        backgroundColor: '#6ee7b7', // emerald-300
-        marginTop: 8,
+        height: 2,
+        width: 32,
+        backgroundColor: '#34d399', // emerald-400
+        marginTop: 6,
         opacity: 0.6,
     },
     surface: {
@@ -216,6 +217,7 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         justifyContent: 'center',
         overflow: 'hidden',
+        marginTop: -40, // Push content up
     },
     centerContent: {
         alignItems: 'center',
@@ -224,55 +226,55 @@ const styles = StyleSheet.create({
     uroborosContainer: {
         width: width * 0.7,
         height: width * 0.7,
-        marginBottom: 40,
-        opacity: 0.8,
+        marginBottom: 20, // Reduced from 40
+        opacity: 0.9,
     },
     uroborosImage: {
         width: '100%',
         height: '100%',
-        tintColor: '#1e293b' // Dark slate tint if the image is transparent, otherwise remove tintColor
+        // tintColor removed to show original image colors
     },
     instructionText: {
         fontSize: 10,
         letterSpacing: 4,
-        color: '#94a3b8',
+        color: '#000000',
         textAlign: 'center',
         lineHeight: 20,
-        opacity: 0.7,
     },
     quoteContainer: {
         position: 'absolute',
         width: '100%',
-        paddingHorizontal: 40,
+        paddingHorizontal: 48,
         alignItems: 'center',
         justifyContent: 'center',
     },
-    quoteCard: {
-        backgroundColor: 'rgba(255, 255, 255, 0.6)',
-        borderRadius: 40,
-        padding: 40,
-        width: '100%',
-        borderWidth: 1,
-        borderColor: 'rgba(255,255,255,0.8)',
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 10 },
-        shadowOpacity: 0.05,
-        shadowRadius: 20,
+    quoteGlow: {
+        position: 'absolute',
+        width: '120%',
+        height: '200%',
+        backgroundColor: 'rgba(255, 255, 255, 0.4)',
+        borderRadius: 200,
+        // Blur effect via shadow on iOS
+        shadowColor: '#fff',
+        shadowOffset: { width: 0, height: 0 },
+        shadowOpacity: 1,
+        shadowRadius: 80,
     },
     quoteText: {
         fontSize: 20,
-        lineHeight: 32,
-        color: '#1e293b', // slate-800
+        lineHeight: 40, // leading-[2] = 2x font size
+        color: '#44403c', // stone-700
         fontStyle: 'italic',
         textAlign: 'center',
-        fontFamily: 'serif', // Ensure serif font is used
+        fontFamily: 'serif',
+        letterSpacing: 0.5,
     },
     buttonContainer: {
         paddingHorizontal: 50,
         paddingBottom: 60,
     },
     acceptButton: {
-        backgroundColor: '#0f172a', // slate-900
+        backgroundColor: '#0f172a',
         paddingVertical: 20,
         borderRadius: 30,
         alignItems: 'center',
@@ -300,7 +302,7 @@ const styles = StyleSheet.create({
         borderRadius: 50,
         backgroundColor: 'transparent',
         borderWidth: 2,
-        borderColor: 'rgba(255,255,255,0.8)',
+        borderColor: 'rgba(0,0,0,0.3)',
         zIndex: 0,
     }
 });

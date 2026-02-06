@@ -70,6 +70,18 @@ async function handler(event, context) {
             return await banUser(driver, userId, data, responseHeaders);
         }
 
+        // --- ZEN ROUTES ---
+        if (httpMethod === 'GET' && (path === '/zen/quote' || path.endsWith('/zen/quote'))) {
+            if (!userId) return { statusCode: 401, headers: responseHeaders, body: JSON.stringify({ error: 'Unauthorized' }) };
+            return await getZenQuote(driver, userId, responseHeaders);
+        }
+
+        if (httpMethod === 'POST' && (path === '/zen/complete' || path.endsWith('/zen/complete'))) {
+            if (!userId) return { statusCode: 401, headers: responseHeaders, body: JSON.stringify({ error: 'Unauthorized' }) };
+            const data = JSON.parse(body);
+            return await completeZen(driver, userId, data, responseHeaders);
+        }
+
         return { statusCode: 404, headers: responseHeaders, body: JSON.stringify({ error: 'Not found' }) };
 
     } catch (error) {
@@ -307,6 +319,107 @@ async function banUser(driver, adminId, data, headers) {
         statusCode: 200,
         headers,
         body: JSON.stringify({ success: true, message: 'User banned' })
+    };
+}
+
+// --- ZEN IMPL ---
+async function getZenQuote(driver, userId, headers) {
+    let quote = null;
+    let shouldShow = false;
+
+    await driver.tableClient.withSession(async (session) => {
+        // 1. Check 24h interval
+        const checkQuery = `
+            DECLARE $id AS Utf8;
+            SELECT last_zen_at FROM users WHERE id = $id LIMIT 1;
+        `;
+        const { resultSets: userRes } = await session.executeQuery(checkQuery, { '$id': TypedValues.utf8(userId) });
+        const users = TypedData.createNativeObjects(userRes[0]);
+
+        if (users.length > 0) {
+            const lastZen = users[0].last_zen_at;
+            if (!lastZen) {
+                shouldShow = true;
+            } else {
+                const diff = (new Date()).getTime() - (new Date(lastZen)).getTime();
+                const hours = diff / (1000 * 60 * 60);
+                shouldShow = hours >= 24;
+            }
+        }
+
+        if (!shouldShow) return; // Don't fetch quote if not time
+
+        // 2. Fetch user's seen quote IDs
+        const historyQuery = `
+            DECLARE $userId AS Utf8;
+            SELECT quote_id FROM zen_history WHERE user_id = $userId;
+        `;
+        const { resultSets: historyRes } = await session.executeQuery(historyQuery, { '$userId': TypedValues.utf8(userId) });
+        const seenHistory = TypedData.createNativeObjects(historyRes[0]);
+        const seenIds = new Set(seenHistory.map(h => h.quote_id));
+
+        // 3. Fetch ALL quotes
+        const allQuotesQuery = `SELECT id, text, theme FROM zen_quotes;`;
+        const { resultSets: allRes } = await session.executeQuery(allQuotesQuery);
+        const allQuotes = TypedData.createNativeObjects(allRes[0]);
+
+        // 4. Filter to unseen quotes
+        let availableQuotes = allQuotes.filter(q => !seenIds.has(q.id));
+
+        // If all seen, reset and use all
+        if (availableQuotes.length === 0) {
+            availableQuotes = allQuotes;
+        }
+
+        if (availableQuotes.length > 0) {
+            const randomIndex = Math.floor(Math.random() * availableQuotes.length);
+            quote = availableQuotes[randomIndex];
+        }
+    });
+
+    // Ensure quote has text, otherwise use fallback
+    const finalQuote = (quote && quote.text)
+        ? { id: quote.id, text: quote.text, theme: quote.theme }
+        : { id: 'fallback', text: 'Тишина внутри — начало всякого пути.', theme: 'Покой' };
+
+    return {
+        statusCode: 200,
+        headers,
+        body: JSON.stringify({
+            shouldShow,
+            quote: finalQuote
+        })
+    };
+}
+
+async function completeZen(driver, userId, data, headers) {
+    const { quoteId } = data;
+    // We update last_zen_at AND insert history
+
+    await driver.tableClient.withSession(async (session) => {
+        const query = `
+            DECLARE $userId AS Utf8;
+            DECLARE $quoteId AS Utf8;
+            DECLARE $now AS Timestamp;
+
+            -- Update User Timer
+            UPDATE users SET last_zen_at = $now WHERE id = $userId;
+
+            -- Add to History (if quoteId present)
+            UPSERT INTO zen_history (user_id, quote_id, viewed_at) VALUES ($userId, $quoteId, $now);
+        `;
+
+        await session.executeQuery(query, {
+            '$userId': TypedValues.utf8(userId),
+            '$quoteId': TypedValues.utf8(quoteId || 'unknown'),
+            '$now': TypedValues.timestamp(new Date())
+        }, { commitTx: true, beginTx: { serializableReadWrite: {} } });
+    });
+
+    return {
+        statusCode: 200,
+        headers,
+        body: JSON.stringify({ success: true })
     };
 }
 

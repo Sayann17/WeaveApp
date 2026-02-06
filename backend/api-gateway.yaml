@@ -163,6 +163,20 @@ paths:
         function_id: d4esa663s3sph2k3ohh2
       operationId: attendEvent
 
+  # --- ZEN SERVICE (Mapped to interactions function) ---
+  /zen/quote:
+    get:
+      x-yc-apigateway-integration:
+        type: cloud_functions
+        function_id: d4esa663s3sph2k3ohh2
+      operationId: getZenQuote
+  /zen/complete:
+    post:
+      x-yc-apigateway-integration:
+        type: cloud_functions
+        function_id: d4esa663s3sph2k3ohh2
+      operationId: completeZen
+
   # --- INTERACTIONS SERVICE ---
   /block:
     post:
