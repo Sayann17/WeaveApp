@@ -190,3 +190,11 @@ paths:
         type: cloud_functions
         function_id: d4esa663s3sph2k3ohh2
       operationId: banUser
+
+  # --- ANNOUNCEMENT SERVICE ---
+  /admin/broadcast:
+    post:
+      x-yc-apigateway-integration:
+        type: cloud_functions
+        function_id: announcement-function-id-placeholder
+      operationId: broadcastAnnouncement

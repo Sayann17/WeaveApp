@@ -217,16 +217,16 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         justifyContent: 'center',
         overflow: 'hidden',
-        marginTop: -40, // Push content up
+        marginTop: -100, // Significantly push content up
     },
     centerContent: {
         alignItems: 'center',
         justifyContent: 'center',
     },
     uroborosContainer: {
-        width: width * 0.7,
-        height: width * 0.7,
-        marginBottom: 20, // Reduced from 40
+        width: width * 0.85, // Increased size
+        height: width * 0.85,
+        marginBottom: 20,
         opacity: 0.9,
     },
     uroborosImage: {
