@@ -228,6 +228,7 @@ export default function MatchesScreen() {
                     </View>
                 ))}
             </View>
+        );
     };
 
 
