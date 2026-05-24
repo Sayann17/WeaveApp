@@ -1,0 +1,1362 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>WeaveApp — Орнаментальный UI</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;0,700;1,300;1,400;1,600&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --ink:     #0d0904;
+  --deep:    #1a0e06;
+  --gold:    #c9973a;
+  --gold-lt: #e8c56d;
+  --gold-dk: #8a6020;
+  --ivory:   #f5edd8;
+  --ivory2:  #ede0c4;
+  --wine:    #5c1020;
+  --wine2:   #3d0a14;
+  --teal:    #0d4a40;
+  --text-on-dark: #f5edd8;
+  --text-on-light: #1a0e06;
+}
+
+body {
+  font-family: 'Inter', sans-serif;
+  background: #080503;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 50px 20px 100px;
+  gap: 70px;
+  background-image: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cpath d='M30 0 L60 30 L30 60 L0 30 Z' stroke='%23c9973a' stroke-width='0.3' opacity='0.12'/%3E%3Ccircle cx='30' cy='30' r='3' stroke='%23c9973a' stroke-width='0.3' opacity='0.08'/%3E%3C/g%3E%3C/svg%3E");
+}
+
+.page-header {
+  text-align: center;
+}
+
+.page-title {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 32px;
+  font-weight: 400;
+  color: var(--gold-lt);
+  letter-spacing: 4px;
+}
+
+.page-ornament {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  margin-top: 8px;
+}
+
+.orn-line {
+  width: 60px;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--gold), transparent);
+}
+
+.orn-diamond {
+  width: 6px; height: 6px;
+  background: var(--gold);
+  transform: rotate(45deg);
+}
+
+.page-subtitle {
+  color: #6b5a3a;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 3px;
+  margin-top: 10px;
+}
+
+.screens-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 50px;
+  justify-content: center;
+  align-items: flex-start;
+}
+
+.screen-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+}
+
+.screen-label {
+  color: #6b5a3a;
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 3px;
+  font-weight: 500;
+}
+
+/* ──────────── PHONE SHELL ──────────── */
+.phone {
+  width: 320px;
+  height: 680px;
+  border-radius: 36px;
+  overflow: hidden;
+  position: relative;
+  flex-shrink: 0;
+  box-shadow:
+    0 0 0 1px rgba(201,151,58,0.25),
+    0 0 0 3px rgba(201,151,58,0.08),
+    0 40px 100px rgba(0,0,0,0.8),
+    inset 0 1px 0 rgba(232,197,109,0.15);
+}
+
+/* ══════════════════════════════════════
+   SCREEN 1 — DISCOVERY
+══════════════════════════════════════ */
+.s-discovery {
+  background: var(--ink);
+}
+
+/* SVG ornament pattern for background panels */
+.geo-pattern-bg {
+  position: absolute;
+  top: 0; left: 0; right: 0; bottom: 0;
+  opacity: 0.07;
+  background-image: url("data:image/svg+xml,%3Csvg width='40' height='40' viewBox='0 0 40 40' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='%23c9973a' fill-rule='evenodd'%3E%3Cpath d='M20 0 L40 20 L20 40 L0 20Z'/%3E%3Ccircle cx='20' cy='20' r='4'/%3E%3C/g%3E%3C/svg%3E");
+  background-size: 40px 40px;
+}
+
+/* Photo area */
+.disc-photo {
+  width: 100%;
+  height: 360px;
+  position: relative;
+  overflow: hidden;
+  background: linear-gradient(160deg, #3d2010 0%, #1a0c04 100%);
+}
+
+.disc-photo-emoji {
+  position: absolute;
+  top: 50%; left: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 90px;
+  opacity: 0.9;
+}
+
+/* Ornamental top frame overlay */
+.disc-photo .orn-top-frame {
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 70px;
+  background: linear-gradient(var(--ink), transparent);
+  z-index: 2;
+}
+
+.disc-photo .orn-bottom-frame {
+  position: absolute;
+  bottom: 0; left: 0; right: 0;
+  height: 160px;
+  background: linear-gradient(transparent, var(--ink));
+  z-index: 2;
+}
+
+/* Ornamental corners on photo */
+.orn-corner {
+  position: absolute;
+  z-index: 3;
+  opacity: 0.7;
+}
+.orn-corner svg { display: block; }
+
+/* Status bar area */
+.disc-statusbar {
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  z-index: 10;
+  padding: 12px 20px 0;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+/* Cultural roots badge */
+.roots-badge {
+  background: rgba(201,151,58,0.18);
+  border: 1px solid rgba(201,151,58,0.5);
+  border-radius: 4px;
+  padding: 4px 10px;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--gold-lt);
+  letter-spacing: 0.5px;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+/* Name block */
+.disc-info {
+  position: relative;
+  z-index: 5;
+  padding: 0 20px;
+  margin-top: -30px;
+}
+
+.disc-name {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 34px;
+  font-weight: 400;
+  color: var(--ivory);
+  line-height: 1;
+}
+
+/* Ornamental divider */
+.orn-divider {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 10px 0;
+}
+
+.orn-divider .line {
+  flex: 1;
+  height: 1px;
+  background: linear-gradient(90deg, var(--gold-dk), transparent);
+}
+
+.orn-divider .line.right {
+  background: linear-gradient(270deg, var(--gold-dk), transparent);
+}
+
+.orn-divider .motif {
+  color: var(--gold);
+  font-size: 14px;
+  line-height: 1;
+}
+
+/* Compatibility arc */
+.compat-arc-block {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin: 8px 0;
+}
+
+.arc-wrap {
+  position: relative;
+  width: 64px;
+  height: 64px;
+  flex-shrink: 0;
+}
+
+.arc-wrap svg { transform: rotate(-90deg); }
+
+.arc-wrap .arc-pct {
+  position: absolute;
+  top: 50%; left: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--gold);
+  font-family: 'Cormorant Garamond', serif;
+}
+
+.compat-pills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+}
+
+.compat-pill {
+  border: 1px solid rgba(201,151,58,0.4);
+  border-radius: 3px;
+  padding: 3px 8px;
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--gold-lt);
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+}
+
+/* Bio */
+.disc-bio {
+  font-family: 'Cormorant Garamond', serif;
+  font-style: italic;
+  font-size: 16px;
+  color: rgba(245,237,216,0.6);
+  line-height: 1.4;
+  margin: 4px 0;
+}
+
+/* Action buttons */
+.disc-actions {
+  position: absolute;
+  bottom: 20px;
+  left: 0; right: 0;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 20px;
+  z-index: 10;
+}
+
+/* Ornamental button */
+.btn-orn {
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.15s;
+  position: relative;
+}
+.btn-orn:active { transform: scale(0.92); }
+
+.btn-pass-orn {
+  width: 58px; height: 58px;
+  border-radius: 0;
+  background: rgba(92,16,32,0.3);
+  border: 1px solid rgba(201,151,58,0.3);
+  font-size: 20px;
+  clip-path: polygon(12px 0%, calc(100% - 12px) 0%, 100% 12px, 100% calc(100% - 12px), calc(100% - 12px) 100%, 12px 100%, 0% calc(100% - 12px), 0% 12px);
+  color: #e07070;
+}
+
+.btn-like-orn {
+  width: 72px; height: 72px;
+  background: linear-gradient(135deg, #c9973a, #8a6020);
+  font-size: 26px;
+  clip-path: polygon(15px 0%, calc(100% - 15px) 0%, 100% 15px, 100% calc(100% - 15px), calc(100% - 15px) 100%, 15px 100%, 0% calc(100% - 15px), 0% 15px);
+  color: var(--ivory);
+  box-shadow: 0 0 30px rgba(201,151,58,0.4);
+}
+
+.btn-filter-orn {
+  width: 50px; height: 50px;
+  clip-path: polygon(10px 0%, calc(100% - 10px) 0%, 100% 10px, 100% calc(100% - 10px), calc(100% - 10px) 100%, 10px 100%, 0% calc(100% - 10px), 0% 10px);
+  background: rgba(13,74,64,0.5);
+  border: 1px solid rgba(201,151,58,0.25);
+  font-size: 17px;
+  color: var(--gold-lt);
+}
+
+/* ══════════════════════════════════════
+   SCREEN 2 — MATCHES
+══════════════════════════════════════ */
+.s-matches {
+  background: var(--deep);
+}
+
+.matches-topbar {
+  padding: 48px 20px 0;
+  position: relative;
+}
+
+.matches-topbar h1 {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 30px;
+  font-weight: 400;
+  color: var(--ivory);
+  letter-spacing: 2px;
+}
+
+.matches-topbar .new-pill {
+  display: inline-block;
+  background: var(--wine);
+  border: 1px solid rgba(201,151,58,0.4);
+  color: var(--gold-lt);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  padding: 2px 8px;
+  margin-left: 8px;
+  border-radius: 2px;
+}
+
+/* Tab bar — ornamental */
+.orn-tabs {
+  display: flex;
+  gap: 0;
+  padding: 14px 20px 0;
+  border-bottom: 1px solid rgba(201,151,58,0.2);
+}
+
+.orn-tab {
+  padding: 8px 14px;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+  color: rgba(245,237,216,0.4);
+  cursor: pointer;
+  position: relative;
+  white-space: nowrap;
+}
+
+.orn-tab.active {
+  color: var(--gold);
+}
+
+.orn-tab.active::after {
+  content: '';
+  position: absolute;
+  bottom: -1px;
+  left: 0; right: 0;
+  height: 2px;
+  background: var(--gold);
+}
+
+/* New matches row */
+.new-matches-row {
+  padding: 16px 20px 0;
+}
+
+.nm-label {
+  font-size: 9px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 2.5px;
+  color: var(--gold-dk);
+  margin-bottom: 12px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.nm-label::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: linear-gradient(90deg, rgba(201,151,58,0.3), transparent);
+}
+
+.nm-bubbles {
+  display: flex;
+  gap: 14px;
+  overflow-x: auto;
+}
+
+.nm-bubble {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 5px;
+  flex-shrink: 0;
+}
+
+.nm-avatar {
+  width: 54px; height: 54px;
+  position: relative;
+}
+
+.nm-avatar-inner {
+  width: 50px; height: 50px;
+  border-radius: 0;
+  background: linear-gradient(135deg, #3d2010, #1a0c04);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 22px;
+  clip-path: polygon(8px 0%, calc(100% - 8px) 0%, 100% 8px, 100% calc(100% - 8px), calc(100% - 8px) 100%, 8px 100%, 0% calc(100% - 8px), 0% 8px);
+  margin: 2px;
+}
+
+.nm-avatar-ring {
+  position: absolute;
+  top: 0; left: 0;
+  width: 54px; height: 54px;
+}
+
+.nm-name {
+  font-size: 10px;
+  color: rgba(245,237,216,0.5);
+  font-weight: 500;
+  text-align: center;
+}
+
+/* Match list items */
+.match-list {
+  padding: 16px 16px 0;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.match-item {
+  background: rgba(255,255,255,0.03);
+  border: 1px solid rgba(201,151,58,0.12);
+  border-radius: 0;
+  padding: 12px 14px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  position: relative;
+  margin-bottom: 8px;
+  border-radius: 2px;
+}
+
+/* corner ornament on card */
+.match-item::before,
+.match-item::after {
+  content: '';
+  position: absolute;
+  width: 8px; height: 8px;
+  border-color: rgba(201,151,58,0.4);
+  border-style: solid;
+}
+.match-item::before {
+  top: -1px; left: -1px;
+  border-width: 1px 0 0 1px;
+}
+.match-item::after {
+  bottom: -1px; right: -1px;
+  border-width: 0 1px 1px 0;
+}
+
+.match-item .mi-avatar {
+  width: 46px; height: 46px;
+  background: linear-gradient(135deg, #3d2010, #1a0c04);
+  font-size: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  clip-path: polygon(7px 0%, calc(100% - 7px) 0%, 100% 7px, 100% calc(100% - 7px), calc(100% - 7px) 100%, 7px 100%, 0% calc(100% - 7px), 0% 7px);
+  flex-shrink: 0;
+}
+
+.match-item .mi-info { flex: 1; min-width: 0; }
+
+.match-item .mi-name {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--ivory);
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 17px;
+}
+
+.match-item .mi-roots {
+  font-size: 10px;
+  color: var(--gold);
+  font-weight: 600;
+  letter-spacing: 0.5px;
+  margin-top: 1px;
+}
+
+.match-item .mi-preview {
+  font-size: 11px;
+  color: rgba(245,237,216,0.4);
+  margin-top: 3px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.match-item .mi-right {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 4px;
+  flex-shrink: 0;
+}
+
+.match-item .mi-time {
+  font-size: 10px;
+  color: rgba(245,237,216,0.3);
+}
+
+.mi-unread {
+  width: 18px; height: 18px;
+  background: var(--wine);
+  border: 1px solid var(--gold-dk);
+  border-radius: 0;
+  clip-path: polygon(4px 0%, calc(100% - 4px) 0%, 100% 4px, 100% calc(100% - 4px), calc(100% - 4px) 100%, 4px 100%, 0% calc(100% - 4px), 0% 4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 9px;
+  font-weight: 700;
+  color: var(--gold-lt);
+}
+
+/* ══════════════════════════════════════
+   SCREEN 3 — ONBOARDING ROOTS
+══════════════════════════════════════ */
+.s-onboarding {
+  background: var(--ink);
+}
+
+.ob-top {
+  padding: 48px 24px 0;
+}
+
+.ob-step-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.ob-step-dot {
+  width: 6px; height: 6px;
+  border-radius: 0;
+  transform: rotate(45deg);
+  background: transparent;
+  border: 1px solid rgba(201,151,58,0.3);
+}
+
+.ob-step-dot.done {
+  background: var(--gold);
+  border-color: var(--gold);
+}
+
+.ob-step-dot.active {
+  background: transparent;
+  border-color: var(--gold);
+  box-shadow: 0 0 6px var(--gold);
+}
+
+.ob-title {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 28px;
+  font-weight: 300;
+  color: var(--ivory);
+  line-height: 1.2;
+}
+
+.ob-sub {
+  font-size: 12px;
+  color: rgba(245,237,216,0.45);
+  margin-top: 6px;
+  line-height: 1.6;
+}
+
+/* Roots Grid — ornamental cards */
+.roots-grid-orn {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  padding: 18px 18px 0;
+}
+
+.root-tile {
+  background: rgba(255,255,255,0.03);
+  border: 1px solid rgba(201,151,58,0.18);
+  border-radius: 0;
+  padding: 14px 10px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+  transition: all 0.18s;
+  position: relative;
+}
+
+/* Corner ornaments on tile */
+.root-tile::before,
+.root-tile::after {
+  content: '';
+  position: absolute;
+  width: 7px; height: 7px;
+  border-color: rgba(201,151,58,0.35);
+  border-style: solid;
+}
+.root-tile::before {
+  top: -1px; left: -1px;
+  border-width: 1px 0 0 1px;
+}
+.root-tile::after {
+  bottom: -1px; right: -1px;
+  border-width: 0 1px 1px 0;
+}
+
+.root-tile.sel {
+  background: rgba(201,151,58,0.1);
+  border-color: rgba(201,151,58,0.6);
+}
+
+.root-tile.sel::before,
+.root-tile.sel::after {
+  border-color: var(--gold);
+}
+
+.root-tile .re { font-size: 24px; line-height: 1; }
+
+.root-tile .rn {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.3px;
+  color: rgba(245,237,216,0.5);
+  text-align: center;
+}
+
+.root-tile.sel .rn { color: var(--gold); }
+
+.root-tile .rcheck {
+  width: 14px; height: 14px;
+  border: 1px solid rgba(201,151,58,0.3);
+  transform: rotate(45deg);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 8px;
+}
+
+.root-tile.sel .rcheck {
+  background: var(--gold);
+  border-color: var(--gold);
+  color: var(--ink);
+  font-style: normal;
+  transform: rotate(45deg);
+}
+
+/* Ornamental continue button */
+.ob-footer {
+  position: absolute;
+  bottom: 20px;
+  left: 18px; right: 18px;
+}
+
+.btn-orn-primary {
+  width: 100%;
+  padding: 15px;
+  background: linear-gradient(135deg, #c9973a, #8a6020);
+  color: var(--ink);
+  border: none;
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  cursor: pointer;
+  font-family: 'Inter', sans-serif;
+  clip-path: polygon(12px 0%, calc(100% - 12px) 0%, 100% 12px, 100% calc(100% - 12px), calc(100% - 12px) 100%, 12px 100%, 0% calc(100% - 12px), 0% 12px);
+  box-shadow: 0 4px 24px rgba(201,151,58,0.3);
+}
+
+/* ══════════════════════════════════════
+   SCREEN 4 — CULTURAL PASSPORT / PROFILE
+══════════════════════════════════════ */
+.s-profile {
+  background: var(--ink);
+  overflow-y: auto;
+}
+
+.prof-hero {
+  width: 100%;
+  height: 200px;
+  background: linear-gradient(160deg, #3d2010 0%, #0d0904 100%);
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+/* Geometric pattern inside hero */
+.prof-hero-pattern {
+  position: absolute;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background-image: url("data:image/svg+xml,%3Csvg width='50' height='50' viewBox='0 0 50 50' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M25 5 L45 25 L25 45 L5 25Z' stroke='%23c9973a' stroke-width='0.5' fill='none' opacity='0.3'/%3E%3Cpath d='M25 12 L38 25 L25 38 L12 25Z' stroke='%23c9973a' stroke-width='0.5' fill='none' opacity='0.2'/%3E%3Ccircle cx='25' cy='25' r='3' stroke='%23c9973a' stroke-width='0.5' fill='none' opacity='0.2'/%3E%3C/svg%3E");
+  background-size: 50px 50px;
+  opacity: 0.6;
+}
+
+.prof-hero::after {
+  content: '';
+  position: absolute;
+  bottom: 0; left: 0; right: 0;
+  height: 80px;
+  background: linear-gradient(transparent, var(--ink));
+}
+
+.prof-avatar {
+  width: 80px; height: 80px;
+  background: linear-gradient(135deg, #5c3520, #2a1508);
+  font-size: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  clip-path: polygon(12px 0%, calc(100% - 12px) 0%, 100% 12px, 100% calc(100% - 12px), calc(100% - 12px) 100%, 12px 100%, 0% calc(100% - 12px), 0% 12px);
+  border: 2px solid rgba(201,151,58,0.5);
+  position: absolute;
+  bottom: -20px;
+  z-index: 2;
+  box-shadow: 0 0 30px rgba(201,151,58,0.2);
+}
+
+.prof-body {
+  padding: 34px 18px 16px;
+}
+
+.prof-name {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 26px;
+  font-weight: 400;
+  color: var(--ivory);
+  text-align: center;
+  letter-spacing: 1px;
+}
+
+.prof-sub {
+  font-size: 11px;
+  color: var(--gold-dk);
+  text-align: center;
+  margin-top: 3px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+}
+
+/* CULTURAL PASSPORT BLOCK */
+.passport-block {
+  margin-top: 16px;
+  border: 1px solid rgba(201,151,58,0.25);
+  position: relative;
+  padding: 16px;
+  background: rgba(255,255,255,0.025);
+}
+
+/* 4-corner ornamental frame */
+.passport-block::before {
+  content: '';
+  position: absolute;
+  top: -1px; left: -1px; right: -1px; bottom: -1px;
+  background:
+    linear-gradient(to right, var(--gold-dk) 12px, transparent 12px) top left,
+    linear-gradient(to left, var(--gold-dk) 12px, transparent 12px) top right,
+    linear-gradient(to right, var(--gold-dk) 12px, transparent 12px) bottom left,
+    linear-gradient(to left, var(--gold-dk) 12px, transparent 12px) bottom right,
+    linear-gradient(to bottom, var(--gold-dk) 12px, transparent 12px) top left,
+    linear-gradient(to top, var(--gold-dk) 12px, transparent 12px) bottom left,
+    linear-gradient(to bottom, var(--gold-dk) 12px, transparent 12px) top right,
+    linear-gradient(to top, var(--gold-dk) 12px, transparent 12px) bottom right;
+  background-repeat: no-repeat;
+  background-size: 12px 12px;
+  pointer-events: none;
+}
+
+.passport-title {
+  font-size: 9px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 3px;
+  color: var(--gold);
+  margin-bottom: 14px;
+  text-align: center;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  justify-content: center;
+}
+
+.passport-title::before,
+.passport-title::after {
+  content: '◆';
+  font-size: 6px;
+  color: var(--gold-dk);
+}
+
+.passport-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 9px 0;
+  border-bottom: 1px solid rgba(201,151,58,0.1);
+}
+.passport-row:last-child { border-bottom: none; }
+
+.passport-icon {
+  width: 30px; height: 30px;
+  background: rgba(201,151,58,0.1);
+  border: 1px solid rgba(201,151,58,0.2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  clip-path: polygon(5px 0%, calc(100% - 5px) 0%, 100% 5px, 100% calc(100% - 5px), calc(100% - 5px) 100%, 5px 100%, 0% calc(100% - 5px), 0% 5px);
+  flex-shrink: 0;
+}
+
+.passport-label {
+  font-size: 9px;
+  color: var(--gold-dk);
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  font-weight: 600;
+}
+
+.passport-value {
+  font-size: 13px;
+  color: var(--ivory);
+  font-weight: 500;
+  margin-top: 1px;
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 16px;
+}
+
+/* Hooks section */
+.hooks-orn {
+  margin-top: 14px;
+}
+
+.hooks-title {
+  font-size: 9px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 3px;
+  color: var(--gold-dk);
+  text-align: center;
+  margin-bottom: 10px;
+}
+
+.hook-orn {
+  border: 1px solid rgba(201,151,58,0.15);
+  padding: 10px 12px;
+  margin-bottom: 8px;
+  position: relative;
+  background: rgba(255,255,255,0.02);
+}
+
+.hook-orn::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0;
+  width: 2px;
+  height: 100%;
+  background: linear-gradient(var(--gold), transparent);
+}
+
+.hook-orn .hq {
+  font-size: 9px;
+  color: var(--gold-dk);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  margin-bottom: 4px;
+}
+
+.hook-orn .ha {
+  font-family: 'Cormorant Garamond', serif;
+  font-style: italic;
+  font-size: 15px;
+  color: rgba(245,237,216,0.75);
+  line-height: 1.4;
+}
+
+/* ──────── GLOBAL SVG ORNAMENTS ──────── */
+.svg-orn-corner {
+  position: absolute;
+  z-index: 5;
+}
+
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<div class="page-header">
+  <div class="page-title">✦ WeaveApp</div>
+  <div class="page-ornament">
+    <div class="orn-line"></div>
+    <div class="orn-diamond"></div>
+    <div class="orn-line" style="background:linear-gradient(270deg,transparent,var(--gold),transparent);"></div>
+  </div>
+  <div class="page-subtitle">Орнаментальный UI · Концепция</div>
+</div>
+
+<!-- ROW 1 -->
+<div class="screens-row">
+
+  <!-- ═══ SCREEN 1: DISCOVERY ═══ -->
+  <div class="screen-wrap">
+    <div class="screen-label">I · Поиск</div>
+    <div class="phone s-discovery">
+      <div class="geo-pattern-bg"></div>
+
+      <!-- Status bar -->
+      <div class="disc-statusbar">
+        <!-- Top corner ornament SVG -->
+        <svg width="100%" height="50" style="position:absolute;top:0;left:0;opacity:0.5;pointer-events:none;">
+          <!-- Top-left corner -->
+          <polyline points="0,30 0,0 30,0" fill="none" stroke="#c9973a" stroke-width="1"/>
+          <rect x="12" y="0" width="2" height="2" fill="#c9973a" opacity="0.6"/>
+          <!-- Top-right corner -->
+          <polyline points="320,30 320,0 290,0" fill="none" stroke="#c9973a" stroke-width="1"/>
+          <rect x="306" y="0" width="2" height="2" fill="#c9973a" opacity="0.6"/>
+        </svg>
+        <div style="color:rgba(245,237,216,0.3);font-size:11px;z-index:10;margin-top:8px;">22:55</div>
+        <div class="roots-badge" style="z-index:10;margin-top:8px;">🌿 Тюркские корни</div>
+      </div>
+
+      <!-- Photo -->
+      <div class="disc-photo">
+        <div class="disc-photo-emoji">👩</div>
+        <!-- Ornamental bottom frame with pattern -->
+        <div class="disc-bottom-frame" style="position:absolute;bottom:0;left:0;right:0;height:200px;background:linear-gradient(transparent,#0d0904);z-index:2;"></div>
+        <!-- Ornamental SVG overlays on corners of photo -->
+        <svg style="position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:3;" viewBox="0 0 320 360">
+          <!-- Bottom ornamental border -->
+          <path d="M0 330 L20 310 L40 330 L60 310 L80 330 L100 310 L120 330 L140 310 L160 330 L180 310 L200 330 L220 310 L240 330 L260 310 L280 330 L300 310 L320 330" fill="none" stroke="#c9973a" stroke-width="0.6" opacity="0.5"/>
+        </svg>
+      </div>
+
+      <!-- Info -->
+      <div class="disc-info">
+        <div class="disc-name">Айгерим, 24</div>
+
+        <div class="orn-divider">
+          <div class="line"></div>
+          <div class="motif">❖</div>
+          <div class="line right"></div>
+        </div>
+
+        <div class="compat-arc-block">
+          <div class="arc-wrap">
+            <svg width="64" height="64" viewBox="0 0 64 64">
+              <circle cx="32" cy="32" r="26" fill="none" stroke="rgba(201,151,58,0.15)" stroke-width="4"/>
+              <circle cx="32" cy="32" r="26" fill="none" stroke="url(#goldGrad)" stroke-width="4"
+                stroke-dasharray="163" stroke-dashoffset="20" stroke-linecap="butt"/>
+              <defs>
+                <linearGradient id="goldGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+                  <stop offset="0%" stop-color="#c9973a"/>
+                  <stop offset="100%" stop-color="#e8c56d"/>
+                </linearGradient>
+              </defs>
+              <!-- Diamond markers -->
+              <rect x="30" y="4" width="4" height="4" fill="#c9973a" transform="rotate(45 32 6)"/>
+            </svg>
+            <div class="arc-pct">89%</div>
+          </div>
+
+          <div>
+            <div style="font-size:9px;color:#8a6020;text-transform:uppercase;letter-spacing:2px;margin-bottom:6px;">Совместимость</div>
+            <div class="compat-pills">
+              <span class="compat-pill">Тюркские</span>
+              <span class="compat-pill">Ислам</span>
+              <span class="compat-pill">Козерог</span>
+              <span class="compat-pill">±3 года</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="disc-bio">"Гостеприимство — это мой язык любви"</div>
+      </div>
+
+      <!-- Actions -->
+      <div class="disc-actions">
+        <button class="btn-orn btn-filter-orn">⚙</button>
+        <button class="btn-orn btn-pass-orn">✕</button>
+        <button class="btn-orn btn-like-orn">♥</button>
+      </div>
+
+      <!-- Bottom corner ornaments -->
+      <svg style="position:absolute;bottom:0;left:0;width:100%;height:20px;pointer-events:none;z-index:10;" viewBox="0 0 320 20">
+        <polyline points="0,20 0,0 20,0" fill="none" stroke="#c9973a" stroke-width="0.8" opacity="0.5"/>
+        <polyline points="320,20 320,0 300,0" fill="none" stroke="#c9973a" stroke-width="0.8" opacity="0.5"/>
+      </svg>
+    </div>
+  </div>
+
+  <!-- ═══ SCREEN 2: MATCHES ═══ -->
+  <div class="screen-wrap">
+    <div class="screen-label">II · Мэтчи</div>
+    <div class="phone s-matches">
+      <div class="geo-pattern-bg" style="opacity:0.04;"></div>
+
+      <div class="matches-topbar">
+        <h1>Мэтчи <span class="new-pill">2 новых</span></h1>
+      </div>
+
+      <div class="orn-tabs">
+        <div class="orn-tab active">Мэтчи (4)</div>
+        <div class="orn-tab">Лайкнули (7)</div>
+        <div class="orn-tab">Лайкнул (12)</div>
+      </div>
+
+      <div class="new-matches-row">
+        <div class="nm-label">Новые совпадения</div>
+        <div class="nm-bubbles">
+          <div class="nm-bubble">
+            <div class="nm-avatar">
+              <svg style="position:absolute;top:0;left:0;" width="54" height="54" viewBox="0 0 54 54">
+                <polygon points="27,1 53,27 27,53 1,27" fill="none" stroke="#c9973a" stroke-width="1.5" opacity="0.8"/>
+                <circle cx="27" cy="27" r="4" fill="#c9973a" opacity="0.6"/>
+              </svg>
+              <div class="nm-avatar-inner">👩</div>
+            </div>
+            <div class="nm-name">Айгерим</div>
+          </div>
+          <div class="nm-bubble">
+            <div class="nm-avatar">
+              <svg style="position:absolute;top:0;left:0;" width="54" height="54" viewBox="0 0 54 54">
+                <polygon points="27,1 53,27 27,53 1,27" fill="none" stroke="#c9973a" stroke-width="1.5" opacity="0.8"/>
+              </svg>
+              <div class="nm-avatar-inner">👩‍🦱</div>
+            </div>
+            <div class="nm-name">Зарина</div>
+          </div>
+          <div class="nm-bubble">
+            <div class="nm-avatar">
+              <svg style="position:absolute;top:0;left:0;" width="54" height="54" viewBox="0 0 54 54">
+                <polygon points="27,1 53,27 27,53 1,27" fill="none" stroke="rgba(201,151,58,0.3)" stroke-width="1"/>
+              </svg>
+              <div class="nm-avatar-inner">👩‍🦳</div>
+            </div>
+            <div class="nm-name">Мадина</div>
+          </div>
+          <div class="nm-bubble">
+            <div class="nm-avatar">
+              <svg style="position:absolute;top:0;left:0;" width="54" height="54" viewBox="0 0 54 54">
+                <polygon points="27,1 53,27 27,53 1,27" fill="none" stroke="rgba(201,151,58,0.3)" stroke-width="1"/>
+              </svg>
+              <div class="nm-avatar-inner">👧</div>
+            </div>
+            <div class="nm-name">Алина</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="match-list" style="margin-top:14px;">
+        <div class="match-item">
+          <div class="mi-avatar">👩</div>
+          <div class="mi-info">
+            <div class="mi-name">Айгерим, 24</div>
+            <div class="mi-roots">❖ Тюркские · Ислам · 89%</div>
+            <div class="mi-preview">Сплетем узор? Напиши первое...</div>
+          </div>
+          <div class="mi-right">
+            <div class="mi-time">сейчас</div>
+            <div class="mi-unread">2</div>
+          </div>
+        </div>
+
+        <div class="match-item">
+          <div class="mi-avatar">👩‍🦱</div>
+          <div class="mi-info">
+            <div class="mi-name">Зарина, 26</div>
+            <div class="mi-roots">❖ Кавказские · 74%</div>
+            <div class="mi-preview">Привет! Очень рада знакомству</div>
+          </div>
+          <div class="mi-right">
+            <div class="mi-time">14:32</div>
+            <div style="font-size:11px;color:#c9973a;">✓✓</div>
+          </div>
+        </div>
+
+        <div class="match-item">
+          <div class="mi-avatar">👩‍🦳</div>
+          <div class="mi-info">
+            <div class="mi-name">Мадина, 27</div>
+            <div class="mi-roots">❖ Славянские · 61%</div>
+            <div class="mi-preview">Ты: Это очень интересно!</div>
+          </div>
+          <div class="mi-right">
+            <div class="mi-time">Вчера</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Bottom ornament -->
+      <svg style="position:absolute;bottom:0;left:0;width:100%;height:20px;pointer-events:none;" viewBox="0 0 320 20">
+        <path d="M0 20 L16 4 L32 20 L48 4 L64 20 L80 4 L96 20" fill="none" stroke="rgba(201,151,58,0.15)" stroke-width="1"/>
+        <polyline points="0,20 0,0 16,0" fill="none" stroke="#c9973a" stroke-width="0.8" opacity="0.5"/>
+        <polyline points="320,20 320,0 304,0" fill="none" stroke="#c9973a" stroke-width="0.8" opacity="0.5"/>
+      </svg>
+    </div>
+  </div>
+
+</div>
+
+<!-- ROW 2 -->
+<div class="screens-row">
+
+  <!-- ═══ SCREEN 3: ONBOARDING ═══ -->
+  <div class="screen-wrap">
+    <div class="screen-label">III · Онбординг — Корни</div>
+    <div class="phone s-onboarding">
+      <div class="geo-pattern-bg"></div>
+
+      <!-- Top ornamental SVG frame -->
+      <svg style="position:absolute;top:0;left:0;width:100%;z-index:5;pointer-events:none;" height="44" viewBox="0 0 320 44">
+        <polyline points="0,40 0,0 44,0" fill="none" stroke="#c9973a" stroke-width="1" opacity="0.6"/>
+        <polyline points="320,40 320,0 276,0" fill="none" stroke="#c9973a" stroke-width="1" opacity="0.6"/>
+        <circle cx="44" cy="0" r="2" fill="#c9973a" opacity="0.5"/>
+        <circle cx="276" cy="0" r="2" fill="#c9973a" opacity="0.5"/>
+      </svg>
+
+      <div class="ob-top">
+        <div class="ob-step-row" style="margin-top:4px;">
+          <div class="ob-step-dot done"></div>
+          <div class="ob-step-dot active"></div>
+          <div class="ob-step-dot"></div>
+          <div class="ob-step-dot"></div>
+          <div class="ob-step-dot"></div>
+        </div>
+        <div class="ob-title">Ваши<br/>культурные корни</div>
+        <div class="ob-sub">Выберите всё, что отражает вас.</div>
+      </div>
+
+      <div class="orn-divider" style="padding: 0 18px; margin-top: 12px;">
+        <div class="line"></div>
+        <div class="motif" style="font-size:10px;">◆</div>
+        <div class="line right"></div>
+      </div>
+
+      <div class="roots-grid-orn">
+        <div class="root-tile sel">
+          <div class="re">🌿</div>
+          <div class="rn">Тюркские</div>
+          <div class="rcheck" style="transform:rotate(45deg);">✓</div>
+        </div>
+        <div class="root-tile">
+          <div class="re">🏔</div>
+          <div class="rn">Кавказские</div>
+          <div class="rcheck"></div>
+        </div>
+        <div class="root-tile sel">
+          <div class="re">🌾</div>
+          <div class="rn">Славянские</div>
+          <div class="rcheck" style="transform:rotate(45deg);">✓</div>
+        </div>
+        <div class="root-tile">
+          <div class="re">🌸</div>
+          <div class="rn">Азиатские</div>
+          <div class="rcheck"></div>
+        </div>
+        <div class="root-tile">
+          <div class="re">🕌</div>
+          <div class="rn">Арабские</div>
+          <div class="rcheck"></div>
+        </div>
+        <div class="root-tile">
+          <div class="re">🌺</div>
+          <div class="rn">Индийские</div>
+          <div class="rcheck"></div>
+        </div>
+        <div class="root-tile">
+          <div class="re">🌍</div>
+          <div class="rn">Финно-угорские</div>
+          <div class="rcheck"></div>
+        </div>
+        <div class="root-tile">
+          <div class="re">🌐</div>
+          <div class="rn">Человек мира</div>
+          <div class="rcheck"></div>
+        </div>
+      </div>
+
+      <div class="ob-footer">
+        <button class="btn-orn-primary">Продолжить</button>
+      </div>
+
+      <!-- Bottom corners -->
+      <svg style="position:absolute;bottom:0;left:0;width:100%;height:20px;pointer-events:none;" viewBox="0 0 320 20">
+        <polyline points="0,20 0,0 20,0" fill="none" stroke="#c9973a" stroke-width="0.8" opacity="0.5"/>
+        <polyline points="320,20 320,0 300,0" fill="none" stroke="#c9973a" stroke-width="0.8" opacity="0.5"/>
+      </svg>
+    </div>
+  </div>
+
+  <!-- ═══ SCREEN 4: PROFILE ═══ -->
+  <div class="screen-wrap">
+    <div class="screen-label">IV · Культурный паспорт</div>
+    <div class="phone s-profile">
+
+      <!-- Top ornamental frame -->
+      <svg style="position:absolute;top:0;left:0;width:100%;z-index:10;pointer-events:none;" height="44" viewBox="0 0 320 44">
+        <polyline points="0,40 0,0 44,0" fill="none" stroke="#c9973a" stroke-width="1" opacity="0.5"/>
+        <polyline points="320,40 320,0 276,0" fill="none" stroke="#c9973a" stroke-width="1" opacity="0.5"/>
+      </svg>
+
+      <div class="prof-hero">
+        <div class="prof-hero-pattern"></div>
+        <!-- Central ornament -->
+        <svg style="position:absolute;opacity:0.15;" width="200" height="200" viewBox="0 0 200 200">
+          <polygon points="100,10 190,100 100,190 10,100" fill="none" stroke="#c9973a" stroke-width="1"/>
+          <polygon points="100,30 170,100 100,170 30,100" fill="none" stroke="#c9973a" stroke-width="0.7"/>
+          <polygon points="100,50 150,100 100,150 50,100" fill="none" stroke="#c9973a" stroke-width="0.5"/>
+          <circle cx="100" cy="100" r="8" fill="none" stroke="#c9973a" stroke-width="1"/>
+          <circle cx="100" cy="100" r="3" fill="#c9973a"/>
+          <line x1="10" y1="100" x2="30" y2="100" stroke="#c9973a" stroke-width="0.5"/>
+          <line x1="170" y1="100" x2="190" y2="100" stroke="#c9973a" stroke-width="0.5"/>
+          <line x1="100" y1="10" x2="100" y2="30" stroke="#c9973a" stroke-width="0.5"/>
+          <line x1="100" y1="170" x2="100" y2="190" stroke="#c9973a" stroke-width="0.5"/>
+        </svg>
+        <div class="prof-avatar">👤</div>
+      </div>
+
+      <div class="prof-body">
+        <div class="prof-name">Саян</div>
+        <div class="prof-sub">Алматы · В поиске</div>
+
+        <div class="passport-block" style="margin-top:20px;">
+          <div class="passport-title">Культурный паспорт</div>
+
+          <div class="passport-row">
+            <div class="passport-icon">🌿</div>
+            <div>
+              <div class="passport-label">Корни</div>
+              <div class="passport-value">Тюркские · Славянские</div>
+            </div>
+          </div>
+
+          <div class="passport-row">
+            <div class="passport-icon">🕌</div>
+            <div>
+              <div class="passport-label">Мировоззрение</div>
+              <div class="passport-value">Ислам</div>
+            </div>
+          </div>
+
+          <div class="passport-row">
+            <div class="passport-icon">♑</div>
+            <div>
+              <div class="passport-label">Зодиак · Стихия</div>
+              <div class="passport-value">Козерог · Земля</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="hooks-orn" style="margin-top:14px;">
+          <div class="orn-divider" style="margin-bottom:10px;">
+            <div class="line"></div>
+            <div class="motif" style="font-size:10px; color:var(--gold-dk);">◆</div>
+            <div class="line right"></div>
+          </div>
+
+          <div class="hook-orn">
+            <div class="hq">Горжусь в своей культуре</div>
+            <div class="ha">"Гостеприимство — у нас никто не уходит голодным"</div>
+          </div>
+
+          <div class="hook-orn">
+            <div class="hq">Как перезагружаюсь</div>
+            <div class="ha">"Горы, тишина и чашка чая"</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Bottom corners -->
+      <svg style="position:absolute;bottom:0;left:0;width:100%;height:20px;pointer-events:none;" viewBox="0 0 320 20">
+        <polyline points="0,20 0,0 20,0" fill="none" stroke="#c9973a" stroke-width="0.8" opacity="0.5"/>
+        <polyline points="320,20 320,0 300,0" fill="none" stroke="#c9973a" stroke-width="0.8" opacity="0.5"/>
+      </svg>
+
+    </div>
+  </div>
+
+</div>
+
+<!-- Footer note -->
+<div style="text-align:center; max-width:620px;">
+  <div style="color:#4a3820;font-size:11px;line-height:2;letter-spacing:0.3px;">
+    Орнаментальный стиль: золото на тёмном · Угловые рамки вместо скруглений · Бриллиантовые маркеры прогресса ·
+    Срезанные углы кнопок (clip-path) · Геометрические аватары · SVG-паттерн как фон ·
+    Зигзаг-орнамент у нижнего края · Бордюр-углы на карточках
+  </div>
+</div>
+
+</body>
+</html>

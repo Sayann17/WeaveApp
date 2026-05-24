@@ -1,0 +1,1084 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>WeaveApp — Мокапы экранов</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --cream: #f4f0e8;
+    --cream-dark: #ebe5d8;
+    --text: #1c1a17;
+    --subtext: #7a7060;
+    --amber: #c8873a;
+    --amber-light: #f0c070;
+    --terra: #b85c38;
+    --green: #3d8b6e;
+    --card: #ffffff;
+    --border: #e8e0d0;
+  }
+
+  body {
+    font-family: 'Inter', sans-serif;
+    background: #1a1814;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 40px 20px 80px;
+    gap: 60px;
+  }
+
+  .page-title {
+    color: #f4f0e8;
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 28px;
+    font-weight: 300;
+    letter-spacing: 2px;
+    text-align: center;
+    opacity: 0.9;
+  }
+
+  .page-subtitle {
+    color: #7a7060;
+    font-size: 13px;
+    text-align: center;
+    margin-top: 6px;
+    letter-spacing: 0.5px;
+  }
+
+  .screens-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 40px;
+    justify-content: center;
+    align-items: flex-start;
+  }
+
+  .screen-wrap {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 16px;
+  }
+
+  .screen-label {
+    color: #7a7060;
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    font-weight: 500;
+  }
+
+  /* Phone shell */
+  .phone {
+    width: 320px;
+    height: 660px;
+    background: var(--cream);
+    border-radius: 40px;
+    overflow: hidden;
+    position: relative;
+    box-shadow:
+      0 0 0 1px rgba(255,255,255,0.08),
+      0 30px 80px rgba(0,0,0,0.6),
+      inset 0 1px 0 rgba(255,255,255,0.15);
+    flex-shrink: 0;
+  }
+
+  /* ==============================
+     SCREEN 1: DISCOVERY
+  ============================== */
+  .discovery {
+    background: var(--cream);
+  }
+
+  .discovery .photo-area {
+    width: 100%;
+    height: 380px;
+    position: relative;
+    overflow: hidden;
+    background: linear-gradient(160deg, #8B7355 0%, #5C4A35 40%, #3D2E1E 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .discovery .photo-area .avatar-placeholder {
+    width: 100%;
+    height: 100%;
+    background:
+      radial-gradient(ellipse at 50% 30%, rgba(200,135,58,0.3) 0%, transparent 60%),
+      linear-gradient(180deg, #6B4F38 0%, #3D2A1A 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 80px;
+    filter: saturate(0.8);
+  }
+
+  .discovery .photo-area .gradient-overlay {
+    position: absolute;
+    bottom: 0;
+    left: 0; right: 0;
+    height: 200px;
+    background: linear-gradient(transparent, var(--cream));
+  }
+
+  .discovery .cultural-badge {
+    position: absolute;
+    top: 50px;
+    left: 16px;
+    background: rgba(255,255,255,0.92);
+    backdrop-filter: blur(10px);
+    border-radius: 20px;
+    padding: 5px 12px;
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--text);
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.15);
+  }
+
+  .discovery .info-area {
+    padding: 0 20px 0;
+    margin-top: -20px;
+    position: relative;
+    z-index: 2;
+  }
+
+  .discovery .name-age {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 30px;
+    font-weight: 400;
+    color: var(--text);
+    line-height: 1.1;
+  }
+
+  .discovery .compatibility-block {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    margin: 10px 0;
+  }
+
+  .discovery .compat-circle {
+    width: 56px;
+    height: 56px;
+    position: relative;
+    flex-shrink: 0;
+  }
+
+  .discovery .compat-circle svg {
+    transform: rotate(-90deg);
+  }
+
+  .discovery .compat-circle .pct {
+    position: absolute;
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--amber);
+  }
+
+  .discovery .compat-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 5px;
+  }
+
+  .discovery .compat-tag {
+    background: rgba(200,135,58,0.1);
+    border: 1px solid rgba(200,135,58,0.25);
+    border-radius: 10px;
+    padding: 3px 8px;
+    font-size: 11px;
+    color: var(--amber);
+    font-weight: 500;
+  }
+
+  .discovery .bio {
+    font-size: 13px;
+    color: var(--subtext);
+    margin-top: 6px;
+    font-style: italic;
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 15px;
+  }
+
+  .discovery .actions {
+    position: absolute;
+    bottom: 24px;
+    left: 0; right: 0;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 18px;
+  }
+
+  .btn-action {
+    border: none;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: transform 0.15s;
+  }
+  .btn-action:active { transform: scale(0.93); }
+
+  .btn-pass {
+    width: 56px; height: 56px;
+    border-radius: 50%;
+    background: white;
+    border: 1.5px solid var(--border);
+    font-size: 22px;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.08);
+  }
+
+  .btn-like {
+    width: 68px; height: 68px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #c8873a, #e0a050);
+    font-size: 26px;
+    box-shadow: 0 6px 24px rgba(200,135,58,0.4);
+  }
+
+  .btn-filter {
+    width: 48px; height: 48px;
+    border-radius: 50%;
+    background: var(--green);
+    font-size: 18px;
+    box-shadow: 0 4px 14px rgba(61,139,110,0.3);
+  }
+
+  /* ==============================
+     SCREEN 2: MATCHES
+  ============================== */
+  .matches-screen {
+    background: var(--cream);
+  }
+
+  .matches-screen .top-bar {
+    padding: 52px 20px 0;
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+  }
+
+  .matches-screen .top-bar h1 {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 28px;
+    font-weight: 400;
+    color: var(--text);
+  }
+
+  .new-badge {
+    background: var(--terra);
+    color: white;
+    font-size: 10px;
+    font-weight: 700;
+    border-radius: 10px;
+    padding: 2px 8px;
+  }
+
+  .matches-screen .tabs {
+    display: flex;
+    gap: 6px;
+    padding: 14px 16px 0;
+    overflow-x: auto;
+  }
+
+  .tab-chip {
+    padding: 7px 14px;
+    border-radius: 20px;
+    border: 1.5px solid var(--border);
+    font-size: 12px;
+    font-weight: 600;
+    white-space: nowrap;
+    color: var(--subtext);
+    background: transparent;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+
+  .tab-chip.active {
+    background: var(--text);
+    color: var(--cream);
+    border-color: var(--text);
+  }
+
+  /* New matches horizontal */
+  .matches-screen .new-matches-scroll {
+    display: flex;
+    gap: 14px;
+    padding: 16px 16px 0;
+    overflow-x: auto;
+  }
+
+  .match-bubble {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 5px;
+    flex-shrink: 0;
+  }
+
+  .match-bubble .avatar {
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #8B7355, #5C4A35);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 24px;
+    border: 2.5px solid var(--amber);
+    position: relative;
+  }
+
+  .match-bubble .avatar .new-dot {
+    position: absolute;
+    top: 0; right: 0;
+    width: 12px; height: 12px;
+    background: var(--terra);
+    border-radius: 50%;
+    border: 2px solid var(--cream);
+  }
+
+  .match-bubble .bname {
+    font-size: 11px;
+    color: var(--subtext);
+    font-weight: 500;
+  }
+
+  /* Match list */
+  .matches-screen .match-list {
+    padding: 14px 14px 0;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .match-card {
+    background: white;
+    border-radius: 18px;
+    padding: 14px;
+    border: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+  }
+
+  .match-card .m-avatar {
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #7a6045, #3d2a1a);
+    font-size: 22px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+
+  .match-card .m-info { flex: 1; min-width: 0; }
+
+  .match-card .m-name {
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--text);
+  }
+
+  .match-card .m-roots {
+    font-size: 11px;
+    color: var(--green);
+    font-weight: 500;
+    margin-top: 1px;
+  }
+
+  .match-card .m-preview {
+    font-size: 12px;
+    color: var(--subtext);
+    margin-top: 3px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .match-card .m-time {
+    font-size: 11px;
+    color: var(--subtext);
+    align-self: flex-start;
+  }
+
+  .match-card .unread-dot {
+    width: 8px; height: 8px;
+    background: var(--amber);
+    border-radius: 50%;
+    align-self: flex-end;
+    margin-bottom: 2px;
+    flex-shrink: 0;
+  }
+
+  /* ==============================
+     SCREEN 3: ONBOARDING ROOTS
+  ============================== */
+  .onboarding-roots {
+    background: var(--cream);
+  }
+
+  .onboarding-roots .ob-header {
+    padding: 52px 24px 0;
+  }
+
+  .onboarding-roots .ob-step {
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    color: var(--amber);
+    margin-bottom: 8px;
+  }
+
+  .weave-progress {
+    height: 3px;
+    background: var(--border);
+    border-radius: 2px;
+    margin-bottom: 20px;
+    overflow: hidden;
+    position: relative;
+  }
+
+  .weave-progress-fill {
+    height: 100%;
+    width: 40%;
+    background: linear-gradient(90deg, var(--amber), var(--terra));
+    border-radius: 2px;
+    position: relative;
+  }
+
+  .weave-progress-fill::after {
+    content: '';
+    position: absolute;
+    right: -2px;
+    top: -1px;
+    width: 5px;
+    height: 5px;
+    background: var(--terra);
+    border-radius: 50%;
+  }
+
+  .onboarding-roots .ob-title {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 30px;
+    font-weight: 300;
+    color: var(--text);
+    line-height: 1.15;
+  }
+
+  .onboarding-roots .ob-subtitle {
+    font-size: 14px;
+    color: var(--subtext);
+    margin-top: 8px;
+    line-height: 1.5;
+  }
+
+  .roots-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    padding: 20px 20px 0;
+    overflow-y: auto;
+    max-height: 350px;
+  }
+
+  .root-card {
+    background: white;
+    border: 1.5px solid var(--border);
+    border-radius: 16px;
+    padding: 14px 10px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    cursor: pointer;
+    transition: all 0.18s;
+  }
+
+  .root-card.selected {
+    border-color: var(--amber);
+    background: rgba(200,135,58,0.08);
+  }
+
+  .root-card .root-emoji {
+    font-size: 26px;
+    line-height: 1;
+  }
+
+  .root-card .root-name {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text);
+    text-align: center;
+  }
+
+  .root-card.selected .root-name {
+    color: var(--amber);
+  }
+
+  .root-card .root-check {
+    width: 16px; height: 16px;
+    border-radius: 50%;
+    border: 1.5px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .root-card.selected .root-check {
+    background: var(--amber);
+    border-color: var(--amber);
+    color: white;
+    font-size: 9px;
+  }
+
+  .onboarding-roots .ob-footer {
+    position: absolute;
+    bottom: 24px;
+    left: 20px; right: 20px;
+  }
+
+  .btn-primary {
+    width: 100%;
+    padding: 16px;
+    background: var(--text);
+    color: var(--cream);
+    border: none;
+    border-radius: 16px;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    font-family: 'Inter', sans-serif;
+    transition: opacity 0.15s;
+  }
+
+  /* ==============================
+     SCREEN 4: PROFILE / CULTURAL PASSPORT
+  ============================== */
+  .profile-screen {
+    background: var(--cream);
+  }
+
+  .profile-screen .profile-header {
+    width: 100%;
+    height: 220px;
+    background: linear-gradient(160deg, #6B4F38 0%, #3D2A1A 100%);
+    position: relative;
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+    padding-bottom: 0;
+  }
+
+  .profile-screen .profile-header::after {
+    content: '';
+    position: absolute;
+    bottom: 0; left: 0; right: 0;
+    height: 60px;
+    background: linear-gradient(transparent, var(--cream));
+  }
+
+  .profile-screen .avatar-big {
+    width: 90px;
+    height: 90px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #8B7355, #5C4A35);
+    font-size: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 3px solid var(--cream);
+    position: absolute;
+    bottom: -30px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.2);
+    z-index: 2;
+  }
+
+  .profile-screen .profile-body {
+    padding: 44px 20px 20px;
+  }
+
+  .profile-screen .p-name {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 26px;
+    font-weight: 400;
+    color: var(--text);
+    text-align: center;
+  }
+
+  .profile-screen .p-sub {
+    font-size: 13px;
+    color: var(--subtext);
+    text-align: center;
+    margin-top: 4px;
+  }
+
+  /* Cultural Passport Card */
+  .cultural-passport {
+    background: white;
+    border-radius: 20px;
+    border: 1px solid var(--border);
+    padding: 16px;
+    margin-top: 16px;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.05);
+  }
+
+  .cultural-passport .cp-title {
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    color: var(--amber);
+    margin-bottom: 12px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .cultural-passport .cp-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 0;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .cultural-passport .cp-row:last-child {
+    border-bottom: none;
+    padding-bottom: 0;
+  }
+
+  .cultural-passport .cp-icon {
+    width: 32px;
+    height: 32px;
+    border-radius: 10px;
+    background: rgba(200,135,58,0.1);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 16px;
+    flex-shrink: 0;
+  }
+
+  .cultural-passport .cp-label {
+    font-size: 11px;
+    color: var(--subtext);
+    font-weight: 500;
+  }
+
+  .cultural-passport .cp-value {
+    font-size: 14px;
+    color: var(--text);
+    font-weight: 600;
+    margin-top: 1px;
+  }
+
+  .profile-screen .hooks-section {
+    margin-top: 14px;
+  }
+
+  .hooks-section .section-title {
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    color: var(--subtext);
+    margin-bottom: 10px;
+  }
+
+  .hook-card {
+    background: white;
+    border-radius: 14px;
+    border: 1px solid var(--border);
+    padding: 12px 14px;
+    margin-bottom: 8px;
+  }
+
+  .hook-card .hk-q {
+    font-size: 11px;
+    color: var(--subtext);
+    margin-bottom: 4px;
+  }
+
+  .hook-card .hk-a {
+    font-size: 13px;
+    color: var(--text);
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 16px;
+    font-style: italic;
+    line-height: 1.4;
+  }
+
+  /* Divider */
+  .section-divider {
+    text-align: center;
+    color: #7a7060;
+    font-size: 11px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    padding: 8px 0;
+    font-weight: 500;
+    width: 100%;
+  }
+
+  /* Compatibility Explainer (on discovery detail) */
+  .compat-explainer {
+    background: rgba(200,135,58,0.08);
+    border: 1px solid rgba(200,135,58,0.2);
+    border-radius: 14px;
+    padding: 12px;
+    margin-top: 10px;
+  }
+
+  .compat-explainer .ce-title {
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--amber);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 8px;
+  }
+
+  .compat-explainer .ce-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 5px;
+    font-size: 12px;
+    color: var(--text);
+  }
+
+  .compat-explainer .ce-check {
+    color: var(--green);
+    font-size: 13px;
+    flex-shrink: 0;
+  }
+
+  .ce-score {
+    margin-left: auto;
+    font-weight: 700;
+    color: var(--amber);
+    font-size: 12px;
+  }
+</style>
+</head>
+<body>
+
+<div>
+  <div class="page-title">✦ WeaveApp — Мокапы</div>
+  <div class="page-subtitle">Концепция UI · Без правок в коде</div>
+</div>
+
+<div class="screens-row">
+
+  <!-- ======== SCREEN 1: DISCOVERY ======== -->
+  <div class="screen-wrap">
+    <div class="screen-label">1 · Поиск (Discovery)</div>
+    <div class="phone discovery">
+
+      <div class="photo-area">
+        <div class="avatar-placeholder">👩</div>
+        <div class="gradient-overlay"></div>
+        <div class="cultural-badge">🌿 Тюркские корни</div>
+      </div>
+
+      <div class="info-area">
+        <div class="name-age">Айгерим, 24</div>
+
+        <div class="compatibility-block">
+          <!-- SVG circle progress -->
+          <div class="compat-circle">
+            <svg width="56" height="56" viewBox="0 0 56 56">
+              <circle cx="28" cy="28" r="22" fill="none" stroke="#ebe5d8" stroke-width="4"/>
+              <circle cx="28" cy="28" r="22" fill="none" stroke="#c8873a" stroke-width="4"
+                stroke-dasharray="138" stroke-dashoffset="17" stroke-linecap="round"/>
+            </svg>
+            <div class="pct">89%</div>
+          </div>
+
+          <div>
+            <div style="font-size:11px; color:#7a7060; margin-bottom:5px; font-weight:500;">культурное совпадение</div>
+            <div class="compat-tags">
+              <span class="compat-tag">✓ Тюркские корни</span>
+              <span class="compat-tag">✓ Ислам</span>
+              <span class="compat-tag">✓ Козерог</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="bio">"Люблю готовить и читать поэзию..."</div>
+
+        <div class="compat-explainer" style="margin-top: 10px;">
+          <div class="ce-title">Почему вы совместимы</div>
+          <div class="ce-row"><span class="ce-check">✓</span> Общие корни: Тюркские<span class="ce-score">+5</span></div>
+          <div class="ce-row"><span class="ce-check">✓</span> Религия: Ислам<span class="ce-score">+3</span></div>
+          <div class="ce-row"><span class="ce-check">✓</span> Стихия: Земля · Земля<span class="ce-score">+3</span></div>
+          <div class="ce-row"><span class="ce-check">✓</span> Возраст: ±3 года<span class="ce-score">+5</span></div>
+        </div>
+      </div>
+
+      <div class="actions">
+        <button class="btn-action btn-filter">⚙️</button>
+        <button class="btn-action btn-pass">✕</button>
+        <button class="btn-action btn-like">♥</button>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ======== SCREEN 2: MATCHES ======== -->
+  <div class="screen-wrap">
+    <div class="screen-label">2 · Мэтчи</div>
+    <div class="phone matches-screen">
+
+      <div class="top-bar">
+        <h1>Мэтчи</h1>
+        <span class="new-badge">2 новых</span>
+      </div>
+
+      <div class="tabs">
+        <div class="tab-chip active">Мэтчи (4)</div>
+        <div class="tab-chip">Вас лайкнули (7)</div>
+        <div class="tab-chip">Вы лайкнули (12)</div>
+      </div>
+
+      <!-- New matches bubbles -->
+      <div style="padding: 14px 16px 0;">
+        <div style="font-size:11px; color:#7a7060; font-weight:600; text-transform:uppercase; letter-spacing:1px; margin-bottom:10px;">Новые совпадения</div>
+        <div class="new-matches-scroll">
+          <div class="match-bubble">
+            <div class="avatar">👩<div class="new-dot"></div></div>
+            <div class="bname">Айгерим</div>
+          </div>
+          <div class="match-bubble">
+            <div class="avatar">👩‍🦱<div class="new-dot"></div></div>
+            <div class="bname">Зарина</div>
+          </div>
+          <div class="match-bubble">
+            <div class="avatar" style="border-color: var(--border);">👩‍🦳</div>
+            <div class="bname">Мадина</div>
+          </div>
+          <div class="match-bubble">
+            <div class="avatar" style="border-color: var(--border);">👧</div>
+            <div class="bname">Алина</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Match list -->
+      <div style="padding: 0 14px; margin-top: 16px;">
+        <div style="font-size:11px; color:#7a7060; font-weight:600; text-transform:uppercase; letter-spacing:1px; margin-bottom:10px;">Переписка</div>
+      </div>
+      <div class="match-list">
+        <div class="match-card">
+          <div class="m-avatar">👩</div>
+          <div class="m-info">
+            <div class="m-name">Айгерим, 24</div>
+            <div class="m-roots">🌿 Тюркские · Ислам · 89%</div>
+            <div class="m-preview">Сплетем узор? Напиши первое...</div>
+          </div>
+          <div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px;">
+            <div class="m-time">Сейчас</div>
+            <div class="unread-dot"></div>
+          </div>
+        </div>
+
+        <div class="match-card">
+          <div class="m-avatar">👩‍🦱</div>
+          <div class="m-info">
+            <div class="m-name">Зарина, 26</div>
+            <div class="m-roots">🏔 Кавказские · 74%</div>
+            <div class="m-preview">Привет! Как ты?</div>
+          </div>
+          <div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px;">
+            <div class="m-time">14:32</div>
+          </div>
+        </div>
+
+        <div class="match-card">
+          <div class="m-avatar">👩‍🦳</div>
+          <div class="m-info">
+            <div class="m-name">Мадина, 27</div>
+            <div class="m-roots">🌾 Славянские · 61%</div>
+            <div class="m-preview">Ты: Это интересно!</div>
+          </div>
+          <div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px;">
+            <div class="m-time">Вчера</div>
+            <span style="font-size:11px;color:var(--green);">✓✓</span>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+</div>
+
+<!-- Second row -->
+<div class="screens-row">
+
+  <!-- ======== SCREEN 3: ONBOARDING - ROOTS ======== -->
+  <div class="screen-wrap">
+    <div class="screen-label">3 · Онбординг — Корни</div>
+    <div class="phone onboarding-roots">
+
+      <div class="ob-header">
+        <div class="ob-step">Шаг 2 из 5</div>
+        <div class="weave-progress">
+          <div class="weave-progress-fill"></div>
+        </div>
+        <div class="ob-title">Ваши<br/>культурные корни</div>
+        <div class="ob-subtitle">Выберите всё, что отражает вас. Можно несколько.</div>
+      </div>
+
+      <div class="roots-grid">
+        <div class="root-card selected">
+          <div class="root-emoji">🌿</div>
+          <div class="root-name">Тюркские</div>
+          <div class="root-check">✓</div>
+        </div>
+        <div class="root-card">
+          <div class="root-emoji">🏔</div>
+          <div class="root-name">Кавказские</div>
+          <div class="root-check"></div>
+        </div>
+        <div class="root-card selected">
+          <div class="root-emoji">🌾</div>
+          <div class="root-name">Славянские</div>
+          <div class="root-check">✓</div>
+        </div>
+        <div class="root-card">
+          <div class="root-emoji">🌸</div>
+          <div class="root-name">Азиатские</div>
+          <div class="root-check"></div>
+        </div>
+        <div class="root-card">
+          <div class="root-emoji">🕌</div>
+          <div class="root-name">Арабские</div>
+          <div class="root-check"></div>
+        </div>
+        <div class="root-card">
+          <div class="root-emoji">🌍</div>
+          <div class="root-name">Финно-угорские</div>
+          <div class="root-check"></div>
+        </div>
+        <div class="root-card">
+          <div class="root-emoji">🌺</div>
+          <div class="root-name">Индийские</div>
+          <div class="root-check"></div>
+        </div>
+        <div class="root-card">
+          <div class="root-emoji">🌐</div>
+          <div class="root-name">Человек мира</div>
+          <div class="root-check"></div>
+        </div>
+      </div>
+
+      <div class="ob-footer">
+        <button class="btn-primary">Продолжить</button>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ======== SCREEN 4: PROFILE / CULTURAL PASSPORT ======== -->
+  <div class="screen-wrap">
+    <div class="screen-label">4 · Профиль — Культурный паспорт</div>
+    <div class="phone profile-screen" style="overflow-y:auto;">
+
+      <div class="profile-header">
+        <div class="avatar-big">👤</div>
+      </div>
+
+      <div class="profile-body">
+        <div class="p-name">Саян, 25</div>
+        <div class="p-sub">Алматы · В поиске</div>
+
+        <!-- Cultural Passport -->
+        <div class="cultural-passport">
+          <div class="cp-title">🧬 Культурный паспорт</div>
+
+          <div class="cp-row">
+            <div class="cp-icon">🌿</div>
+            <div>
+              <div class="cp-label">Корни</div>
+              <div class="cp-value">Тюркские · Славянские</div>
+            </div>
+          </div>
+
+          <div class="cp-row">
+            <div class="cp-icon">🕌</div>
+            <div>
+              <div class="cp-label">Мировоззрение</div>
+              <div class="cp-value">Ислам</div>
+            </div>
+          </div>
+
+          <div class="cp-row">
+            <div class="cp-icon">♑</div>
+            <div>
+              <div class="cp-label">Зодиак · Стихия</div>
+              <div class="cp-value">Козерог · Земля</div>
+            </div>
+          </div>
+
+          <div class="cp-row">
+            <div class="cp-icon">💬</div>
+            <div>
+              <div class="cp-label">Языки</div>
+              <div class="cp-value">Русский · Казахский</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Personality Hooks -->
+        <div class="hooks-section">
+          <div class="section-title">Личность</div>
+
+          <div class="hook-card">
+            <div class="hk-q">Чем горжусь в своей культуре</div>
+            <div class="hk-a">"Гостеприимство — у нас никто не уходит голодным"</div>
+          </div>
+
+          <div class="hook-card">
+            <div class="hk-q">Как перезагружаюсь</div>
+            <div class="hk-a">"Горы, тишина и чашка чая с молоком"</div>
+          </div>
+        </div>
+
+      </div>
+
+    </div>
+  </div>
+
+</div>
+
+<!-- Note -->
+<div style="text-align:center; max-width: 600px;">
+  <div style="color:#7a7060; font-size:12px; line-height:1.8;">
+    <span style="color:#c8873a;">✦</span> Ключевые изменения: убрано поле «Национальность», оставлены только Корни (макрогруппы) ·
+    Добавлен блок «Культурный паспорт» в профиле ·
+    % совместимости + объяснение «Почему вы совместимы» на карточке ·
+    Горизонтальный скролл новых матчей ·
+    Прогресс-бар с точкой вместо текста «Шаг N из N»
+  </div>
+</div>
+
+</body>
+</html>

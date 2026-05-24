@@ -25,6 +25,15 @@ import { formatMessageTime } from '../utils/date';
 import { normalize } from '../utils/normalize';
 import { getPlatformPadding } from '../utils/platformPadding';
 
+const ETHNICITY_MAP: Record<string, string> = {
+    slavic: 'Славянские', asian: 'Азиатские', caucasian: 'Кавказские',
+    finno_ugric: 'Финно-угорские', european: 'Европейские', african: 'Африканские',
+    latin: 'Латиноамериканские', arab: 'Арабские', jewish: 'Еврейские',
+    indian: 'Индийские', native_american: 'Коренные', pacific: 'Тихоокеанские',
+    middle_eastern: 'Ближневосточные', turkic: 'Тюркские',
+    indo_european: 'Индоевропейские корни', world_citizen: 'Человек мира'
+};
+
 export default function MatchesScreen() {
     const router = useRouter();
     const { theme, themeType } = useTheme();
@@ -130,44 +139,41 @@ export default function MatchesScreen() {
         }
     };
 
-    // Helper to render bio details (gender, zodiac, religion)
+    // Helper to render bio details as pill chips (heritage + gender, zodiac, religion)
     const renderBioDetails = (profile: any) => {
-        // Debug: check what data we're receiving
-        console.log('[renderBioDetails] Profile data:', {
-            id: profile.id,
-            name: profile.name,
-            gender: profile.gender,
-            zodiac: profile.zodiac,
-            religion: profile.religion,
-            religions: profile.religions
-        });
+        const chips: { label: string; isHeritage?: boolean }[] = [];
 
-        const items = [];
-        const dotColor = theme.subText;
-
-        // 1. Gender (text)
-        if (profile.gender) {
-            const genderText = profile.gender === 'female' ? 'Женщина' : 'Мужчина';
-            items.push(
-                <Text key="gender" style={{ fontSize: normalize(13), color: theme.subText }}>
-                    {genderText}
-                </Text>
-            );
-        }
-
-        // 2. Zodiac (emoji + name)
-        if (profile.zodiac && profile.zodiac !== '[]') {
-            const zodiac = getZodiacSignById(profile.zodiac);
-            if (zodiac) {
-                items.push(
-                    <Text key="zodiac" style={{ fontSize: normalize(13), color: theme.subText }}>
-                        {zodiac.emoji} {zodiac.name}
-                    </Text>
-                );
+        // 1. Этнические корни (macroGroups)
+        if (profile.macroGroups && Array.isArray(profile.macroGroups) && profile.macroGroups.length > 0) {
+            const groups = [...profile.macroGroups];
+            const wcIdx = groups.indexOf('world_citizen');
+            if (wcIdx !== -1) {
+                chips.push({ label: 'Человек мира', isHeritage: true });
+                groups.splice(wcIdx, 1);
+            }
+            if (groups.length > 0) {
+                const names = groups.map((g: string) => ETHNICITY_MAP[g] || g).join(', ');
+                chips.push({ label: `${names} корни`, isHeritage: true });
             }
         }
 
-        // 3. Religion (from array or single value)
+        // 2. Национальность (ethnicity)
+        if (profile.ethnicity) {
+            chips.push({ label: profile.ethnicity.charAt(0).toUpperCase() + profile.ethnicity.slice(1).toLowerCase(), isHeritage: true });
+        }
+
+        // 3. Пол
+        if (profile.gender) {
+            chips.push({ label: profile.gender === 'female' ? 'Женщина' : 'Мужчина' });
+        }
+
+        // 4. Зодиак
+        if (profile.zodiac && profile.zodiac !== '[]') {
+            const zodiac = getZodiacSignById(profile.zodiac);
+            if (zodiac) chips.push({ label: `${zodiac.emoji} ${zodiac.name}` });
+        }
+
+        // 5. Религия
         const getReligions = () => {
             if (profile.religions && Array.isArray(profile.religions) && profile.religions.length > 0) {
                 return profile.religions.map((id: string) => {
@@ -180,40 +186,51 @@ export default function MatchesScreen() {
             }
             return null;
         };
-
         const religionsText = getReligions();
-        if (religionsText) {
-            items.push(
-                <Text key="religion" style={{ fontSize: normalize(13), color: theme.subText }}>
-                    {religionsText}
-                </Text>
-            );
-        }
+        if (religionsText) chips.push({ label: religionsText });
 
-        if (items.length === 0) return null;
+        if (chips.length === 0) return null;
 
-        // Render items with dots between them
+        // Chip styles per theme
+        const getChipBg = (isHeritage?: boolean) => {
+            if (themeType === 'light') return isHeritage ? 'rgba(0,0,0,0.06)' : '#fff';
+            if (themeType === 'wine') return isHeritage ? 'rgba(251,218,201,0.15)' : 'rgba(255,255,255,0.1)';
+            return isHeritage ? 'rgba(74,222,128,0.08)' : 'rgba(255,255,255,0.07)';
+        };
+        const getChipBorder = (isHeritage?: boolean) => {
+            if (themeType === 'light') return isHeritage ? 'rgba(0,0,0,0.12)' : '#d0d0d0';
+            if (themeType === 'wine') return isHeritage ? 'rgba(251,218,201,0.4)' : 'rgba(255,255,255,0.25)';
+            return isHeritage ? 'rgba(74,222,128,0.25)' : 'rgba(255,255,255,0.18)';
+        };
+        const getChipText = (isHeritage?: boolean) => {
+            if (themeType === 'light') return isHeritage ? '#1c1c1e' : '#555555';
+            if (themeType === 'wine') return isHeritage ? '#fbdac9' : 'rgba(255,255,255,0.9)';
+            return isHeritage ? '#4ade80' : '#E2E8F0';
+        };
+
         return (
-            <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: normalize(4), flexWrap: 'wrap' }}>
-                {items.map((item, index) => (
-                    <React.Fragment key={index}>
-                        {item}
-                        {index < items.length - 1 && (
-                            <View
-                                style={{
-                                    width: normalize(3),
-                                    height: normalize(3),
-                                    borderRadius: normalize(1.5),
-                                    backgroundColor: dotColor,
-                                    marginHorizontal: normalize(6),
-                                }}
-                            />
-                        )}
-                    </React.Fragment>
+            <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: normalize(6), marginTop: normalize(6) }}>
+                {chips.map((chip, idx) => (
+                    <View
+                        key={idx}
+                        style={{
+                            backgroundColor: getChipBg(chip.isHeritage),
+                            borderWidth: 1,
+                            borderColor: getChipBorder(chip.isHeritage),
+                            borderRadius: normalize(20),
+                            paddingHorizontal: normalize(10),
+                            paddingVertical: normalize(4),
+                        }}
+                    >
+                        <Text style={{ fontSize: normalize(12), color: getChipText(chip.isHeritage), fontWeight: '500' }}>
+                            {chip.label}
+                        </Text>
+                    </View>
                 ))}
             </View>
-        );
     };
+
+
 
     // Helper to format roots
     const getHeritageString = (profile: any) => {
@@ -346,11 +363,9 @@ export default function MatchesScreen() {
                                                         {formatMessageTime(match.lastMessageTime) || ''}
                                                     </Text>
                                                 </View>
-                                                <Text style={[styles.details, { color: themeType === 'wine' ? '#ffd9d9' : '#4ade80' }]} numberOfLines={1}>
-                                                    {getHeritageString(match)}
-                                                </Text>
                                                 {renderBioDetails(match)}
                                             </View>
+
                                         </Pressable>
                                     </View>
 
@@ -478,9 +493,6 @@ export default function MatchesScreen() {
                                             <Text style={[styles.name, { color: theme.text }]} numberOfLines={1}>
                                                 {(profile.name || 'Пользователь')}{profile.age ? `, ${profile.age}` : ''}
                                             </Text>
-                                            <Text style={[styles.details, { color: themeType === 'wine' ? '#ffd9d9' : '#4ade80' }]} numberOfLines={1}>
-                                                {getHeritageString(profile)}
-                                            </Text>
                                             {renderBioDetails(profile)}
                                         </View>
                                     </Pressable>
@@ -552,9 +564,6 @@ export default function MatchesScreen() {
                                         <View style={styles.info}>
                                             <Text style={[styles.name, { color: theme.text }]} numberOfLines={1}>
                                                 {(profile.name || 'Пользователь')}{profile.age ? `, ${profile.age}` : ''}
-                                            </Text>
-                                            <Text style={[styles.details, { color: themeType === 'wine' ? '#ffd9d9' : '#4ade80' }]} numberOfLines={1}>
-                                                {getHeritageString(profile)}
                                             </Text>
                                             {renderBioDetails(profile)}
                                         </View>

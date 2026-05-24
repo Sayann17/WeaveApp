@@ -402,41 +402,98 @@ export const ProfileView = ({ userData, isOwnProfile = false, isMatch = false, b
                     </View>
 
 
-                    {getFullHeritageString() && (
-                        <Text style={[styles.rootsText, { color: themeType === 'wine' ? '#fbdac9' : GREEN_ACCENT }]}>
-                            {getFullHeritageString()}
-                        </Text>
-                    )}
-
-                    {/* Vitals Color Logic */}
+                    {/* PILL CHIPS: корни + витальные данные */}
                     {(() => {
-                        const vitalsColor = isLight ? subTextColor : (themeType === 'wine' ? '#ffffff' : '#E2E8F0');
+                        // Собираем все чипы
+                        const chips: { label: string; isHeritage?: boolean }[] = [];
+
+                        // 1. Этнические корни (macroGroups)
+                        if (userData?.macroGroups && Array.isArray(userData.macroGroups)) {
+                            const groups = [...userData.macroGroups];
+                            const wcIdx = groups.indexOf('world_citizen');
+                            if (wcIdx !== -1) {
+                                chips.push({ label: 'Человек мира', isHeritage: true });
+                                groups.splice(wcIdx, 1);
+                            }
+                            if (groups.length > 0) {
+                                const names = groups.map((g: string) => ETHNICITY_MAP[g] || capitalizeFirst(g)).join(', ');
+                                chips.push({ label: `${names} корни`, isHeritage: true });
+                            }
+                        }
+
+                        // 2. Национальность (ethnicity)
+                        if (userData?.ethnicity) {
+                            chips.push({ label: capitalizeFirst(userData.ethnicity), isHeritage: true });
+                        }
+
+                        // 3. Пол
+                        if (userData?.gender) {
+                            chips.push({ label: userData.gender === 'female' ? 'Женщина' : 'Мужчина' });
+                        }
+
+                        // 4. Знак зодиака
+                        if (userData?.zodiac && userData.zodiac !== '[]') {
+                            chips.push({ label: getZodiacName(userData.zodiac) });
+                        }
+
+                        // 5. Религия
+                        const religions = getAllReligions();
+                        if (religions) {
+                            chips.push({ label: religions });
+                        }
+
+                        // 6. Город
+                        if (userData?.city) {
+                            chips.push({ label: userData.city });
+                        }
+
+                        if (chips.length === 0) return null;
+
+                        // Стили чипов по теме
+                        const getChipStyle = (isHeritage?: boolean) => {
+                            if (isLight) {
+                                return {
+                                    backgroundColor: isHeritage ? 'rgba(0,0,0,0.06)' : '#fff',
+                                    borderColor: isHeritage ? 'rgba(0,0,0,0.12)' : '#d0d0d0',
+                                };
+                            }
+                            if (themeType === 'wine') {
+                                return {
+                                    backgroundColor: isHeritage ? 'rgba(251,218,201,0.15)' : 'rgba(255,255,255,0.1)',
+                                    borderColor: isHeritage ? 'rgba(251,218,201,0.4)' : 'rgba(255,255,255,0.25)',
+                                };
+                            }
+                            // space
+                            return {
+                                backgroundColor: isHeritage ? 'rgba(74,222,128,0.08)' : 'rgba(255,255,255,0.07)',
+                                borderColor: isHeritage ? 'rgba(74,222,128,0.25)' : 'rgba(255,255,255,0.18)',
+                            };
+                        };
+
+                        const getChipTextColor = (isHeritage?: boolean) => {
+                            if (isLight) return isHeritage ? '#1c1c1e' : '#555555';
+                            if (themeType === 'wine') return isHeritage ? '#fbdac9' : 'rgba(255,255,255,0.9)';
+                            return isHeritage ? GREEN_ACCENT : '#E2E8F0';
+                        };
+
                         return (
-                            <View style={styles.statusRow}>
-                                <Text style={[styles.statusText, { color: vitalsColor }]}>
-                                    {userData?.gender === 'female' ? 'Женщина' : 'Мужчина'}
-                                </Text>
-                                <View style={[styles.statusDot, { backgroundColor: vitalsColor }]} />
-                                <Text style={[styles.statusText, { color: vitalsColor }]}>
-                                    {getZodiacName(userData?.zodiac || '')}
-                                </Text>
-                                {getAllReligions() && (
-                                    <>
-                                        <View style={[styles.statusDot, { backgroundColor: vitalsColor }]} />
-                                        <Text style={[styles.statusText, { color: vitalsColor }]}>
-                                            {getAllReligions()}
+                            <View style={styles.pillChipsRow}>
+                                {chips.map((chip, idx) => (
+                                    <View
+                                        key={idx}
+                                        style={[
+                                            styles.pillChip,
+                                            getChipStyle(chip.isHeritage)
+                                        ]}
+                                    >
+                                        <Text style={[
+                                            styles.pillChipText,
+                                            { color: getChipTextColor(chip.isHeritage) }
+                                        ]}>
+                                            {chip.label}
                                         </Text>
-                                    </>
-                                )}
-                                {/* 4. ГОРОД */}
-                                {userData?.city && (
-                                    <>
-                                        <View style={[styles.statusDot, { backgroundColor: vitalsColor }]} />
-                                        <Text style={[styles.statusText, { color: vitalsColor }]}>
-                                            {userData.city}
-                                        </Text>
-                                    </>
-                                )}
+                                    </View>
+                                ))}
                             </View>
                         );
                     })()}
@@ -809,8 +866,28 @@ const styles = StyleSheet.create({
     nameRow: { flexDirection: 'row', alignItems: 'center' },
     nameText: { fontSize: normalize(28), fontWeight: 'bold' },
 
-    rootsText: { fontSize: normalize(15), fontWeight: '600', marginTop: normalize(4), marginBottom: normalize(12) },
+    // Pill chips row (replaces rootsText + statusRow)
+    pillChipsRow: {
+        flexDirection: 'row',
+        flexWrap: 'wrap',
+        gap: normalize(8),
+        marginTop: normalize(10),
+        marginBottom: normalize(4),
+    },
+    pillChip: {
+        paddingHorizontal: normalize(12),
+        paddingVertical: normalize(6),
+        borderRadius: normalize(20),
+        borderWidth: 1,
+    },
+    pillChipText: {
+        fontSize: normalize(13),
+        fontWeight: '500',
+        lineHeight: normalize(18),
+    },
 
+    // Legacy (kept for safety, no longer rendered)
+    rootsText: { fontSize: normalize(15), fontWeight: '600', marginTop: normalize(4), marginBottom: normalize(12) },
     statusRow: { flexDirection: 'row', alignItems: 'center', flexWrap: 'wrap' },
     statusText: { fontSize: normalize(15), fontWeight: '400' },
     statusDot: { width: normalize(3), height: normalize(3), borderRadius: normalize(1.5), marginHorizontal: normalize(8) },
