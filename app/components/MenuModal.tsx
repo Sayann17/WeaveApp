@@ -218,7 +218,7 @@ export const MenuModal = ({ visible, onClose }: MenuModalProps) => {
                                 </View>
                                 <View style={styles.menuTextContainer}>
                                     <Text style={[styles.menuText, { color: theme.text }]}>Поддержать проект</Text>
-                                    <Text style={[styles.menuSubtext, { color: theme.subText }]}>На развитие Weave</Text>
+                                    <Text style={[styles.menuSubtext, { color: theme.subText }]}>На развитие Менди</Text>
                                 </View>
                                 <Ionicons name="chevron-forward" size={20} color={theme.subText} />
                             </Pressable>
@@ -284,7 +284,7 @@ export const MenuModal = ({ visible, onClose }: MenuModalProps) => {
                         </Pressable>
 
                         <Text style={[styles.feedbackText, { color: theme.text }]}>
-                            Привет! Это команда Weave :) нам очень важно сейчас получать обратную связь от пользователей. Удели нам немного времени и помоги нам сделать классный и зрелый продукт :)
+                            Привет! Это команда Менди :) нам очень важно сейчас получать обратную связь от пользователей. Удели нам немного времени и помоги нам сделать классный и зрелый продукт :)
                             {'\n\n'}
                             Ссылка приведет тебя к гугл формам )
                         </Text>
@@ -347,7 +347,7 @@ export const MenuModal = ({ visible, onClose }: MenuModalProps) => {
                         </Pressable>
 
                         <Text style={[styles.feedbackText, { color: theme.text, fontSize: 16, lineHeight: 24 }]}>
-                            Привет! Weave сейчас находится на стадии развития и у нас большие амбициозные планы!{'\n'}{'\n'}
+                            Привет! Менди сейчас находится на стадии развития и у нас большие амбициозные планы!{'\n'}{'\n'}
                             Если тебе нравится продукт, помоги нам стать еще лучше!{'\n'}
                             Будем рады любой сумме :)
                         </Text>
